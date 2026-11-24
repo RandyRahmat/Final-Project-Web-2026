@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useActionState } from "react";
 import Link from "next/link";
+import { loginUserAction, registerUserAction } from "@/actions/auth-actions";
 
 export default function WelcomePage() {
   const [step, setStep] = useState(0);
   const [authMode, setAuthMode] = useState("login");
-  const [selectedRole, setSelectedRole] = useState("member");
+  const [selectedRole, setSelectedRole] = useState("Member");
   const timerRef = useRef(null);
+
+  const [loginState, loginFormAction, isLoginPending] = useActionState(loginUserAction, null);
+  const [registerState, registerFormAction, isRegisterPending] = useActionState(registerUserAction, null);
 
   const handleStartLoginSequence = () => {
     setStep(1);
@@ -34,10 +38,12 @@ export default function WelcomePage() {
     };
   }, []);
 
+  const activeError = authMode === "login" ? loginState?.error : registerState?.error;
+  const isSubmitting = authMode === "login" ? isLoginPending : isRegisterPending;
+
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#0b0b0c] text-zinc-100 select-none">
       <div className="pointer-events-none fixed inset-y-0 left-1/2 z-0 w-[1px] -translate-x-1/2 bg-white/[0.06]" />
-
       <div className="pointer-events-none fixed left-1/2 top-1/2 z-0 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.03] blur-3xl" />
 
       <header className="fixed top-6 left-1/2 z-30 -translate-x-1/2">
@@ -83,7 +89,7 @@ export default function WelcomePage() {
           <div className="absolute bottom-7 inset-x-8 flex items-center justify-between text-[10px] uppercase tracking-[0.25em] text-zinc-500">
             <span>ART SHOWCASE</span>
             <span>AESTHE PLATFORM &copy; 2026</span>
-            <Link href="" className="transition hover:text-zinc-300">
+            <Link href="/home" className="transition hover:text-zinc-300">
               MODE TAMU
             </Link>
           </div>
@@ -144,27 +150,34 @@ export default function WelcomePage() {
               </button>
             </div>
 
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+            {activeError && (
+              <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                {activeError}
+              </div>
+            )}
+
+            <form action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
               {authMode === "register" && (
                 <>
                   <div>
                     <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Display Name</label>
-                    <input type="text" placeholder="Display Name" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                    <input type="text" name="displayName" required placeholder="Contoh: Randy Rahmat" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
                   </div>
 
                   <div>
                     <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username</label>
-                    <input type="text" placeholder="Username" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                    <input type="text" name="username" required placeholder="randy_art" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
                   </div>
 
                   <div>
                     <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Peran Akun</label>
+                    <input type="hidden" name="role" value={selectedRole} />
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <button type="button" onClick={() => setSelectedRole("member")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "member" ? "border-white bg-white/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
+                      <button type="button" onClick={() => setSelectedRole("Member")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Member" ? "border-white bg-white/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
                         <div className="font-medium">Member / Kreator</div>
                         <div className="text-[10px] text-zinc-500">Unggah &amp; ikut tantangan</div>
                       </button>
-                      <button type="button" onClick={() => setSelectedRole("curator")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "curator" ? "border-white bg-white/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
+                      <button type="button" onClick={() => setSelectedRole("Curator")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Curator" ? "border-white bg-white/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
                         <div className="font-medium">Curator</div>
                         <div className="text-[10px] text-zinc-500">Butuh verifikasi Admin</div>
                       </button>
@@ -175,21 +188,24 @@ export default function WelcomePage() {
 
               <div>
                 <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email</label>
-                <input type="email" placeholder="email@email.com" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                <input type="email" name="email" required placeholder="email@email.com" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
               </div>
 
               <div>
                 <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi</label>
-                <input type="password" placeholder="Password" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                <input type="password" name="password" required placeholder="Password" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
               </div>
 
-              <button type="submit" className="mt-2 w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200">
-                {authMode === "login" ? "Masuk Sekarang" : "Daftar Akun"}
+              <button type="submit" disabled={isSubmitting} className="mt-2 w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50">
+                {isSubmitting ? "Memproses..." : authMode === "login" ? "Masuk Sekarang" : "Daftar Akun"}
               </button>
             </form>
 
             <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 text-[11px] text-zinc-500">
-              <Link href="/explore" className="transition hover:text-white">
+              <button type="button" onClick={handleBackToTop} className="transition hover:text-white">
+                &uarr; Kembali ke Awal
+              </button>
+              <Link href="/home" className="transition hover:text-white">
                 Jelajahi tanpa akun &rarr;
               </Link>
             </div>

@@ -17,7 +17,7 @@ const NAVIGATION = [
   { label: "Home", href: "/home", icon: "⌂" },
   { label: "Explore", href: "/explore", icon: "◈" },
   { label: "Favorites", href: "/favorites", icon: "⚑" },
-  { label: "Challenges", href: "/home#challenges", icon: "✧" },
+  { label: "Challenges", href: "/challenges", icon: "✧" },
 ];
 
 export default function HomeClient({ currentUser, artworks, categories, challenges, podiumWinners }) {
@@ -139,7 +139,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
           <p className="mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600">WORKSPACE</p>
           <nav className="space-y-1">
             {visibleNavigation.map((item) =>
-              item.label === "Explore" || item.label === "Favorites" ? (
+              item.label === "Explore" || item.label === "Favorites" || item.label === "Challenges" ? (
                 <Link
                   key={item.label}
                   href={item.href}
@@ -150,6 +150,11 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                     {item.icon}
                   </span>
                   {item.label}
+                  {item.label === "Challenges" && (
+                    <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300">
+                      {filteredChallenges.length}
+                    </span>
+                  )}
                 </Link>
               ) : (
                 <button
@@ -571,23 +576,24 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {filteredChallenges.map((ch) => (
-                  <div
+                  <Link
                     key={ch.id}
-                    className="group relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/50 p-6 transition hover:border-white/25"
+                    href={`/challenges/${ch.id}`}
+                    className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/50 p-6 transition hover:border-white/25"
                   >
                     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                       <div>
                         <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[9px] uppercase tracking-widest text-emerald-300">
                           Ongoing Event
                         </span>
-                        <h3 className="mt-3 text-lg font-medium text-white">{ch.title}</h3>
+                        <h3 className="mt-3 text-lg font-medium text-white group-hover:underline">{ch.title}</h3>
                         <p className="mt-1 text-xs text-zinc-400">{ch.description}</p>
                         <p className="mt-3 text-[10px] text-zinc-500">
                           Curator: {ch.curator_name} &bull; Hadiah: {ch.prize}
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </section>

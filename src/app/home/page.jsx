@@ -55,7 +55,7 @@ export default async function HomePage() {
       SELECT ch.id
       FROM challenges ch
       JOIN challenge_submissions cs ON cs.challenge_id = ch.id
-      WHERE cs.winner_rank IN (1, 2, 3)
+      WHERE ch.end_date < NOW() AND cs.winner_rank IN (1, 2, 3)
       GROUP BY ch.id, ch.end_date
       ORDER BY ch.end_date DESC, ch.id DESC
       LIMIT 1

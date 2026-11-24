@@ -6,6 +6,7 @@ const pool = new Pool({
 
 let profileColumnsEnsured = false;
 let directMessagesTableEnsured = false;
+let challengeColumnsEnsured = false;
 
 export async function query(text, params) {
     const res = await pool.query(text, params);
@@ -43,5 +44,20 @@ export async function ensureDirectMessagesTable() {
         directMessagesTableEnsured = true;
     } catch {
         // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
+    }
+}
+
+export async function ensureChallengeColumns() {
+    if (challengeColumnsEnsured) return;
+    try {
+        await pool.query(
+            `ALTER TABLE challenges
+             ADD COLUMN IF NOT EXISTS rules TEXT,
+             ADD COLUMN IF NOT EXISTS start_date TIMESTAMP DEFAULT NOW(),
+             ADD COLUMN IF NOT EXISTS banner_url TEXT`
+        );
+        challengeColumnsEnsured = true;
+    } catch {
+        // Abaikan jika user DB tidak memiliki izin ALTER atau kolom sudah tersedia
     }
 }

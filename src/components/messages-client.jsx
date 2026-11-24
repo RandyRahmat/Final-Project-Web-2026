@@ -160,7 +160,7 @@ export default function MessagesClient({
                 Favorites
               </Link>
             )}
-            <Link href="/home#challenges" className="group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition-all duration-300 hover:bg-white/[0.04] hover:text-white">
+            <Link href="/challenges" className="group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition-all duration-300 hover:bg-white/[0.04] hover:text-white">
               <span className="w-4 text-center text-base transition-transform duration-300 group-hover:scale-110">✧</span>
               Challenges
             </Link>

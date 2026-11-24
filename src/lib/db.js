@@ -7,6 +7,7 @@ const pool = new Pool({
 let profileColumnsEnsured = false;
 let directMessagesTableEnsured = false;
 let challengeColumnsEnsured = false;
+let reportsTableEnsured = false;
 
 export async function query(text, params) {
     const res = await pool.query(text, params);
@@ -59,5 +60,25 @@ export async function ensureChallengeColumns() {
         challengeColumnsEnsured = true;
     } catch {
         // Abaikan jika user DB tidak memiliki izin ALTER atau kolom sudah tersedia
+    }
+}
+
+export async function ensureReportsTable() {
+    if (reportsTableEnsured) return;
+    try {
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS reports (
+                id SERIAL PRIMARY KEY,
+                artwork_id INT NOT NULL REFERENCES artworks(id) ON DELETE CASCADE,
+                reporter_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                reason TEXT NOT NULL,
+                status VARCHAR(20) DEFAULT 'Pending',
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (artwork_id, reporter_id)
+            )`
+        );
+        reportsTableEnsured = true;
+    } catch {
+        // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
     }
 }

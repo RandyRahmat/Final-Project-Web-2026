@@ -105,9 +105,10 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
     return REACTIONS.find((r) => r.type === type) || REACTIONS[0];
   };
 
-  const rank1 = podiumWinners.find((w) => w.winner_rank === 1);
-  const rank2 = podiumWinners.find((w) => w.winner_rank === 2);
-  const rank3 = podiumWinners.find((w) => w.winner_rank === 3);
+  const rank1 = podiumWinners.find((w) => Number(w.winner_rank) === 1);
+  const rank2 = podiumWinners.find((w) => Number(w.winner_rank) === 2);
+  const rank3 = podiumWinners.find((w) => Number(w.winner_rank) === 3);
+  const podiumMeta = podiumWinners[0] || null;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#090909] text-zinc-100">
@@ -460,19 +461,22 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
             </div>
 
             <div className="flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-6 xl:col-span-5 xl:h-[420px]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[9px] tracking-[0.3em] text-zinc-500">CHALLENGE LEADERBOARD</p>
-                  <h3 className="mt-1 text-base font-light tracking-wide text-white">
-                    Hall of Fame Podium
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[9px] tracking-[0.3em] text-zinc-500">CURATOR&apos;S CHALLENGE PODIUM</p>
+                  <h3 className="mt-1 truncate text-base font-light tracking-wide text-white">
+                    {podiumMeta ? podiumMeta.challenge_title : "Hall of Fame Podium"}
                   </h3>
+                  <p className="mt-0.5 truncate text-[10px] text-zinc-500">
+                    {podiumMeta ? `Dipilih oleh Curator: ${podiumMeta.curator_name}` : "Menunggu pengumuman resmi Curator"}
+                  </p>
                 </div>
-                <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[9px] tracking-widest text-zinc-300">
+                <span className="shrink-0 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[9px] tracking-widest text-zinc-300">
                   TOP 3
                 </span>
               </div>
 
-              <div className="mt-6 grid grid-cols-3 items-end gap-3 pt-4">
+              <div className="mt-4 grid grid-cols-3 items-end gap-3 pt-2">
                 <div className="flex flex-col items-center">
                   <div className="mb-2 h-16 w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-800">
                     {rank3 ? (
@@ -484,9 +488,15 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                   <p className="w-full truncate text-center text-[10px] font-medium text-zinc-300">
                     {rank3 ? rank3.title : "Slot #3"}
                   </p>
-                  <p className="w-full truncate text-center text-[9px] text-zinc-500">
-                    {rank3 ? rank3.artist_name : "Menunggu"}
-                  </p>
+                  {rank3?.artist_username ? (
+                    <Link href={`/creators/${rank3.artist_username}`} className="w-full truncate text-center text-[9px] text-zinc-500 transition hover:text-zinc-200">
+                      {rank3.artist_name}
+                    </Link>
+                  ) : (
+                    <p className="w-full truncate text-center text-[9px] text-zinc-500">
+                      {rank3 ? rank3.artist_name : "Menunggu Curator"}
+                    </p>
+                  )}
                   <div className="mt-2 flex h-20 w-full flex-col items-center justify-center rounded-t-xl border-x border-t border-amber-700/30 bg-gradient-to-t from-zinc-900 to-amber-900/20">
                     <span className="text-sm font-semibold text-amber-500">#3</span>
                     <span className="text-[8px] uppercase tracking-widest text-zinc-500">Bronze</span>
@@ -504,9 +514,15 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                   <p className="w-full truncate text-center text-[11px] font-semibold text-amber-100">
                     {rank1 ? rank1.title : "Champion #1"}
                   </p>
-                  <p className="w-full truncate text-center text-[9px] text-zinc-400">
-                    {rank1 ? rank1.artist_name : "Menunggu"}
-                  </p>
+                  {rank1?.artist_username ? (
+                    <Link href={`/creators/${rank1.artist_username}`} className="w-full truncate text-center text-[9px] text-zinc-400 transition hover:text-amber-200">
+                      {rank1.artist_name}
+                    </Link>
+                  ) : (
+                    <p className="w-full truncate text-center text-[9px] text-zinc-400">
+                      {rank1 ? rank1.artist_name : "Menunggu Curator"}
+                    </p>
+                  )}
                   <div className="mt-2 flex h-32 w-full flex-col items-center justify-center rounded-t-xl border-x border-t border-amber-400/40 bg-gradient-to-t from-zinc-900 to-amber-500/20 shadow-[inset_0_1px_0_rgba(251,191,36,0.3)]">
                     <span className="text-lg font-bold text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]">♛ #1</span>
                     <span className="text-[8px] uppercase tracking-widest text-amber-400/90 font-medium">Gold</span>
@@ -524,9 +540,15 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                   <p className="w-full truncate text-center text-[10px] font-medium text-slate-100">
                     {rank2 ? rank2.title : "Slot #2"}
                   </p>
-                  <p className="w-full truncate text-center text-[9px] text-zinc-500">
-                    {rank2 ? rank2.artist_name : "Menunggu"}
-                  </p>
+                  {rank2?.artist_username ? (
+                    <Link href={`/creators/${rank2.artist_username}`} className="w-full truncate text-center text-[9px] text-zinc-500 transition hover:text-slate-200">
+                      {rank2.artist_name}
+                    </Link>
+                  ) : (
+                    <p className="w-full truncate text-center text-[9px] text-zinc-500">
+                      {rank2 ? rank2.artist_name : "Menunggu Curator"}
+                    </p>
+                  )}
                   <div className="mt-2 flex h-24 w-full flex-col items-center justify-center rounded-t-xl border-x border-t border-slate-300/35 bg-gradient-to-t from-zinc-900 to-slate-200/20 shadow-[inset_0_1px_0_rgba(226,232,240,0.3)]">
                     <span className="text-base font-semibold text-slate-100 drop-shadow-[0_0_8px_rgba(226,232,240,0.5)]">#2</span>
                     <span className="text-[8px] uppercase tracking-widest text-slate-300 font-medium">Silver</span>

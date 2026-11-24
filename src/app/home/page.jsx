@@ -51,38 +51,34 @@ export default async function HomePage() {
   );
 
   const podiumResult = await query(
-    `SELECT 
+    `WITH latest_awarded_challenge AS (
+      SELECT ch.id
+      FROM challenges ch
+      JOIN challenge_submissions cs ON cs.challenge_id = ch.id
+      WHERE cs.winner_rank IN (1, 2, 3)
+      GROUP BY ch.id, ch.end_date
+      ORDER BY ch.end_date DESC, ch.id DESC
+      LIMIT 1
+    )
+    SELECT 
       cs.winner_rank,
       a.title,
       a.image_url,
-      u.display_name AS artist_name
+      u.display_name AS artist_name,
+      u.username AS artist_username,
+      ch.id AS challenge_id,
+      ch.title AS challenge_title,
+      cu.display_name AS curator_name
     FROM challenge_submissions cs
+    JOIN latest_awarded_challenge lac ON cs.challenge_id = lac.id
+    JOIN challenges ch ON cs.challenge_id = ch.id
+    JOIN users cu ON ch.curator_id = cu.id
     JOIN artworks a ON cs.artwork_id = a.id
     JOIN users u ON cs.member_id = u.id
-    WHERE cs.winner_rank IS NOT NULL
+    WHERE cs.winner_rank IN (1, 2, 3)
     ORDER BY cs.winner_rank ASC
     LIMIT 3`
   );
-
-  const submissionWinners = podiumResult.rows;
-  const usedTitles = new Set(submissionWinners.map((w) => w.title));
-
-  const resolvedPodium = [1, 2, 3].map((rank) => {
-    const existing = submissionWinners.find((w) => Number(w.winner_rank) === rank);
-    if (existing) return existing;
-
-    const fallbackArt = artworksResult.rows.find((a) => !usedTitles.has(a.title));
-    if (fallbackArt) {
-      usedTitles.add(fallbackArt.title);
-      return {
-        winner_rank: rank,
-        title: fallbackArt.title,
-        image_url: fallbackArt.image_url,
-        artist_name: fallbackArt.artist_name,
-      };
-    }
-    return null;
-  }).filter(Boolean);
 
   return (
     <HomeClient
@@ -90,7 +86,7 @@ export default async function HomePage() {
       artworks={artworksResult.rows}
       categories={categoriesResult.rows}
       challenges={challengesResult.rows}
-      podiumWinners={resolvedPodium}
+      podiumWinners={podiumResult.rows}
     />
   );
 }

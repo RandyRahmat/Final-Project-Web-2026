@@ -15,7 +15,7 @@ const REACTIONS = [
 
 const NAVIGATION = [
   { label: "Home", href: "/home", icon: "⌂" },
-  { label: "Explore", href: "/home", icon: "◈" },
+  { label: "Explore", href: "/explore", icon: "◈" },
   { label: "Favorites", href: "/home?tab=favorites", icon: "⚑" },
   { label: "Challenges", href: "/home#challenges", icon: "✧" },
 ];
@@ -137,31 +137,45 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
         <div>
           <p className="mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600">WORKSPACE</p>
           <nav className="space-y-1">
-            {visibleNavigation.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => {
-                  setActiveNav(item.label);
-                  setMobileMenu(false);
-                }}
-                className={`group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] transition-all duration-300 ${
-                  activeNav === item.label
-                    ? "border border-white/[0.08] bg-white/[0.08] text-white shadow-[inset_2px_0_0_white]"
-                    : "text-zinc-500 hover:bg-white/[0.04] hover:text-white"
-                }`}
-              >
-                <span className="w-4 text-center text-base transition-transform duration-300 group-hover:scale-110">
-                  {item.icon}
-                </span>
-                {item.label}
-                {item.label === "Challenges" && (
-                  <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300">
-                    {filteredChallenges.length}
+            {visibleNavigation.map((item) =>
+              item.label === "Explore" ? (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setMobileMenu(false)}
+                  className="group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition-all duration-300 hover:bg-white/[0.04] hover:text-white"
+                >
+                  <span className="w-4 text-center text-base transition-transform duration-300 group-hover:scale-110">
+                    {item.icon}
                   </span>
-                )}
-              </button>
-            ))}
+                  {item.label}
+                </Link>
+              ) : (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    setActiveNav(item.label);
+                    setMobileMenu(false);
+                  }}
+                  className={`group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] transition-all duration-300 ${
+                    activeNav === item.label
+                      ? "border border-white/[0.08] bg-white/[0.08] text-white shadow-[inset_2px_0_0_white]"
+                      : "text-zinc-500 hover:bg-white/[0.04] hover:text-white"
+                  }`}
+                >
+                  <span className="w-4 text-center text-base transition-transform duration-300 group-hover:scale-110">
+                    {item.icon}
+                  </span>
+                  {item.label}
+                  {item.label === "Challenges" && (
+                    <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300">
+                      {filteredChallenges.length}
+                    </span>
+                  )}
+                </button>
+              )
+            )}
           </nav>
         </div>
 

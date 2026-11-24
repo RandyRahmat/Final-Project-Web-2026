@@ -24,6 +24,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
   const [activeNav, setActiveNav] = useState("Home");
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("popular");
+  const [followingOnly, setFollowingOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
@@ -68,6 +69,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
     const q = search.trim().toLowerCase();
     const filtered = artworks.filter((art) => {
       if (activeNav === "Favorites" && isMember && !art.is_favorited) return false;
+      if (followingOnly && isMember && !art.is_following_artist) return false;
       const matchesCategory = activeCategory === "All" || art.category_name === activeCategory;
       const matchesSearch =
         !q ||
@@ -83,7 +85,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
       }
       return (b.total_reactions || 0) - (a.total_reactions || 0) || new Date(b.created_at) - new Date(a.created_at);
     });
-  }, [artworks, activeCategory, search, activeNav, isMember, sortBy]);
+  }, [artworks, activeCategory, search, activeNav, isMember, sortBy, followingOnly]);
 
   const filteredChallenges = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -625,6 +627,20 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                {isMember && (
+                  <button
+                    type="button"
+                    onClick={() => setFollowingOnly(!followingOnly)}
+                    className={`rounded-full border px-4 py-2 text-[9px] tracking-[0.14em] transition ${
+                      followingOnly
+                        ? "border-amber-400 bg-amber-400 font-semibold text-black"
+                        : "border-white/[0.08] bg-white/[0.025] text-zinc-400 hover:border-white/30 hover:text-white"
+                    }`}
+                  >
+                    {followingOnly ? "✓ FOLLOWING" : "FOLLOWING"}
+                  </button>
+                )}
+
                 <div className="flex items-center rounded-full border border-white/[0.08] bg-white/[0.025] p-1">
                   <button
                     type="button"
@@ -652,6 +668,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                     setActiveCategory("All");
                     setActiveNav("Home");
                     setSortBy("popular");
+                    setFollowingOnly(false);
                     setSearch("");
                   }}
                   className="text-[9px] tracking-[0.15em] text-zinc-500 transition hover:text-white"

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { query, ensureUserProfileColumns } from "@/lib/db";
+import { query, ensureUserProfileColumns, ensureFollowsTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import ProfileClient from "@/components/profile-client";
 
@@ -12,6 +12,7 @@ export default async function ProfilePage() {
   }
 
   await ensureUserProfileColumns();
+  await ensureFollowsTable();
 
   // 1. Ambil data lengkap profil pengguna dari PostgreSQL
   const userResult = await query(
@@ -79,6 +80,29 @@ export default async function ProfilePage() {
     [currentUser.id]
   );
 
+  // 6. Hitung total followers dan daftar kreator yang diikuti (Following)
+  const followersCountResult = await query(
+    "SELECT COUNT(*)::int AS total FROM follows WHERE following_id = $1",
+    [currentUser.id]
+  );
+
+  const followingListResult = await query(
+    `SELECT
+      u.id,
+      u.display_name,
+      u.username,
+      u.avatar_url,
+      u.bio,
+      COUNT(a.id)::int AS artwork_count
+    FROM follows f
+    JOIN users u ON f.following_id = u.id
+    LEFT JOIN artworks a ON a.user_id = u.id
+    WHERE f.follower_id = $1
+    GROUP BY u.id, f.created_at
+    ORDER BY f.created_at DESC`,
+    [currentUser.id]
+  );
+
   return (
     <ProfileClient
       currentUser={currentUser}
@@ -87,6 +111,8 @@ export default async function ProfilePage() {
       categories={categoriesResult.rows}
       mySubmissions={submissionsResult.rows}
       favoritesCount={favCountResult.rows[0]?.total || 0}
+      followersCount={followersCountResult.rows[0]?.total || 0}
+      followingList={followingListResult.rows}
     />
   );
 }

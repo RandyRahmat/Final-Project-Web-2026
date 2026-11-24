@@ -8,6 +8,7 @@ import {
   updateAccountAction,
   updateArtworkAction,
   deleteArtworkAction,
+  toggleFollowAction,
 } from "@/actions/profile-actions";
 
 export default function ProfileClient({
@@ -17,6 +18,8 @@ export default function ProfileClient({
   categories,
   mySubmissions,
   favoritesCount,
+  followersCount = 0,
+  followingList = [],
 }) {
   const role = profile.role || currentUser.role;
   const isMember = role === "Member";
@@ -28,6 +31,7 @@ export default function ProfileClient({
   const [mobileMenu, setMobileMenu] = useState(false);
   const [editingArt, setEditingArt] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [unfollowingId, setUnfollowingId] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatar_url || "");
 
   const [profileState, profileFormAction, isSavingProfile] = useActionState(updateProfileAction, null);
@@ -57,9 +61,16 @@ export default function ProfileClient({
     setDeletingId(null);
   };
 
+  const handleUnfollow = async (creatorId) => {
+    setUnfollowingId(creatorId);
+    await toggleFollowAction(creatorId);
+    setUnfollowingId(null);
+  };
+
   const tabs = isMember
     ? [
         { id: "artworks", label: "My Artworks", count: myArtworks.length },
+        { id: "following", label: "Following", count: followingList.length },
         { id: "submissions", label: "My Submissions", count: mySubmissions.length },
         { id: "profile", label: "Edit Profile" },
         { id: "account", label: "Account Settings" },
@@ -251,11 +262,19 @@ export default function ProfileClient({
               </div>
 
               {isMember && (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 md:grid-cols-3">
                   <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
                     <p className="text-lg font-light text-white">{myArtworks.length}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Artworks</p>
                   </div>
+                  <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
+                    <p className="text-lg font-light text-white">{followersCount}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Followers</p>
+                  </div>
+                  <button type="button" onClick={() => setActiveTab("following")} className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center transition hover:border-white/25">
+                    <p className="text-lg font-light text-white">{followingList.length}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Following</p>
+                  </button>
                   <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
                     <p className="text-lg font-light text-white">{totalReactionsReceived}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Reactions</p>
@@ -264,10 +283,10 @@ export default function ProfileClient({
                     <p className="text-lg font-light text-amber-300">{favoritesCount}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Favorites</p>
                   </Link>
-                  <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
+                  <button type="button" onClick={() => setActiveTab("submissions")} className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center transition hover:border-white/25">
                     <p className="text-lg font-light text-white">{mySubmissions.length}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Submissions</p>
-                  </div>
+                  </button>
                 </div>
               )}
             </div>
@@ -360,6 +379,57 @@ export default function ProfileClient({
                         </div>
                       </div>
                     </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* TAB FOLLOWING */}
+          {activeTab === "following" && isMember && (
+            <section className="mt-8">
+              <h2 className="text-xl font-light text-white">Kreator yang Kamu Ikuti</h2>
+              <p className="mt-1 text-xs text-zinc-500">Kelola daftar kreator favorit yang sedang kamu ikuti.</p>
+
+              {followingList.length === 0 ? (
+                <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-16 text-center">
+                  <p className="text-sm text-zinc-400">Kamu belum mengikuti kreator mana pun.</p>
+                  <Link href="/explore" className="mt-4 inline-block rounded-full bg-white px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-black">
+                    Temukan Kreator di Explore
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {followingList.map((creator) => (
+                    <div key={creator.id} className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-zinc-900/50 p-4">
+                      <Link href={`/creators/${creator.username}`} className="flex min-w-0 flex-1 items-center gap-3.5 transition hover:opacity-85">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-zinc-800 text-sm font-semibold text-white">
+                          {creator.avatar_url ? (
+                            <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
+                          ) : (
+                            creator.display_name?.charAt(0).toUpperCase() || "C"
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-white">{creator.display_name}</p>
+                          <p className="truncate text-[11px] text-zinc-500">
+                            @{creator.username} &bull; {creator.artwork_count} karya
+                          </p>
+                          {creator.bio && (
+                            <p className="mt-0.5 truncate text-[10px] text-zinc-400">{creator.bio}</p>
+                          )}
+                        </div>
+                      </Link>
+
+                      <button
+                        type="button"
+                        disabled={unfollowingId === creator.id}
+                        onClick={() => handleUnfollow(creator.id)}
+                        className="shrink-0 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1.5 text-[10px] uppercase tracking-wider text-zinc-300 transition hover:border-red-400/50 hover:bg-red-500/15 hover:text-red-300 disabled:opacity-50"
+                      >
+                        {unfollowingId === creator.id ? "..." : "Unfollow"}
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}

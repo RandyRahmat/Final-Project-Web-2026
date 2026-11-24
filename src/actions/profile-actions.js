@@ -5,7 +5,7 @@ import { mkdir, unlink, writeFile } from "fs/promises";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { query, ensureUserProfileColumns } from "@/lib/db";
+import { query, ensureUserProfileColumns, ensureFollowsTable } from "@/lib/db";
 import { getCurrentUser, createSessionToken } from "@/lib/auth";
 
 const ALLOWED_IMAGE_TYPES = new Map([
@@ -242,4 +242,56 @@ export async function deleteArtworkAction(artworkId) {
   revalidatePath(`/creators/${user.username}`);
 
   return { success: true };
+}
+
+export async function toggleFollowAction(targetUserId) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "Member") {
+    return { error: "Silakan masuk sebagai Member untuk mengikuti kreator." };
+  }
+
+  const targetId = Number(targetUserId);
+  if (!targetId || Number.isNaN(targetId)) {
+    return { error: "Kreator tidak valid." };
+  }
+
+  if (targetId === Number(user.id)) {
+    return { error: "Kamu tidak dapat mengikuti dirimu sendiri." };
+  }
+
+  await ensureFollowsTable();
+
+  const targetRes = await query("SELECT id, username FROM users WHERE id = $1", [targetId]);
+  if (targetRes.rows.length === 0) {
+    return { error: "Kreator tidak ditemukan." };
+  }
+
+  const targetUsername = targetRes.rows[0].username;
+
+  const existing = await query(
+    "SELECT id FROM follows WHERE follower_id = $1 AND following_id = $2",
+    [user.id, targetId]
+  );
+
+  let following = false;
+  if (existing.rows.length > 0) {
+    await query(
+      "DELETE FROM follows WHERE follower_id = $1 AND following_id = $2",
+      [user.id, targetId]
+    );
+    following = false;
+  } else {
+    await query(
+      "INSERT INTO follows (follower_id, following_id) VALUES ($1, $2)",
+      [user.id, targetId]
+    );
+    following = true;
+  }
+
+  revalidatePath(`/creators/${targetUsername}`);
+  revalidatePath("/profile");
+  revalidatePath("/home");
+  revalidatePath("/explore");
+
+  return { success: true, following };
 }

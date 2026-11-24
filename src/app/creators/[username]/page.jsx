@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { query, ensureUserProfileColumns } from "@/lib/db";
+import { query, ensureUserProfileColumns, ensureFollowsTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import CreatorProfileClient from "@/components/creator-profile-client";
 
@@ -10,6 +10,7 @@ export default async function CreatorProfilePage({ params }) {
   const decodedUsername = decodeURIComponent(username).toLowerCase();
 
   await ensureUserProfileColumns();
+  await ensureFollowsTable();
 
   const currentUser = await getCurrentUser();
   const userId = currentUser?.id || 0;
@@ -54,11 +55,27 @@ export default async function CreatorProfilePage({ params }) {
     [userId, creator.id]
   );
 
+  // 3. Ambil statistik Followers, Following, dan status follow user aktif
+  const followStatsResult = await query(
+    `SELECT
+      (SELECT COUNT(*)::int FROM follows WHERE following_id = $1) AS followers_count,
+      (SELECT COUNT(*)::int FROM follows WHERE follower_id = $1) AS following_count,
+      EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND following_id = $1) AS is_following`,
+    [creator.id, userId]
+  );
+
+  const followStats = followStatsResult.rows[0] || {
+    followers_count: 0,
+    following_count: 0,
+    is_following: false,
+  };
+
   return (
     <CreatorProfileClient
       currentUser={currentUser}
       creator={creator}
       artworks={artworksResult.rows}
+      followStats={followStats}
     />
   );
 }

@@ -9,6 +9,7 @@ let directMessagesTableEnsured = false;
 let challengeColumnsEnsured = false;
 let reportsTableEnsured = false;
 let commentsTableEnsured = false;
+let followsTableEnsured = false;
 
 export async function query(text, params) {
     const res = await pool.query(text, params);
@@ -97,6 +98,25 @@ export async function ensureCommentsTable() {
             )`
         );
         commentsTableEnsured = true;
+    } catch {
+        // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
+    }
+}
+
+export async function ensureFollowsTable() {
+    if (followsTableEnsured) return;
+    try {
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS follows (
+                id SERIAL PRIMARY KEY,
+                follower_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                following_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (follower_id, following_id),
+                CHECK (follower_id <> following_id)
+            )`
+        );
+        followsTableEnsured = true;
     } catch {
         // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
     }

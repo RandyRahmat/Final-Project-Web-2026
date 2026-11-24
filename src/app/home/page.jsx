@@ -1,4 +1,4 @@
-import { query } from "@/lib/db";
+import { query, ensureFollowsTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import HomeClient from "@/components/home-client";
 
@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const currentUser = await getCurrentUser();
   const userId = currentUser?.id || 0;
+
+  await ensureFollowsTable();
 
   const artworksResult = await query(
     `SELECT 
@@ -21,7 +23,8 @@ export default async function HomePage() {
       u.username AS artist_username,
       COUNT(DISTINCT ar.user_id)::int AS total_reactions,
       MAX(CASE WHEN ar.user_id = $1 THEN ar.reaction_type ELSE NULL END) AS user_reaction,
-      BOOL_OR(f.user_id = $1) AS is_favorited
+      BOOL_OR(f.user_id = $1) AS is_favorited,
+      EXISTS(SELECT 1 FROM follows fl WHERE fl.follower_id = $1 AND fl.following_id = a.user_id) AS is_following_artist
     FROM artworks a
     JOIN categories c ON a.category_id = c.id
     JOIN users u ON a.user_id = u.id

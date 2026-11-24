@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 import { sendMessageAction } from "@/actions/message-actions";
+import { toggleFollowAction } from "@/actions/profile-actions";
 
 const REACTIONS = [
   { type: "love", icon: "❤️", label: "Love" },
@@ -13,8 +14,9 @@ const REACTIONS = [
   { type: "applause", icon: "👏", label: "Applause" },
 ];
 
-export default function CreatorProfileClient({ currentUser, creator, artworks }) {
+export default function CreatorProfileClient({ currentUser, creator, artworks, followStats }) {
   const [authNotice, setAuthNotice] = useState("");
+  const [togglingFollow, setTogglingFollow] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [loadingChat, setLoadingChat] = useState(false);
@@ -62,6 +64,18 @@ export default function CreatorProfileClient({ currentUser, creator, artworks })
       chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatMessages.length, showChat]);
+
+  const handleToggleFollow = async () => {
+    if (isGuest) {
+      setAuthNotice(`Silakan masuk sebagai Member untuk mengikuti ${creator.display_name}.`);
+      return;
+    }
+    if (!isMember || isOwnProfile || togglingFollow) return;
+    setTogglingFollow(true);
+    setAuthNotice("");
+    await toggleFollowAction(creator.id);
+    setTogglingFollow(false);
+  };
 
   const handleOpenChat = () => {
     if (isGuest) {
@@ -201,21 +215,39 @@ export default function CreatorProfileClient({ currentUser, creator, artworks })
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+              {!isOwnProfile && (isMember || isGuest) && (
+                <button
+                  type="button"
+                  disabled={togglingFollow}
+                  onClick={handleToggleFollow}
+                  className={`flex items-center gap-2 rounded-full border px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition disabled:opacity-50 ${
+                    isMember && followStats?.is_following
+                      ? "border-white/25 bg-white/[0.08] text-white hover:border-red-400/50 hover:bg-red-500/15 hover:text-red-300"
+                      : "border-white bg-white text-black hover:bg-zinc-200"
+                  }`}
+                >
+                  <span>{isMember && followStats?.is_following ? "✓ Following" : "＋ Follow"}</span>
+                </button>
+              )}
               {!isOwnProfile && (
                 <button
                   type="button"
                   onClick={handleOpenChat}
-                  className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-black transition hover:bg-zinc-200"
+                  className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.04] px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
                 >
                   <span>✉</span>
                   <span>Kirim Pesan</span>
                 </button>
               )}
-              <div className="rounded-xl border border-white/[0.07] bg-black/30 px-5 py-3 text-center">
+              <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
+                <p className="text-xl font-light text-white">{followStats?.followers_count || 0}</p>
+                <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Followers</p>
+              </div>
+              <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
                 <p className="text-xl font-light text-white">{artworks.length}</p>
                 <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Karya</p>
               </div>
-              <div className="rounded-xl border border-white/[0.07] bg-black/30 px-5 py-3 text-center">
+              <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
                 <p className="text-xl font-light text-white">{totalReactions}</p>
                 <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Reaksi</p>
               </div>

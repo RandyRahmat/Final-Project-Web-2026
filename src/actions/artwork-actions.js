@@ -1,8 +1,19 @@
 "use server";
 
+import path from "path";
+import { mkdir, writeFile } from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { query } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+
+const ALLOWED_ARTWORK_TYPES = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/png", "png"],
+  ["image/webp", "webp"],
+  ["image/gif", "gif"],
+]);
+
+const MAX_ARTWORK_BYTES = 8 * 1024 * 1024; // 8MB
 
 export async function reactArtworkAction(artworkId, reactionType = "love") {
   const user = await getCurrentUser();
@@ -74,7 +85,7 @@ export async function createArtworkAction(prevState, formData) {
   const title = formData.get("title")?.trim();
   const description = formData.get("description")?.trim();
   const categoryId = Number(formData.get("categoryId"));
-  const imageUrl = formData.get("imageUrl")?.trim();
+  const imageFile = formData.get("imageFile");
   const rawTags = formData.get("tags")?.trim() || "";
 
   const tags = rawTags
@@ -82,9 +93,32 @@ export async function createArtworkAction(prevState, formData) {
     .map((tag) => tag.trim().toLowerCase())
     .filter(Boolean);
 
-  if (!title || !description || !categoryId || !imageUrl || tags.length === 0) {
+  if (!title || !description || !categoryId || tags.length === 0) {
     return { error: "Semua field wajib diisi (minimal 1 tag dipisahkan koma)." };
   }
+
+  if (!imageFile || typeof imageFile !== "object" || imageFile.size === 0) {
+    return { error: "File gambar karya wajib dipilih dari perangkatmu." };
+  }
+
+  const ext = ALLOWED_ARTWORK_TYPES.get(imageFile.type);
+  if (!ext) {
+    return { error: "Format gambar harus JPG, PNG, WEBP, atau GIF." };
+  }
+
+  if (imageFile.size > MAX_ARTWORK_BYTES) {
+    return { error: "Ukuran file gambar maksimal 8 MB." };
+  }
+
+  const uploadsDir = path.join(process.cwd(), "public", "uploads");
+  await mkdir(uploadsDir, { recursive: true });
+
+  const filename = `artwork-${user.id}-${Date.now()}.${ext}`;
+  const filepath = path.join(uploadsDir, filename);
+  const arrayBuffer = await imageFile.arrayBuffer();
+  await writeFile(filepath, Buffer.from(arrayBuffer));
+
+  const imageUrl = `/uploads/${filename}`;
 
   await query(
     `INSERT INTO artworks (user_id, category_id, title, description, image_url, tags)
@@ -95,5 +129,7 @@ export async function createArtworkAction(prevState, formData) {
   revalidatePath("/home");
   revalidatePath("/explore");
   revalidatePath("/favorites");
+  revalidatePath("/profile");
+  revalidatePath(`/creators/${user.username}`);
   return { success: true };
 }

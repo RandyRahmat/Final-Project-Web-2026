@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useActionState, useEffect } from "react";
+import { useMemo, useState, useActionState } from "react";
 import Link from "next/link";
 import { logoutUserAction } from "@/actions/auth-actions";
 import { reactArtworkAction, toggleFavoriteAction, createArtworkAction } from "@/actions/artwork-actions";
@@ -27,6 +27,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
   const [search, setSearch] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [uploadPreview, setUploadPreview] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [authNotice, setAuthNotice] = useState("");
 
@@ -37,13 +38,27 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
   const isAdmin = role === "Admin";
   const isCuratorApproved = isCurator && currentUser?.curatorStatus === "Approved";
 
-  const [uploadState, uploadFormAction, isUploading] = useActionState(createArtworkAction, null);
+  const closeUploadModal = () => {
+    setShowUpload(false);
+    setUploadPreview("");
+  };
 
-  useEffect(() => {
-    if (uploadState?.success) {
-      setShowUpload(false);
+  const handleArtworkFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setUploadPreview("");
+      return;
     }
-  }, [uploadState]);
+    setUploadPreview(URL.createObjectURL(file));
+  };
+
+  const [uploadState, uploadFormAction, isUploading] = useActionState(async (prevState, formData) => {
+    const res = await createArtworkAction(prevState, formData);
+    if (res?.success) {
+      closeUploadModal();
+    }
+    return res;
+  }, null);
 
   const visibleNavigation = useMemo(() => {
     return NAVIGATION.filter((item) => item.label !== "Favorites" || isMember);
@@ -789,11 +804,11 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
       {showUpload && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-xl"
-          onClick={() => setShowUpload(false)}
+          onClick={closeUploadModal}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#111] p-7 shadow-2xl sm:p-9"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#111] p-7 shadow-2xl sm:p-9"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -804,7 +819,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </div>
               <button
                 type="button"
-                onClick={() => setShowUpload(false)}
+                onClick={closeUploadModal}
                 className="text-xl text-zinc-500 transition hover:text-white"
               >
                 ×
@@ -845,14 +860,22 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">URL Gambar Karya</label>
+                <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">
+                  File Gambar Karya (JPG/PNG/WEBP/GIF, maks. 8MB)
+                </label>
                 <input
-                  type="url"
-                  name="imageUrl"
+                  type="file"
+                  name="imageFile"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   required
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  onChange={handleArtworkFileChange}
+                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-zinc-300 file:mr-3 file:rounded-md file:border-0 file:bg-white file:px-3 file:py-1 file:text-[10px] file:font-semibold file:text-black focus:border-white/40 focus:outline-none"
                 />
+                {uploadPreview && (
+                  <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
+                    <img src={uploadPreview} alt="Preview karya" className="max-h-48 w-full object-contain" />
+                  </div>
+                )}
               </div>
 
               <div>

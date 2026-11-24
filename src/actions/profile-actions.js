@@ -1,7 +1,7 @@
 "use server";
 
 import path from "path";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, unlink, writeFile } from "fs/promises";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -216,12 +216,23 @@ export async function deleteArtworkAction(artworkId) {
   }
 
   const deleted = await query(
-    "DELETE FROM artworks WHERE id = $1 AND user_id = $2 RETURNING id",
+    "DELETE FROM artworks WHERE id = $1 AND user_id = $2 RETURNING id, image_url",
     [Number(artworkId), user.id]
   );
 
   if (deleted.rows.length === 0) {
     return { error: "Karya tidak ditemukan atau kamu tidak berhak menghapusnya." };
+  }
+
+  const deletedImageUrl = deleted.rows[0].image_url;
+  if (deletedImageUrl && deletedImageUrl.startsWith("/uploads/")) {
+    const safeFilename = path.basename(deletedImageUrl);
+    const localFilePath = path.join(process.cwd(), "public", "uploads", safeFilename);
+    try {
+      await unlink(localFilePath);
+    } catch {
+      // Abaikan jika file sudah tidak ada di disk
+    }
   }
 
   revalidatePath("/profile");

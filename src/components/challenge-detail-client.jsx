@@ -354,7 +354,9 @@ export default function ChallengeDetailClient({
                     )}
 
                     <div className="absolute inset-x-0 bottom-0 p-4">
-                      <p className="text-sm font-medium text-white">{sub.artwork_title}</p>
+                      <Link href={`/artworks/${sub.artwork_id}`} className="block text-sm font-medium text-white hover:underline">
+                        {sub.artwork_title}
+                      </Link>
                       <Link href={`/creators/${sub.artist_username}`} className="mt-1 inline-block text-[11px] text-zinc-400 transition hover:text-white">
                         {sub.artist_name} (@{sub.artist_username})
                       </Link>

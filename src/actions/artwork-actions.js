@@ -3,7 +3,7 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { revalidatePath } from "next/cache";
-import { query } from "@/lib/db";
+import { query, ensureCommentsTable, ensureReportsTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 const ALLOWED_ARTWORK_TYPES = new Map([
@@ -44,6 +44,7 @@ export async function reactArtworkAction(artworkId, reactionType = "love") {
   revalidatePath("/home");
   revalidatePath("/explore");
   revalidatePath("/favorites");
+  revalidatePath(`/artworks/${artworkId}`);
   return { success: true };
 }
 
@@ -73,6 +74,7 @@ export async function toggleFavoriteAction(artworkId) {
   revalidatePath("/home");
   revalidatePath("/explore");
   revalidatePath("/favorites");
+  revalidatePath(`/artworks/${artworkId}`);
   return { success: true };
 }
 
@@ -132,4 +134,111 @@ export async function createArtworkAction(prevState, formData) {
   revalidatePath("/profile");
   revalidatePath(`/creators/${user.username}`);
   return { success: true };
+}
+
+export async function addCommentAction(prevState, formData) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "Member") {
+    return { error: "Silakan masuk sebagai Member untuk menambahkan komentar." };
+  }
+
+  const artworkId = Number(formData.get("artworkId"));
+  const content = formData.get("content")?.trim();
+
+  if (!artworkId || !content) {
+    return { error: "Komentar tidak boleh kosong." };
+  }
+
+  if (content.length > 500) {
+    return { error: "Komentar maksimal 500 karakter." };
+  }
+
+  await ensureCommentsTable();
+
+  const artExists = await query("SELECT id FROM artworks WHERE id = $1", [artworkId]);
+  if (artExists.rows.length === 0) {
+    return { error: "Karya tidak ditemukan." };
+  }
+
+  await query(
+    "INSERT INTO comments (artwork_id, user_id, content) VALUES ($1, $2, $3)",
+    [artworkId, user.id, content]
+  );
+
+  revalidatePath(`/artworks/${artworkId}`);
+  return { success: true };
+}
+
+export async function deleteCommentAction(commentId, artworkId) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "Member") {
+    return { error: "Hanya Member yang dapat menghapus komentarnya sendiri." };
+  }
+
+  const targetCommentId = Number(commentId);
+  const targetArtworkId = Number(artworkId);
+  if (!targetCommentId) {
+    return { error: "Komentar tidak valid." };
+  }
+
+  await ensureCommentsTable();
+
+  const deleted = await query(
+    "DELETE FROM comments WHERE id = $1 AND user_id = $2 RETURNING id",
+    [targetCommentId, user.id]
+  );
+
+  if (deleted.rows.length === 0) {
+    return { error: "Komentar tidak ditemukan atau kamu tidak berhak menghapusnya." };
+  }
+
+  revalidatePath(`/artworks/${targetArtworkId}`);
+  return { success: true };
+}
+
+export async function reportArtworkAction(prevState, formData) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "Member") {
+    return { error: "Silakan masuk sebagai Member untuk melaporkan karya." };
+  }
+
+  const artworkId = Number(formData.get("artworkId"));
+  const reasonCategory = formData.get("reasonCategory")?.trim();
+  const reasonDetail = formData.get("reasonDetail")?.trim();
+
+  if (!artworkId || !reasonCategory) {
+    return { error: "Pilih alasan pelaporan terlebih dahulu." };
+  }
+
+  const finalReason = reasonDetail ? `${reasonCategory}: ${reasonDetail}` : reasonCategory;
+
+  await ensureReportsTable();
+
+  const artworkRes = await query("SELECT id, user_id FROM artworks WHERE id = $1", [artworkId]);
+  if (artworkRes.rows.length === 0) {
+    return { error: "Karya tidak ditemukan." };
+  }
+
+  if (Number(artworkRes.rows[0].user_id) === Number(user.id)) {
+    return { error: "Kamu tidak dapat melaporkan karyamu sendiri." };
+  }
+
+  const alreadyReported = await query(
+    "SELECT id FROM reports WHERE artwork_id = $1 AND reporter_id = $2",
+    [artworkId, user.id]
+  );
+
+  if (alreadyReported.rows.length > 0) {
+    return { error: "Kamu sudah pernah melaporkan karya ini sebelumnya." };
+  }
+
+  await query(
+    `INSERT INTO reports (artwork_id, reporter_id, reason, status)
+     VALUES ($1, $2, $3, 'Pending')`,
+    [artworkId, user.id, finalReason]
+  );
+
+  revalidatePath(`/artworks/${artworkId}`);
+  revalidatePath("/admin");
+  return { success: true, message: "Laporan telah dikirim ke antrian moderasi Admin. Terima kasih!" };
 }

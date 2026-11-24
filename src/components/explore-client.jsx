@@ -480,27 +480,40 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                 return (
                   <article key={art.id} className="group relative min-w-0">
                     <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-white/[0.06] bg-zinc-900">
-                      <img
-                        src={art.image_url}
-                        alt={art.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-75"
-                      />
+                      <Link href={`/artworks/${art.id}`} className="block h-full w-full">
+                        <img
+                          src={art.image_url}
+                          alt={art.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-75"
+                        />
 
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-80" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-80" />
 
-                      <div className="absolute left-3 top-3">
-                        <span className="rounded-full border border-white/20 bg-black/50 px-3 py-1.5 text-[8px] tracking-wider text-white backdrop-blur-md">
-                          {art.category_name.toUpperCase()}
-                        </span>
-                      </div>
+                        <div className="absolute left-3 top-3">
+                          <span className="rounded-full border border-white/20 bg-black/50 px-3 py-1.5 text-[8px] tracking-wider text-white backdrop-blur-md">
+                            {art.category_name.toUpperCase()}
+                          </span>
+                        </div>
+
+                        <div className="absolute inset-x-0 bottom-0 p-4">
+                          <p className="text-sm font-medium text-white group-hover:underline">{art.title}</p>
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {(art.tags || []).map((tag) => (
+                              <span key={tag} className="text-[9px] text-zinc-400">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </Link>
 
                       {(isMember || isGuest) && (
                         <button
                           type="button"
                           onClick={() => handleFavorite(art.id)}
                           title={isGuest ? "Masuk sebagai Member untuk menyimpan karya" : art.is_favorited ? "Hapus dari Favorites" : "Simpan ke Favorites"}
-                          className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border text-xs backdrop-blur-md transition ${
+                          className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs backdrop-blur-md transition ${
                             isMember && art.is_favorited
                               ? "border-amber-400 bg-amber-400 text-black font-bold"
                               : "border-white/20 bg-black/50 text-white hover:bg-white hover:text-black"
@@ -509,17 +522,6 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                           ⚑
                         </button>
                       )}
-
-                      <div className="absolute inset-x-0 bottom-0 p-4">
-                        <p className="text-sm font-medium text-white">{art.title}</p>
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                          {(art.tags || []).map((tag) => (
-                            <span key={tag} className="text-[9px] text-zinc-400">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
                     </div>
 
                     <div className="mt-3 flex items-center justify-between gap-2">

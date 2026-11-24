@@ -8,6 +8,7 @@ let profileColumnsEnsured = false;
 let directMessagesTableEnsured = false;
 let challengeColumnsEnsured = false;
 let reportsTableEnsured = false;
+let commentsTableEnsured = false;
 
 export async function query(text, params) {
     const res = await pool.query(text, params);
@@ -78,6 +79,24 @@ export async function ensureReportsTable() {
             )`
         );
         reportsTableEnsured = true;
+    } catch {
+        // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
+    }
+}
+
+export async function ensureCommentsTable() {
+    if (commentsTableEnsured) return;
+    try {
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS comments (
+                id SERIAL PRIMARY KEY,
+                artwork_id INT NOT NULL REFERENCES artworks(id) ON DELETE CASCADE,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW()
+            )`
+        );
+        commentsTableEnsured = true;
     } catch {
         // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
     }

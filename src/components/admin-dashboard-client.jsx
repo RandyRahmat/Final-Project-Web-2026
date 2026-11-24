@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
+import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import {
   verifyCuratorAction,
   deleteUserAction,
@@ -43,6 +44,7 @@ export default function AdminDashboardClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
   const [busyKey, setBusyKey] = useState("");
   const [notice, setNotice] = useState({ type: "", text: "" });
 
@@ -172,9 +174,11 @@ export default function AdminDashboardClient({
         adminUser={adminUser}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapsed}
       />
 
-      <div className="min-h-screen lg:ml-64">
+      <div className={`min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}>
         <Navbar
           pageTitle={TAB_TITLES[activeTab]}
           searchQuery={searchQuery}

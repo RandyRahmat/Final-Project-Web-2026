@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { logoutUserAction } from "@/actions/auth-actions";
 import {
   createChallengeAction,
@@ -39,6 +40,7 @@ function toDateTimeLocal(dateValue) {
 
 export default function CuratorDashboardClient({ curator, challenges, submissions }) {
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingChallenge, setEditingChallenge] = useState(null);
   const [managingChallengeId, setManagingChallengeId] = useState(null);
@@ -143,77 +145,93 @@ export default function CuratorDashboardClient({ curator, challenges, submission
       )}
 
       {/* SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0b0b0c]/95 px-6 py-7 backdrop-blur-2xl transition-transform duration-500 lg:translate-x-0 ${mobileMenu ? "translate-x-0" : "-translate-x-full"}`}>
-        <Link href="/home" className="mb-12 flex items-center gap-3">
-          <img src="/images/aesthe-logo.png" alt="Aesthe" className="h-9 w-9 object-contain mix-blend-screen" />
-          <div>
-            <h1 className="text-[17px] font-medium tracking-[0.35em]">AESTHE</h1>
-            <p className="mt-0.5 text-[8px] tracking-[0.3em] text-amber-400/80">CURATOR STUDIO</p>
-          </div>
-        </Link>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0b0b0c]/95 px-6 py-7 backdrop-blur-2xl transition-all duration-300 lg:translate-x-0 ${mobileMenu ? "translate-x-0" : "-translate-x-full"} ${sidebarCollapsed ? "lg:w-[78px] lg:px-3" : "lg:w-[250px]"}`}>
+        <div className={`mb-10 flex items-center ${sidebarCollapsed ? "justify-between lg:flex-col lg:gap-3" : "justify-between"}`}>
+          <Link href="/home" title="Aesthe" className="flex items-center gap-3 overflow-hidden">
+            <img src="/images/aesthe-logo.png" alt="Aesthe" className="h-9 w-9 shrink-0 object-contain mix-blend-screen" />
+            <div className={sidebarCollapsed ? "lg:hidden" : ""}>
+              <h1 className="text-[17px] font-medium tracking-[0.35em]">AESTHE</h1>
+              <p className="mt-0.5 text-[8px] tracking-[0.3em] text-amber-400/80">CURATOR STUDIO</p>
+            </div>
+          </Link>
+
+          <button
+            type="button"
+            onClick={toggleSidebarCollapsed}
+            title={sidebarCollapsed ? "Perbesar Sidebar" : "Perkecil Sidebar"}
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}
+            className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-xs text-zinc-400 transition hover:border-white/30 hover:bg-white/10 hover:text-white lg:flex"
+          >
+            {sidebarCollapsed ? "»" : "«"}
+          </button>
+        </div>
 
         <div>
-          <p className="mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600">CURATOR MENU</p>
+          <p className={`mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600 ${sidebarCollapsed ? "lg:hidden" : ""}`}>CURATOR MENU</p>
+          {sidebarCollapsed && <div className="mb-3 hidden h-px w-full bg-white/[0.07] lg:block" />}
           <nav className="space-y-1">
             <button
               type="button"
+              title="My Challenges"
               onClick={() => {
                 setManagingChallengeId(null);
                 setMobileMenu(false);
               }}
-              className={`flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] transition ${
+              className={`flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] transition ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""} ${
                 !managingChallengeId
                   ? "border border-amber-400/25 bg-amber-500/10 text-amber-200 shadow-[inset_2px_0_0_#fbbf24]"
                   : "text-zinc-500 hover:bg-white/[0.04] hover:text-white"
               }`}
             >
-              <span className="w-4 text-center text-base">✦</span>
-              My Challenges
-              <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300">
+              <span className="w-4 shrink-0 text-center text-base">✦</span>
+              <span className={sidebarCollapsed ? "lg:hidden" : ""}>My Challenges</span>
+              <span className={`ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
                 {challenges.length}
               </span>
             </button>
 
             <button
               type="button"
+              title="Buat Challenge Baru"
               onClick={() => {
                 setShowCreateModal(true);
                 setMobileMenu(false);
               }}
-              className="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-400 transition hover:bg-white/[0.04] hover:text-white"
+              className={`flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-400 transition hover:bg-white/[0.04] hover:text-white ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}
             >
-              <span className="w-4 text-center text-lg">＋</span>
-              Buat Challenge Baru
+              <span className="w-4 shrink-0 text-center text-lg">＋</span>
+              <span className={sidebarCollapsed ? "lg:hidden" : ""}>Buat Challenge Baru</span>
             </button>
           </nav>
         </div>
 
         <div className="mt-10">
-          <p className="mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600">NAVIGASI PUBLIK</p>
+          <p className={`mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600 ${sidebarCollapsed ? "lg:hidden" : ""}`}>NAVIGASI PUBLIK</p>
+          {sidebarCollapsed && <div className="mb-3 hidden h-px w-full bg-white/[0.07] lg:block" />}
           <nav className="space-y-1">
-            <Link href="/home" className="flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white">
-              <span className="w-4 text-center text-base">⌂</span>
-              Home
+            <Link href="/home" title="Home" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
+              <span className="w-4 shrink-0 text-center text-base">⌂</span>
+              <span className={sidebarCollapsed ? "lg:hidden" : ""}>Home</span>
             </Link>
-            <Link href="/explore" className="flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white">
-              <span className="w-4 text-center text-base">◈</span>
-              Explore
+            <Link href="/explore" title="Explore" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
+              <span className="w-4 shrink-0 text-center text-base">◈</span>
+              <span className={sidebarCollapsed ? "lg:hidden" : ""}>Explore</span>
             </Link>
-            <Link href="/challenges" className="flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white">
-              <span className="w-4 text-center text-base">✧</span>
-              Public Challenges
+            <Link href="/challenges" title="Public Challenges" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
+              <span className="w-4 shrink-0 text-center text-base">✧</span>
+              <span className={sidebarCollapsed ? "lg:hidden" : ""}>Public Challenges</span>
             </Link>
-            <Link href="/messages" className="flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white">
-              <span className="w-4 text-center text-sm">✉</span>
-              Messages
+            <Link href="/messages" title="Messages" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
+              <span className="w-4 shrink-0 text-center text-sm">✉</span>
+              <span className={sidebarCollapsed ? "lg:hidden" : ""}>Messages</span>
             </Link>
           </nav>
         </div>
 
         {/* SESSION CARD */}
         <div className="mt-auto border-t border-white/[0.06] pt-4">
-          <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-2.5 transition hover:border-white/20">
-            <Link href="/profile" className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-amber-400/30 bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs font-semibold text-white">
+          <div className={`flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-2.5 transition hover:border-white/20 ${sidebarCollapsed ? "lg:flex-col lg:gap-2 lg:p-2" : ""}`}>
+            <Link href="/profile" title={curator.display_name} className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-amber-400/30 bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs font-semibold text-white">
               {curator.avatar_url ? (
                 <img src={curator.avatar_url} alt={curator.display_name} className="h-full w-full object-cover" />
               ) : (
@@ -221,7 +239,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
               )}
               <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-black bg-emerald-400" />
             </Link>
-            <div className="min-w-0 flex-1">
+            <div className={`min-w-0 flex-1 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
               <Link href="/profile" className="block truncate text-xs font-medium leading-tight text-white transition hover:text-zinc-300">
                 {curator.display_name}
               </Link>
@@ -231,12 +249,19 @@ export default function CuratorDashboardClient({ curator, challenges, submission
                 </button>
               </form>
             </div>
+            {sidebarCollapsed && (
+              <form action={logoutUserAction} className="hidden lg:block">
+                <button type="submit" title="Logout" className="flex h-7 w-7 items-center justify-center rounded-lg text-xs text-zinc-500 transition hover:bg-red-500/15 hover:text-red-400">
+                  ⎋
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="relative z-10 min-h-screen lg:ml-[250px]">
+      <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
         <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">

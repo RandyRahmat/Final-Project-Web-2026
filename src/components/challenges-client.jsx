@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { logoutUserAction } from "@/actions/auth-actions";
+import AppSidebar from "@/components/app-sidebar";
+import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 
 function getChallengeStatus(ch) {
   const now = new Date();
@@ -27,12 +28,10 @@ export default function ChallengesClient({ currentUser, challenges }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
 
   const role = currentUser?.role || "Guest";
-  const isGuest = !currentUser;
-  const isMember = role === "Member";
   const isCurator = role === "Curator";
-  const isAdmin = role === "Admin";
   const isCuratorApproved = isCurator && currentUser?.curatorStatus === "Approved";
 
   const filteredChallenges = useMemo(() => {
@@ -58,148 +57,18 @@ export default function ChallengesClient({ currentUser, challenges }) {
         <div className="absolute inset-0 opacity-[0.025] [background-image:radial-gradient(#fff_0.6px,transparent_0.6px)] [background-size:5px_5px]" />
       </div>
 
-      {/* MOBILE OVERLAY */}
-      {mobileMenu && (
-        <div onClick={() => setMobileMenu(false)} className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden" />
-      )}
-
-      {/* SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0b0b0c]/95 px-6 py-7 backdrop-blur-2xl transition-transform duration-500 lg:translate-x-0 ${mobileMenu ? "translate-x-0" : "-translate-x-full"}`}>
-        <Link href="/home" className="mb-12 flex items-center gap-3">
-          <img src="/images/aesthe-logo.png" alt="Aesthe" className="h-9 w-9 object-contain mix-blend-screen" />
-          <div>
-            <h1 className="text-[17px] font-medium tracking-[0.35em]">AESTHE</h1>
-            <p className="mt-0.5 text-[8px] tracking-[0.3em] text-zinc-600">ART SHOWCASE</p>
-          </div>
-        </Link>
-
-        {/* WORKSPACE NAVIGATION */}
-        <div>
-          <p className="mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600">WORKSPACE</p>
-          <nav className="space-y-1">
-            <Link href="/home" className="group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition-all duration-300 hover:bg-white/[0.04] hover:text-white">
-              <span className="w-4 text-center text-base transition-transform duration-300 group-hover:scale-110">⌂</span>
-              Home
-            </Link>
-
-            <Link href="/explore" className="group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition-all duration-300 hover:bg-white/[0.04] hover:text-white">
-              <span className="w-4 text-center text-base transition-transform duration-300 group-hover:scale-110">◈</span>
-              Explore
-            </Link>
-
-            {isMember && (
-              <Link href="/favorites" className="group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition-all duration-300 hover:bg-white/[0.04] hover:text-white">
-                <span className="w-4 text-center text-base transition-transform duration-300 group-hover:scale-110">⚑</span>
-                Favorites
-              </Link>
-            )}
-
-            <Link href="/challenges" className="group flex w-full items-center gap-4 rounded-lg border border-white/[0.08] bg-white/[0.08] px-4 py-3 text-left text-[12px] text-white shadow-[inset_2px_0_0_white] transition-all duration-300">
-              <span className="w-4 text-center text-base transition-transform duration-300 group-hover:scale-110">✧</span>
-              Challenges
-              <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300">
-                {challenges.length}
-              </span>
-            </Link>
-          </nav>
-        </div>
-
-        {/* PERSONAL SPACE */}
-        <div className="mt-10">
-          <p className="mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600">PERSONAL SPACE</p>
-          {isMember && (
-            <Link href="/home" className="group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white">
-              <span className="text-lg">＋</span>
-              Upload Artwork
-            </Link>
-          )}
-
-          {currentUser && (
-            <Link href="/messages" className="mt-1 group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white">
-              <span className="w-4 text-center text-sm">✉</span>
-              Messages
-            </Link>
-          )}
-
-          {isCurator && isCuratorApproved && (
-            <Link href="/curator" className="mt-1 flex w-full items-center gap-4 rounded-lg border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-left text-[12px] text-amber-200 transition hover:bg-amber-500/15">
-              <span className="text-base">✦</span>
-              Curator Dashboard
-            </Link>
-          )}
-
-          {isCurator && !isCuratorApproved && (
-            <Link href="/pending-curator" className="mt-1 flex w-full items-center justify-between gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-left text-[11px] text-amber-300 transition hover:bg-amber-500/15">
-              <span className="flex items-center gap-3">
-                <span>⏳</span>
-                Status Verifikasi
-              </span>
-              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[8px] uppercase tracking-wider">
-                {currentUser?.curatorStatus || "Pending"}
-              </span>
-            </Link>
-          )}
-
-          {isAdmin && (
-            <Link href="/admin" className="mt-1 flex w-full items-center gap-4 rounded-lg border border-white/15 bg-white/[0.05] px-4 py-3 text-left text-[12px] text-white transition hover:bg-white/10">
-              <span className="text-base">❖</span>
-              Admin Console
-            </Link>
-          )}
-
-          {isGuest && (
-            <Link href="/" className="group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white">
-              <span className="text-lg">→</span>
-              Login / Register
-            </Link>
-          )}
-        </div>
-
-        {/* SESSION CARD */}
-        <div className="mt-auto border-t border-white/[0.06] pt-4">
-          {currentUser ? (
-            <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-2.5 transition hover:border-white/20">
-              <Link href="/profile" className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs font-semibold text-white">
-                {currentUser.avatarUrl ? (
-                  <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
-                ) : (
-                  currentUser.displayName?.charAt(0).toUpperCase() || "U"
-                )}
-                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-black bg-emerald-400" />
-              </Link>
-              <div className="min-w-0 flex-1">
-                <Link href="/profile" className="block truncate text-xs font-medium leading-tight text-white transition hover:text-zinc-300">
-                  {currentUser.displayName}
-                </Link>
-                <form action={logoutUserAction} className="mt-0.5">
-                  <button type="submit" className="text-[10px] text-zinc-500 transition hover:text-red-400">
-                    Logout
-                  </button>
-                </form>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-800 text-xs text-zinc-400">
-                G
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium leading-tight text-white">Guest</p>
-                <Link href="/" className="text-[10px] text-zinc-400 transition hover:text-white">
-                  Sign In
-                </Link>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-3 flex items-center justify-between text-[8px] tracking-wider text-zinc-700">
-            <span>AESTHE © 2026</span>
-          </div>
-        </div>
-      </aside>
+      <AppSidebar
+        currentUser={currentUser}
+        activeItem="challenges"
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapsed}
+        mobileMenu={mobileMenu}
+        onCloseMobile={() => setMobileMenu(false)}
+        challengesCount={challenges.length}
+      />
 
       {/* MAIN CONTENT */}
-      <div className="relative z-10 min-h-screen lg:ml-[250px]">
+      <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
         <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/75 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">

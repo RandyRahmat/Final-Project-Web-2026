@@ -31,6 +31,8 @@ export async function reactArtworkAction(artworkId, reactionType = "love") {
   }
 
   revalidatePath("/home");
+  revalidatePath("/explore");
+  revalidatePath("/favorites");
   return { success: true };
 }
 
@@ -58,6 +60,8 @@ export async function toggleFavoriteAction(artworkId) {
   }
 
   revalidatePath("/home");
+  revalidatePath("/explore");
+  revalidatePath("/favorites");
   return { success: true };
 }
 
@@ -89,5 +93,7 @@ export async function createArtworkAction(prevState, formData) {
   );
 
   revalidatePath("/home");
+  revalidatePath("/explore");
+  revalidatePath("/favorites");
   return { success: true };
 }

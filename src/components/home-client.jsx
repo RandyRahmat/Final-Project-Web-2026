@@ -16,7 +16,7 @@ const REACTIONS = [
 const NAVIGATION = [
   { label: "Home", href: "/home", icon: "⌂" },
   { label: "Explore", href: "/explore", icon: "◈" },
-  { label: "Favorites", href: "/home?tab=favorites", icon: "⚑" },
+  { label: "Favorites", href: "/favorites", icon: "⚑" },
   { label: "Challenges", href: "/home#challenges", icon: "✧" },
 ];
 
@@ -138,7 +138,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
           <p className="mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600">WORKSPACE</p>
           <nav className="space-y-1">
             {visibleNavigation.map((item) =>
-              item.label === "Explore" ? (
+              item.label === "Explore" || item.label === "Favorites" ? (
                 <Link
                   key={item.label}
                   href={item.href}

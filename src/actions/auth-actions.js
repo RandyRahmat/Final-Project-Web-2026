@@ -3,7 +3,7 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { query } from "@/lib/db";
+import { query, ensureUserProfileColumns } from "@/lib/db";
 import { createSessionToken, createResetToken, verifyResetToken } from "@/lib/auth";
 
 export async function registerUserAction(prevState, formData) {
@@ -70,8 +70,10 @@ export async function loginUserAction(prevState, formData) {
         return { error: "Email dan kata sandi wajib diisi." };
     }
 
+    await ensureUserProfileColumns();
+
     const result = await query(
-        "SELECT id, display_name, username, password_hash, role, curator_status FROM users WHERE email = $1",
+        "SELECT id, display_name, username, password_hash, role, curator_status, avatar_url FROM users WHERE email = $1",
         [email]
     );
 
@@ -92,6 +94,7 @@ export async function loginUserAction(prevState, formData) {
         username: user.username,
         role: user.role,
         curatorStatus: user.curator_status,
+        avatarUrl: user.avatar_url || null,
     });
 
     const cookieStore = await cookies();

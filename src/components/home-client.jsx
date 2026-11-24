@@ -188,6 +188,13 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
             </button>
           )}
 
+          {currentUser && (
+            <Link href="/messages" className="mt-1 group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-white">
+              <span className="w-4 text-center text-sm">✉</span>
+              Messages
+            </Link>
+          )}
+
           {isCurator && isCuratorApproved && (
             <Link href="/curator" className="flex w-full items-center gap-4 rounded-lg border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-left text-[12px] text-amber-200 transition hover:border-amber-400/40 hover:bg-amber-500/15">
               <span className="text-base">✦</span>
@@ -224,16 +231,20 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
 
         <div className="mt-auto pt-4 border-t border-white/[0.06]">
           {currentUser ? (
-            <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-2.5">
-              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs font-semibold text-white">
-                {currentUser.displayName?.charAt(0).toUpperCase() || "U"}
+            <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-2.5 transition hover:border-white/20">
+              <Link href="/profile" title="Buka Profil" className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs font-semibold text-white">
+                {currentUser.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
+                ) : (
+                  currentUser.displayName?.charAt(0).toUpperCase() || "U"
+                )}
                 <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-black bg-emerald-400" />
-              </div>
+              </Link>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-white leading-tight">
+                <Link href="/profile" className="block truncate text-xs font-medium leading-tight text-white transition hover:text-zinc-300">
                   {currentUser.displayName}
-                </p>
+                </Link>
                 <form action={logoutUserAction} className="mt-0.5">
                   <button
                     type="submit"
@@ -314,7 +325,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
 
             <div className="h-5 w-px bg-white/10" />
 
-            <div className="flex items-center gap-3">
+            <Link href={currentUser ? "/profile" : "/"} className="flex items-center gap-3 transition hover:opacity-85">
               <div className="hidden text-right sm:block">
                 <p className="text-[11px] font-medium">
                   {currentUser ? currentUser.displayName : "Guest Visitor"}
@@ -323,10 +334,14 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                   {currentUser ? `${currentUser.role.toUpperCase()} ACCOUNT` : "PUBLIC VIEW"}
                 </p>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-zinc-500 to-zinc-900 text-xs font-medium uppercase">
-                {currentUser ? currentUser.displayName.charAt(0) : "G"}
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-500 to-zinc-900 text-xs font-medium uppercase">
+                {currentUser?.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
+                ) : (
+                  currentUser ? currentUser.displayName.charAt(0) : "G"
+                )}
               </div>
-            </div>
+            </Link>
           </div>
 
           {showNotifications && (
@@ -670,10 +685,10 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                     </div>
 
                     <div className="mt-3 flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="truncate text-xs font-medium text-zinc-200">{art.artist_name}</h3>
+                      <Link href={`/creators/${art.artist_username}`} className="min-w-0 transition hover:opacity-80">
+                        <h3 className="truncate text-xs font-medium text-zinc-200 hover:underline">{art.artist_name}</h3>
                         <p className="text-[10px] text-zinc-500">@{art.artist_username}</p>
-                      </div>
+                      </Link>
 
                       {isMember ? (
                         <div className="group/react relative flex items-center">

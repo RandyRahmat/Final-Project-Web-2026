@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useActionState } from "react";
 import Link from "next/link";
-import { loginUserAction, registerUserAction } from "@/actions/auth-actions";
+import { loginUserAction, registerUserAction, verifyAccountForResetAction, resetPasswordAction } from "@/actions/auth-actions";
 
 export default function WelcomePage() {
   const [step, setStep] = useState(0);
@@ -12,6 +12,8 @@ export default function WelcomePage() {
 
   const [loginState, loginFormAction, isLoginPending] = useActionState(loginUserAction, null);
   const [registerState, registerFormAction, isRegisterPending] = useActionState(registerUserAction, null);
+  const [verifyResetState, verifyResetAction, isVerifyingReset] = useActionState(verifyAccountForResetAction, null);
+  const [resetState, resetFormAction, isResetting] = useActionState(resetPasswordAction, null);
 
   const handleStartLoginSequence = () => {
     setStep(1);
@@ -38,8 +40,23 @@ export default function WelcomePage() {
     };
   }, []);
 
-  const activeError = authMode === "login" ? loginState?.error : registerState?.error;
-  const isSubmitting = authMode === "login" ? isLoginPending : isRegisterPending;
+  const isResetVerified = Boolean(verifyResetState?.verified && verifyResetState?.resetToken);
+  const activeError =
+    authMode === "login"
+      ? loginState?.error
+      : authMode === "register"
+      ? registerState?.error
+      : isResetVerified
+      ? resetState?.error
+      : verifyResetState?.error;
+  const isSubmitting =
+    authMode === "login"
+      ? isLoginPending
+      : authMode === "register"
+      ? isRegisterPending
+      : isResetVerified
+      ? isResetting
+      : isVerifyingReset;
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#0b0b0c] text-zinc-100 select-none">
@@ -132,23 +149,33 @@ export default function WelcomePage() {
             <div className="mb-6 flex flex-col items-center text-center">
               <img src="/images/aesthe-logo.png" alt="Aesthe" className="mb-3 h-10 w-10 object-contain mix-blend-screen" />
               <h3 className="text-lg font-medium tracking-wider text-white">
-                {authMode === "login" ? "Masuk ke Akun Aesthe" : "Buat Akun Baru"}
+                {authMode === "login"
+                  ? "Masuk ke Akun Aesthe"
+                  : authMode === "register"
+                  ? "Buat Akun Baru"
+                  : "Pulihkan Kata Sandi"}
               </h3>
               <p className="mt-1 text-xs text-zinc-400">
                 {authMode === "login"
                   ? "Masukkan kredensial untuk mengelola karya dan portofolio."
-                  : "Bergabung sebagai kreator atau kurator pameran."}
+                  : authMode === "register"
+                  ? "Bergabung sebagai kreator atau kurator pameran."
+                  : isResetVerified
+                  ? `Akun ${verifyResetState.displayName} terverifikasi. Buat kata sandi baru.`
+                  : "Verifikasi email dan username akun untuk mengatur ulang kata sandi."}
               </p>
             </div>
 
-            <div className="mb-6 grid grid-cols-2 rounded-lg border border-white/10 bg-black/40 p-1 text-xs">
-              <button type="button" onClick={() => setAuthMode("login")} className={`rounded-md py-2 font-medium transition ${authMode === "login" ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
-                Masuk
-              </button>
-              <button type="button" onClick={() => setAuthMode("register")} className={`rounded-md py-2 font-medium transition ${authMode === "register" ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
-                Daftar Akun
-              </button>
-            </div>
+            {authMode !== "forgot" && (
+              <div className="mb-6 grid grid-cols-2 rounded-lg border border-white/10 bg-black/40 p-1 text-xs">
+                <button type="button" onClick={() => setAuthMode("login")} className={`rounded-md py-2 font-medium transition ${authMode === "login" ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
+                  Masuk
+                </button>
+                <button type="button" onClick={() => setAuthMode("register")} className={`rounded-md py-2 font-medium transition ${authMode === "register" ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
+                  Daftar Akun
+                </button>
+              </div>
+            )}
 
             {activeError && (
               <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
@@ -156,6 +183,58 @@ export default function WelcomePage() {
               </div>
             )}
 
+            {authMode === "forgot" && resetState?.success ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs leading-relaxed text-emerald-300">
+                  {resetState.message}
+                </div>
+                <button type="button" onClick={() => setAuthMode("login")} className="w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200">
+                  Kembali ke Login
+                </button>
+              </div>
+            ) : authMode === "forgot" && isResetVerified ? (
+              <form action={resetFormAction} className="space-y-4">
+                <input type="hidden" name="resetToken" value={verifyResetState.resetToken} />
+
+                <div>
+                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi Baru</label>
+                  <input type="password" name="newPassword" required minLength={6} placeholder="Minimal 6 karakter" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Konfirmasi Kata Sandi</label>
+                  <input type="password" name="confirmPassword" required minLength={6} placeholder="Ulangi kata sandi baru" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                </div>
+
+                <button type="submit" disabled={isSubmitting} className="mt-2 w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50">
+                  {isSubmitting ? "Menyimpan..." : "Simpan Kata Sandi Baru"}
+                </button>
+
+                <button type="button" onClick={() => setAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-white">
+                  &larr; Kembali ke halaman masuk
+                </button>
+              </form>
+            ) : authMode === "forgot" ? (
+              <form action={verifyResetAction} className="space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email Terdaftar</label>
+                  <input type="email" name="email" required placeholder="email@email.com" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username Terdaftar</label>
+                  <input type="text" name="username" required placeholder="randy_art" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                </div>
+
+                <button type="submit" disabled={isSubmitting} className="mt-2 w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50">
+                  {isSubmitting ? "Memverifikasi..." : "Verifikasi Akun"}
+                </button>
+
+                <button type="button" onClick={() => setAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-white">
+                  &larr; Kembali ke halaman masuk
+                </button>
+              </form>
+            ) : (
             <form action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
               {authMode === "register" && (
                 <>
@@ -192,7 +271,14 @@ export default function WelcomePage() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi</label>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi</label>
+                  {authMode === "login" && (
+                    <button type="button" onClick={() => setAuthMode("forgot")} className="text-[11px] text-zinc-400 transition hover:text-white">
+                      Lupa kata sandi?
+                    </button>
+                  )}
+                </div>
                 <input type="password" name="password" required placeholder="Password" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
               </div>
 
@@ -200,6 +286,7 @@ export default function WelcomePage() {
                 {isSubmitting ? "Memproses..." : authMode === "login" ? "Masuk Sekarang" : "Daftar Akun"}
               </button>
             </form>
+            )}
 
             <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 text-[11px] text-zinc-500">
               <button type="button" onClick={handleBackToTop} className="transition hover:text-white">

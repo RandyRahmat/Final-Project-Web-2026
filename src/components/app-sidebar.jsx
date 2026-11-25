@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
+import NavIcon from "@/components/ui/nav-icon";
 import { logoutUserAction } from "@/actions/auth-actions";
 
 export default function AppSidebar({
@@ -79,20 +80,20 @@ export default function AppSidebar({
           <nav className="space-y-1">
             <Link href="/home" title="Home" onClick={onCloseMobile} className={navItemClass(activeItem === "home")}>
               {activeItem === "home" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
-              <span className={`w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110 ${activeItem === "home" ? "text-champagne-300" : ""}`}>⌂</span>
+              <NavIcon name="home" className={`h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110 ${activeItem === "home" ? "text-champagne-300" : ""}`} />
               <span className={collapsed ? "lg:hidden" : ""}>Home</span>
             </Link>
 
             <Link href="/explore" title="Explore" onClick={onCloseMobile} className={navItemClass(activeItem === "explore")}>
               {activeItem === "explore" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
-              <span className={`w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110 ${activeItem === "explore" ? "text-champagne-300" : ""}`}>◈</span>
+              <NavIcon name="explore" className={`h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110 ${activeItem === "explore" ? "text-champagne-300" : ""}`} />
               <span className={collapsed ? "lg:hidden" : ""}>Explore</span>
             </Link>
 
             {isMember && (
               <Link href="/favorites" title="Favorites" onClick={onCloseMobile} className={navItemClass(activeItem === "favorites")}>
                 {activeItem === "favorites" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
-                <span className={`w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110 ${activeItem === "favorites" ? "text-champagne-300" : ""}`}>⚑</span>
+                <NavIcon name="favorites" className={`h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110 ${activeItem === "favorites" ? "text-champagne-300" : ""}`} />
                 <span className={collapsed ? "lg:hidden" : ""}>Favorites</span>
                 {typeof favoritesCount === "number" && (
                   <span className={`ml-auto rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200 ${collapsed ? "lg:hidden" : ""}`}>
@@ -104,7 +105,7 @@ export default function AppSidebar({
 
             <Link href="/challenges" title="Challenges" onClick={onCloseMobile} className={navItemClass(activeItem === "challenges")}>
               {activeItem === "challenges" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
-              <span className={`w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110 ${activeItem === "challenges" ? "text-champagne-300" : ""}`}>✧</span>
+              <NavIcon name="challenges" className={`h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110 ${activeItem === "challenges" ? "text-champagne-300" : ""}`} />
               <span className={collapsed ? "lg:hidden" : ""}>Challenges</span>
               {typeof challengesCount === "number" && (
                 <span className={`ml-auto rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200 ${collapsed ? "lg:hidden" : ""}`}>
@@ -134,12 +135,12 @@ export default function AppSidebar({
                   }}
                   className={navItemClass(false)}
                 >
-                  <span className="w-4 shrink-0 text-center text-lg leading-none">＋</span>
+                  <NavIcon name="upload" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
                   <span className={collapsed ? "lg:hidden" : ""}>Upload Artwork</span>
                 </button>
               ) : (
                 <Link href="/home" title="Upload Artwork" onClick={onCloseMobile} className={navItemClass(false)}>
-                  <span className="w-4 shrink-0 text-center text-lg leading-none">＋</span>
+                  <NavIcon name="upload" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
                   <span className={collapsed ? "lg:hidden" : ""}>Upload Artwork</span>
                 </Link>
               )
@@ -148,14 +149,14 @@ export default function AppSidebar({
             {currentUser && (
               <Link href="/profile" title="My Profile" onClick={onCloseMobile} className={navItemClass(activeItem === "profile")}>
                 {activeItem === "profile" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
-                <span className={`w-4 shrink-0 text-center text-base ${activeItem === "profile" ? "text-champagne-300" : ""}`}>◉</span>
+                <NavIcon name="profile" className={`h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110 ${activeItem === "profile" ? "text-champagne-300" : ""}`} />
                 <span className={collapsed ? "lg:hidden" : ""}>My Profile</span>
               </Link>
             )}
 
             {isMember && publicPortfolioUsername && (
               <Link href={`/creators/${publicPortfolioUsername}`} title="Public Portfolio" onClick={onCloseMobile} className={navItemClass(false)}>
-                <span className="w-4 shrink-0 text-center text-sm">↗</span>
+                <NavIcon name="portfolio" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className={collapsed ? "lg:hidden" : ""}>Public Portfolio</span>
               </Link>
             )}
@@ -163,7 +164,7 @@ export default function AppSidebar({
             {currentUser && (
               <Link href="/messages" title="Messages" onClick={onCloseMobile} className={navItemClass(activeItem === "messages")}>
                 {activeItem === "messages" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
-                <span className={`w-4 shrink-0 text-center text-sm ${activeItem === "messages" ? "text-champagne-300" : ""}`}>✉</span>
+                <NavIcon name="messages" className={`h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110 ${activeItem === "messages" ? "text-champagne-300" : ""}`} />
                 <span className={collapsed ? "lg:hidden" : ""}>Messages</span>
               </Link>
             )}
@@ -173,11 +174,11 @@ export default function AppSidebar({
                 href="/curator"
                 title="Curator Dashboard"
                 onClick={onCloseMobile}
-                className={`flex w-full items-center gap-4 rounded-lg border border-champagne-400/25 bg-champagne-400/10 px-4 py-3 text-left text-[12px] text-champagne-200 transition hover:border-champagne-300/50 hover:bg-champagne-400/15 ${
+                className={`group flex w-full items-center gap-4 rounded-lg border border-champagne-400/25 bg-champagne-400/10 px-4 py-3 text-left text-[12px] text-champagne-200 transition hover:border-champagne-300/50 hover:bg-champagne-400/15 ${
                   collapsed ? "lg:justify-center lg:px-0" : ""
                 }`}
               >
-                <span className="w-4 shrink-0 text-center text-base">✦</span>
+                <NavIcon name="curator" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className={collapsed ? "lg:hidden" : ""}>Curator Dashboard</span>
               </Link>
             )}
@@ -187,12 +188,12 @@ export default function AppSidebar({
                 href="/pending-curator"
                 title={`Status Verifikasi (${currentUser?.curatorStatus || "Pending"})`}
                 onClick={onCloseMobile}
-                className={`flex w-full items-center justify-between gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-left text-[11px] text-amber-300 transition hover:bg-amber-500/15 ${
+                className={`group flex w-full items-center justify-between gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-left text-[11px] text-amber-300 transition hover:bg-amber-500/15 ${
                   collapsed ? "lg:justify-center lg:px-0" : ""
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <span className="w-4 shrink-0 text-center">⏳</span>
+                  <NavIcon name="pending" className="h-[18px] w-[18px] shrink-0" />
                   <span className={collapsed ? "lg:hidden" : ""}>Status Verifikasi</span>
                 </span>
                 <span className={`rounded-full bg-amber-500/20 px-2 py-0.5 text-[8px] uppercase tracking-wider ${collapsed ? "lg:hidden" : ""}`}>
@@ -206,18 +207,18 @@ export default function AppSidebar({
                 href="/admin"
                 title="Admin Console"
                 onClick={onCloseMobile}
-                className={`flex w-full items-center gap-4 rounded-lg border border-white/15 bg-white/[0.05] px-4 py-3 text-left text-[12px] text-white transition hover:bg-white/10 ${
+                className={`group flex w-full items-center gap-4 rounded-lg border border-white/15 bg-white/[0.05] px-4 py-3 text-left text-[12px] text-white transition hover:bg-white/10 ${
                   collapsed ? "lg:justify-center lg:px-0" : ""
                 }`}
               >
-                <span className="w-4 shrink-0 text-center text-base">❖</span>
+                <NavIcon name="admin" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className={collapsed ? "lg:hidden" : ""}>Admin Console</span>
               </Link>
             )}
 
             {isGuest && (
               <Link href="/" title="Login / Register" onClick={onCloseMobile} className={navItemClass(false)}>
-                <span className="w-4 shrink-0 text-center text-lg leading-none">→</span>
+                <NavIcon name="login" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className={collapsed ? "lg:hidden" : ""}>Login / Register</span>
               </Link>
             )}
@@ -252,8 +253,8 @@ export default function AppSidebar({
 
               {collapsed && (
                 <form action={logoutUserAction} className="hidden lg:block">
-                  <button type="submit" title="Logout" aria-label="Logout" className="flex h-7 w-7 items-center justify-center rounded-lg text-xs text-zinc-500 transition hover:bg-red-500/15 hover:text-red-400">
-                    ⎋
+                  <button type="submit" title="Logout" aria-label="Logout" className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-red-500/15 hover:text-red-400">
+                    <NavIcon name="logout" className="h-4 w-4" />
                   </button>
                 </form>
               )}

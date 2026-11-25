@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import NavIcon from "@/components/ui/nav-icon";
 import { logoutUserAction } from "@/actions/auth-actions";
 
 const ADMIN_TABS = [
-  { id: "overview", label: "Statistik Platform", icon: "◈" },
-  { id: "curators", label: "Verifikasi Curator", icon: "✦" },
-  { id: "moderation", label: "Moderasi Konten", icon: "⚑" },
-  { id: "users", label: "Manajemen Pengguna", icon: "◉" },
-  { id: "categories", label: "Manajemen Kategori", icon: "❖" },
+  { id: "overview", label: "Statistik Platform", icon: "stats" },
+  { id: "curators", label: "Verifikasi Curator", icon: "curator" },
+  { id: "moderation", label: "Moderasi Konten", icon: "moderation" },
+  { id: "users", label: "Manajemen Pengguna", icon: "users" },
+  { id: "categories", label: "Manajemen Kategori", icon: "categories" },
 ];
 
 export default function Sidebar({
@@ -89,7 +90,7 @@ export default function Sidebar({
                 >
                   {isActive && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
                   <div className="flex items-center gap-3.5">
-                    <span className={`text-sm ${isActive ? "text-champagne-300" : "opacity-80"}`}>{item.icon}</span>
+                    <NavIcon name={item.icon} className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-champagne-300" : "opacity-80"}`} />
                     <span className={collapsed ? "lg:hidden" : ""}>{item.label}</span>
                   </div>
 
@@ -115,11 +116,11 @@ export default function Sidebar({
               Platform
             </p>
             <Link href="/home" title="Lihat Galeri (/home)" className={`flex w-full items-center gap-3.5 rounded-xl px-3.5 py-2 text-xs text-zinc-400 transition hover:bg-white/[0.04] hover:text-champagne-50 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
-              <span>⌂</span>
+              <NavIcon name="home" className="h-[18px] w-[18px] shrink-0" />
               <span className={collapsed ? "lg:hidden" : ""}>Lihat Galeri (/home)</span>
             </Link>
             <Link href="/profile" title="Pengaturan Profil" className={`flex w-full items-center gap-3.5 rounded-xl px-3.5 py-2 text-xs text-zinc-400 transition hover:bg-white/[0.04] hover:text-champagne-50 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
-              <span>◉</span>
+              <NavIcon name="profile" className="h-[18px] w-[18px] shrink-0" />
               <span className={collapsed ? "lg:hidden" : ""}>Pengaturan Profil</span>
             </Link>
           </div>
@@ -140,9 +141,9 @@ export default function Sidebar({
               </div>
             </div>
             <form action={logoutUserAction}>
-              <button type="submit" title="Keluar" className="rounded-lg px-2 py-1 text-[10px] uppercase tracking-wider text-zinc-400 transition hover:bg-red-500/20 hover:text-red-300">
+              <button type="submit" title="Keluar" className="flex items-center justify-center rounded-lg px-2 py-1 text-[10px] uppercase tracking-wider text-zinc-400 transition hover:bg-red-500/20 hover:text-red-300">
                 <span className={collapsed ? "lg:hidden" : ""}>Keluar</span>
-                {collapsed && <span className="hidden lg:inline">⎋</span>}
+                {collapsed && <NavIcon name="logout" className="hidden h-4 w-4 lg:block" />}
               </button>
             </form>
           </div>

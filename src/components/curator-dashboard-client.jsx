@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
+import NavIcon from "@/components/ui/nav-icon";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { logoutUserAction } from "@/actions/auth-actions";
 import {
@@ -181,7 +182,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
               }`}
             >
               {!managingChallengeId && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
-              <span className={`w-4 shrink-0 text-center text-base ${!managingChallengeId ? "text-champagne-300" : ""}`}>✦</span>
+              <NavIcon name="curator" className={`h-[18px] w-[18px] shrink-0 ${!managingChallengeId ? "text-champagne-300" : ""}`} />
               <span className={sidebarCollapsed ? "lg:hidden" : ""}>My Challenges</span>
               <span className={`ml-auto rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
                 {challenges.length}
@@ -197,7 +198,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
               }}
               className={`flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] text-zinc-400 transition hover:bg-white/[0.04] hover:text-champagne-50 ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}
             >
-              <span className="w-4 shrink-0 text-center text-lg">＋</span>
+              <NavIcon name="upload" className="h-[18px] w-[18px] shrink-0" />
               <span className={sidebarCollapsed ? "lg:hidden" : ""}>Buat Challenge Baru</span>
             </button>
           </nav>
@@ -208,19 +209,19 @@ export default function CuratorDashboardClient({ curator, challenges, submission
           {sidebarCollapsed && <div className="mb-3 hidden h-px w-full bg-white/[0.07] lg:block" />}
           <nav className="space-y-1">
             <Link href="/home" title="Home" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-champagne-50 ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
-              <span className="w-4 shrink-0 text-center text-base">⌂</span>
+              <NavIcon name="home" className="h-[18px] w-[18px] shrink-0" />
               <span className={sidebarCollapsed ? "lg:hidden" : ""}>Home</span>
             </Link>
             <Link href="/explore" title="Explore" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-champagne-50 ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
-              <span className="w-4 shrink-0 text-center text-base">◈</span>
+              <NavIcon name="explore" className="h-[18px] w-[18px] shrink-0" />
               <span className={sidebarCollapsed ? "lg:hidden" : ""}>Explore</span>
             </Link>
             <Link href="/challenges" title="Public Challenges" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-champagne-50 ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
-              <span className="w-4 shrink-0 text-center text-base">✧</span>
+              <NavIcon name="challenges" className="h-[18px] w-[18px] shrink-0" />
               <span className={sidebarCollapsed ? "lg:hidden" : ""}>Public Challenges</span>
             </Link>
             <Link href="/messages" title="Messages" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-champagne-50 ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
-              <span className="w-4 shrink-0 text-center text-sm">✉</span>
+              <NavIcon name="messages" className="h-[18px] w-[18px] shrink-0" />
               <span className={sidebarCollapsed ? "lg:hidden" : ""}>Messages</span>
             </Link>
           </nav>
@@ -251,8 +252,8 @@ export default function CuratorDashboardClient({ curator, challenges, submission
             </div>
             {sidebarCollapsed && (
               <form action={logoutUserAction} className="hidden lg:block">
-                <button type="submit" title="Logout" className="flex h-7 w-7 items-center justify-center rounded-lg text-xs text-zinc-500 transition hover:bg-red-500/15 hover:text-red-400">
-                  ⎋
+                <button type="submit" title="Logout" className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-red-500/15 hover:text-red-400">
+                  <NavIcon name="logout" className="h-4 w-4" />
                 </button>
               </form>
             )}

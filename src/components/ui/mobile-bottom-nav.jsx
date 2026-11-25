@@ -1,68 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
-function NavIcon({ name, className = "h-5 w-5" }) {
-  switch (name) {
-    case "home":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          <path d="M3 10.5L12 3l9 7.5" />
-          <path d="M5 9.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19V9.5" />
-          <path d="M9.5 20.5V14h5v6.5" />
-        </svg>
-      );
-    case "explore":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          <circle cx="12" cy="12" r="9" />
-          <polygon points="15.8 8.2 13.7 13.7 8.2 15.8 10.3 10.3 15.8 8.2" />
-        </svg>
-      );
-    case "favorites":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4.2L5 20V5a1 1 0 0 1 1-1z" />
-        </svg>
-      );
-    case "challenges":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          <path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2L12 3z" />
-        </svg>
-      );
-    case "profile":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4.5 20c1.4-3.8 4.4-5.5 7.5-5.5s6.1 1.7 7.5 5.5" />
-        </svg>
-      );
-    case "curator":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          <rect x="3" y="4" width="18" height="14" rx="2" />
-          <path d="M8 21h8M12 18v3" />
-          <path d="M8 10l2.5 2.5L16 7.5" />
-        </svg>
-      );
-    case "admin":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" />
-          <path d="M9.5 12l1.8 1.8 3.5-3.8" />
-        </svg>
-      );
-    default:
-      return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-          <polyline points="10 17 15 12 10 7" />
-          <line x1="15" y1="12" x2="3" y2="12" />
-        </svg>
-      );
-  }
-}
+import NavIcon from "@/components/ui/nav-icon";
 
 export default function MobileBottomNav({ currentUser, activeItem = "home" }) {
   const role = currentUser?.role || "Guest";

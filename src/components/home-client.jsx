@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useActionState } from "react";
+import { useEffect, useMemo, useRef, useState, useActionState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import ExhibitionMode from "@/components/ui/exhibition-mode";
@@ -15,7 +15,7 @@ const REACTIONS = [
   { type: "applause", icon: "👏", label: "Applause" },
 ];
 
-export default function HomeClient({ currentUser, artworks, categories, challenges, podiumWinners }) {
+export default function HomeClient({ currentUser, artworks, categories, challenges, podiumWinners, notifications = [] }) {
   const [activeNav, setActiveNav] = useState("Home");
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("popular");
@@ -28,6 +28,27 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
   const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
   const [authNotice, setAuthNotice] = useState("");
   const [showExhibition, setShowExhibition] = useState(false);
+  const notifContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (!showNotifications) return;
+    const handleClickOutside = (e) => {
+      if (notifContainerRef.current && !notifContainerRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setShowNotifications(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showNotifications]);
+
+  const highlightCount = notifications.filter((n) => n.highlight).length;
 
   const role = currentUser?.role || "Guest";
   const isGuest = !currentUser;
@@ -156,26 +177,137 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
             </div>
           </div>
 
-          <div className="relative mx-4 hidden max-w-[360px] flex-1 md:block">
+          <div className="relative mx-4 hidden max-w-[380px] flex-1 md:block">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600">⌕</span>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search artworks, artists, challenges..."
-              className="input-lux rounded-full py-2.5 pl-11 pr-5 text-[11px]"
+              className="input-lux rounded-full py-2.5 pl-11 pr-20 text-[11px]"
             />
-          </div>
-
-          <div className="flex items-center gap-5">
             <button
               type="button"
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative text-lg text-zinc-500 transition hover:text-white"
-              aria-label="Notifications"
+              onClick={() => window.dispatchEvent(new Event("aesthe:open-command"))}
+              title="Buka Quick Search (Ctrl + K)"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[9px] tracking-wider text-zinc-400 transition hover:border-champagne-300/40 hover:bg-champagne-400/15 hover:text-champagne-100"
             >
-              ♧
-              <span className="live-dot absolute -right-1 -top-0.5 text-champagne-300" />
+              Ctrl K
             </button>
+          </div>
+
+          <div className="flex items-center gap-4 sm:gap-5">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("aesthe:open-command"))}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-zinc-400 transition hover:border-champagne-300/40 hover:text-champagne-100 md:hidden"
+              aria-label="Quick Search"
+              title="Cari Cepat (Ctrl + K)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <circle cx="11" cy="11" r="7.5" />
+                <path d="M20 20l-3.6-3.6" />
+              </svg>
+            </button>
+
+            <div ref={notifContainerRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                  showNotifications
+                    ? "border-champagne-300/45 bg-champagne-400/15 text-champagne-200"
+                    : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/25 hover:text-white"
+                }`}
+                aria-label="Notifications"
+                title="Notifikasi"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {notifications.length > 0 && (
+                  highlightCount > 0 ? (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-champagne-200 to-champagne-500 px-1 text-[9px] font-bold text-black shadow-[0_0_12px_rgba(212,175,106,0.75)]">
+                      {notifications.length}
+                    </span>
+                  ) : (
+                    <span className="live-dot absolute right-1.5 top-1.5 text-champagne-300" />
+                  )
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="modal-panel absolute right-0 top-12 z-50 w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl p-4 sm:w-[350px]">
+                  <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
+                    <div>
+                      <p className="text-xs font-semibold text-white">Notifikasi</p>
+                      <p className="text-[10px] text-zinc-500">Aktivitas real-time dari ruang karyamu</p>
+                    </div>
+                    <span className="rounded-full border border-champagne-300/25 bg-champagne-400/10 px-2.5 py-0.5 text-[9px] font-medium tracking-wider text-champagne-200">
+                      {notifications.length} TERBARU
+                    </span>
+                  </div>
+
+                  {notifications.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <p className="text-xs text-zinc-400">Belum ada aktivitas terbaru.</p>
+                      <p className="mt-1 text-[10px] text-zinc-600">Interaksi pada karyamu akan muncul di sini.</p>
+                    </div>
+                  ) : (
+                    <div data-lenis-prevent className="mt-2.5 max-h-[340px] space-y-1.5 overflow-y-auto pr-1">
+                      {notifications.map((item) => (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onClick={() => setShowNotifications(false)}
+                          className={`group flex items-start gap-3 rounded-xl border p-2.5 transition ${
+                            item.highlight
+                              ? "border-champagne-300/25 bg-champagne-400/[0.08] hover:border-champagne-300/45 hover:bg-champagne-400/[0.14]"
+                              : "border-transparent bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.05]"
+                          }`}
+                        >
+                          <span
+                            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs ${
+                              item.kind === "message"
+                                ? "bg-champagne-400/20 text-champagne-200"
+                                : item.kind === "admin"
+                                ? "bg-rose-500/20 text-rose-300"
+                                : item.kind === "comment"
+                                ? "bg-sky-500/15 text-sky-300"
+                                : item.kind === "reaction"
+                                ? "bg-rose-500/15 text-rose-300"
+                                : item.kind === "follow"
+                                ? "bg-emerald-500/15 text-emerald-300"
+                                : "bg-amber-500/15 text-amber-300"
+                            }`}
+                          >
+                            {item.kind === "message"
+                              ? "✉"
+                              : item.kind === "admin"
+                              ? "!"
+                              : item.kind === "comment"
+                              ? "✎"
+                              : item.kind === "reaction"
+                              ? "♥"
+                              : item.kind === "follow"
+                              ? "+"
+                              : "✧"}
+                          </span>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-medium leading-snug text-zinc-100 transition group-hover:text-champagne-100">
+                              {item.title}
+                            </p>
+                            <p className="mt-0.5 truncate text-[10px] text-zinc-400">{item.subtitle}</p>
+                            <p className="mt-1 text-[9px] uppercase tracking-wider text-champagne-400/80">{item.time}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="h-5 w-px bg-white/10" />
 
@@ -199,24 +331,6 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </div>
             </Link>
           </div>
-
-          {showNotifications && (
-            <div className="glass modal-panel absolute right-5 top-[65px] w-[290px] rounded-xl p-5 sm:right-12">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium">Notifications</p>
-                <span className="text-[9px] text-champagne-300">LATEST</span>
-              </div>
-              <div className="mt-5 space-y-4">
-                <div className="flex gap-3">
-                  <span className="text-lg text-champagne-300">✧</span>
-                  <div>
-                    <p className="text-[11px]">Welcome to Aesthe!</p>
-                    <p className="mt-1 text-[9px] text-zinc-500">Connected live to PostgreSQL.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </header>
 
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">

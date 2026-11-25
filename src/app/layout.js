@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import AmbientBackground from "@/components/ui/ambient-background";
+import CommandPalette from "@/components/ui/command-palette";
 import { ConfirmProvider } from "@/components/ui/confirm-provider";
 import InteractionLayer from "@/components/ui/interaction-layer";
 import SmoothScroll from "@/components/ui/smooth-scroll";
@@ -43,6 +44,7 @@ export default function RootLayout({ children }) {
         <AmbientBackground />
         <InteractionLayer />
         <SmoothScroll />
+        <CommandPalette />
         <ConfirmProvider>{children}</ConfirmProvider>
       </body>
     </html>

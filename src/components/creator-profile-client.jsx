@@ -132,7 +132,7 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
   return (
     <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       {/* TOP BAR */}
-      <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-10">
+      <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-md sm:px-10">
         <div className="flex items-center gap-4">
           <Link href="/home" className="flex items-center gap-3">
             <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow h-8 w-8 object-contain mix-blend-screen" />

@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
 import NavIcon from "@/components/ui/nav-icon";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { logoutUserAction } from "@/actions/auth-actions";
 import {
@@ -41,6 +42,7 @@ function toDateTimeLocal(dateValue) {
 }
 
 export default function CuratorDashboardClient({ curator, challenges, submissions }) {
+  const confirm = useConfirm();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -105,7 +107,12 @@ export default function CuratorDashboardClient({ curator, challenges, submission
   );
 
   const handleDeleteChallenge = async (ch) => {
-    const confirmed = window.confirm(`Hapus challenge "${ch.title}" beserta seluruh submisinya?`);
+    const confirmed = await confirm({
+      title: "Hapus Challenge",
+      message: `Hapus challenge "${ch.title}" beserta seluruh submisinya secara permanen?`,
+      confirmText: "Ya, Hapus Challenge",
+      variant: "danger",
+    });
     if (!confirmed) return;
     setDeletingId(ch.id);
     setActionError("");
@@ -263,7 +270,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
 
       {/* MAIN CONTENT */}
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-md sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">
               ☰

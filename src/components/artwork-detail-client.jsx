@@ -2,6 +2,7 @@
 
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import {
   reactArtworkAction,
   toggleFavoriteAction,
@@ -36,6 +37,7 @@ function formatDate(dateValue) {
 }
 
 export default function ArtworkDetailClient({ currentUser, artwork, comments }) {
+  const confirm = useConfirm();
   const [authNotice, setAuthNotice] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState(null);
@@ -177,7 +179,13 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm("Hapus komentarmu ini?")) return;
+    const ok = await confirm({
+      title: "Hapus Komentar",
+      message: "Hapus komentarmu ini secara permanen?",
+      confirmText: "Ya, Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
     setDeletingCommentId(commentId);
     await deleteCommentAction(commentId, artwork.id);
     setDeletingCommentId(null);
@@ -186,7 +194,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
   return (
     <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       {/* TOP BAR */}
-      <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-10">
+      <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-md sm:px-10">
         <div className="flex items-center gap-4">
           <Link href="/home" className="flex items-center gap-3">
             <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow h-8 w-8 object-contain mix-blend-screen" />
@@ -512,7 +520,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
       {lightboxOpen && (
         <div
           onClick={closeLightbox}
-          className="modal-overlay fixed inset-0 z-[120] flex flex-col bg-black/95 text-zinc-100 backdrop-blur-2xl select-none"
+          className="modal-overlay fixed inset-0 z-[120] flex flex-col bg-black/95 text-zinc-100 backdrop-blur-md select-none"
         >
           {/* TOOLBAR LIGHTBOX */}
           <div

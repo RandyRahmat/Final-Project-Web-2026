@@ -2,7 +2,7 @@
 
 export default function Navbar({ pageTitle, searchQuery, onSearchChange, onOpenMobileMenu }) {
   return (
-    <header className="sticky top-0 z-20 flex h-[76px] w-full items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-6 backdrop-blur-2xl">
+    <header className="sticky top-0 z-20 flex h-[76px] w-full items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-6 backdrop-blur-md">
       <div className="flex items-center gap-4">
         <button
           type="button"

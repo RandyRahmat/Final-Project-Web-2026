@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import {
   verifyCuratorAction,
@@ -40,6 +41,7 @@ export default function AdminDashboardClient({
   users,
   categories,
 }) {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
@@ -106,9 +108,15 @@ export default function AdminDashboardClient({
     return res;
   };
 
-  const handleVerifyCurator = (curator, status) => {
-    const label = status === "Approved" ? "menyetujui (Approve)" : "menolak (Reject)";
-    if (!window.confirm(`Yakin ingin ${label} pendaftaran Curator "${curator.display_name}"?`)) return;
+  const handleVerifyCurator = async (curator, status) => {
+    const isApprove = status === "Approved";
+    const ok = await confirm({
+      title: isApprove ? "Setujui Curator" : "Tolak Curator",
+      message: `Yakin ingin ${isApprove ? "menyetujui (Approve)" : "menolak (Reject)"} pendaftaran Curator "${curator.display_name}"?`,
+      confirmText: isApprove ? "Ya, Setujui" : "Ya, Tolak",
+      variant: isApprove ? "gold" : "danger",
+    });
+    if (!ok) return;
     runAction(
       `curator-${curator.id}`,
       () => verifyCuratorAction(curator.id, status),
@@ -116,8 +124,14 @@ export default function AdminDashboardClient({
     );
   };
 
-  const handleDeleteUser = (u) => {
-    if (!window.confirm(`Hapus akun ${u.role} "${u.display_name}" (@${u.username}) secara permanen?`)) return;
+  const handleDeleteUser = async (u) => {
+    const ok = await confirm({
+      title: "Hapus Pengguna",
+      message: `Hapus akun ${u.role} "${u.display_name}" (@${u.username}) secara permanen?`,
+      confirmText: "Ya, Hapus Akun",
+      variant: "danger",
+    });
+    if (!ok) return;
     runAction(
       `user-${u.id}`,
       () => deleteUserAction(u.id),
@@ -125,8 +139,14 @@ export default function AdminDashboardClient({
     );
   };
 
-  const handleDismissReport = (item) => {
-    if (!window.confirm(`Tolak (Dismiss) semua laporan untuk karya "${item.artwork_title}"?`)) return;
+  const handleDismissReport = async (item) => {
+    const ok = await confirm({
+      title: "Tolak Laporan",
+      message: `Tolak (Dismiss) semua laporan untuk karya "${item.artwork_title}"?`,
+      confirmText: "Ya, Dismiss",
+      variant: "gold",
+    });
+    if (!ok) return;
     runAction(
       `dismiss-${item.artwork_id}`,
       () => dismissReportAction(item.artwork_id),
@@ -134,8 +154,14 @@ export default function AdminDashboardClient({
     );
   };
 
-  const handleTakeDown = (item) => {
-    if (!window.confirm(`TAKE DOWN karya "${item.artwork_title}"? Karya akan dihapus permanen dari platform.`)) return;
+  const handleTakeDown = async (item) => {
+    const ok = await confirm({
+      title: "Take Down Karya",
+      message: `Take down karya "${item.artwork_title}"? Karya akan dihapus permanen dari platform.`,
+      confirmText: "Ya, Take Down",
+      variant: "danger",
+    });
+    if (!ok) return;
     runAction(
       `takedown-${item.artwork_id}`,
       () => takeDownArtworkAction(item.artwork_id),
@@ -155,8 +181,14 @@ export default function AdminDashboardClient({
     }
   };
 
-  const handleDeleteCategory = (cat) => {
-    if (!window.confirm(`Hapus kategori "${cat.name}"?`)) return;
+  const handleDeleteCategory = async (cat) => {
+    const ok = await confirm({
+      title: "Hapus Kategori",
+      message: `Hapus kategori "${cat.name}" secara permanen?`,
+      confirmText: "Ya, Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
     runAction(
       `del-cat-${cat.id}`,
       () => deleteCategoryAction(cat.id),

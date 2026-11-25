@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 import {
@@ -21,6 +22,7 @@ const REACTIONS = [
 ];
 
 export default function FavoritesClient({ currentUser, artworks, collections = [], categories }) {
+  const confirm = useConfirm();
   const [activeCollectionId, setActiveCollectionId] = useState("all");
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("saved");
@@ -97,7 +99,13 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
   };
 
   const handleDeleteCollection = async (col) => {
-    if (!window.confirm(`Hapus moodboard "${col.name}"? Karya favorit di dalamnya tidak akan ikut terhapus.`)) return;
+    const confirmed = await confirm({
+      title: "Hapus Moodboard",
+      message: `Hapus moodboard "${col.name}"? Karya favorit di dalamnya tidak akan ikut terhapus.`,
+      confirmText: "Ya, Hapus",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setDeletingColId(col.id);
     await deleteCollectionAction(col.id);
     setDeletingColId(null);
@@ -134,7 +142,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
       {/* MAIN CONTENT */}
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
         {/* TOP NAVBAR */}
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-md sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">
               ☰

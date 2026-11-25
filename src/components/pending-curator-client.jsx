@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import { logoutUserAction } from "@/actions/auth-actions";
 import {
   deleteRejectedCuratorAccountAction,
@@ -9,6 +10,7 @@ import {
 } from "@/actions/challenge-actions";
 
 export default function PendingCuratorClient({ curator }) {
+  const confirm = useConfirm();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
@@ -17,7 +19,12 @@ export default function PendingCuratorClient({ curator }) {
   const isRejected = status === "Rejected";
 
   const handleDeleteAccount = async () => {
-    const confirmed = window.confirm("Hapus akun Curator ini secara permanen? Tindakan ini tidak dapat dibatalkan.");
+    const confirmed = await confirm({
+      title: "Hapus Akun Curator",
+      message: "Hapus akun Curator ini secara permanen? Tindakan ini tidak dapat dibatalkan.",
+      confirmText: "Ya, Hapus Akun",
+      variant: "danger",
+    });
     if (!confirmed) return;
     setDeleting(true);
     setError("");

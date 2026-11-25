@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
 import NavIcon from "@/components/ui/nav-icon";
 import { logoutUserAction } from "@/actions/auth-actions";
 
@@ -149,6 +150,8 @@ export default function Sidebar({
           </div>
         </div>
       </aside>
+
+      <MobileBottomNav currentUser={adminUser ? { ...adminUser, role: "Admin" } : { role: "Admin" }} activeItem="admin" />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import {
   updateProfileAction,
@@ -22,6 +23,7 @@ export default function ProfileClient({
   followersCount = 0,
   followingList = [],
 }) {
+  const confirm = useConfirm();
   const role = profile.role || currentUser.role;
   const isMember = role === "Member";
 
@@ -53,7 +55,12 @@ export default function ProfileClient({
   };
 
   const handleDeleteArtwork = async (artworkId, title) => {
-    const confirmed = window.confirm(`Hapus karya "${title}" secara permanen?`);
+    const confirmed = await confirm({
+      title: "Hapus Karya",
+      message: `Hapus karya "${title}" secara permanen? Tindakan ini tidak dapat dibatalkan.`,
+      confirmText: "Ya, Hapus Karya",
+      variant: "danger",
+    });
     if (!confirmed) return;
     setDeletingId(artworkId);
     await deleteArtworkAction(artworkId);
@@ -100,7 +107,7 @@ export default function ProfileClient({
       {/* MAIN CONTENT */}
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
         {/* TOP NAVBAR */}
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-md sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">
               ☰

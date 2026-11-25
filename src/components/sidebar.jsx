@@ -27,11 +27,12 @@ export default function Sidebar({
   return (
     <>
       {mobileOpen && (
-        <div onClick={onCloseMobile} className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden" />
+        <div onClick={onCloseMobile} className="fixed inset-0 z-[45] bg-black/70 backdrop-blur-sm lg:hidden" />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col justify-between border-r border-white/[0.07] bg-[#0a0a0b]/92 px-5 py-6 backdrop-blur-md transition-all duration-300 lg:z-30 lg:translate-x-0 ${
+        data-lenis-prevent
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col justify-between overflow-y-auto border-r border-white/[0.07] bg-[#0a0a0b]/92 px-5 py-6 backdrop-blur-md transition-all duration-300 lg:z-30 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "lg:w-20 lg:px-3" : "lg:w-64"}`}
       >
@@ -81,7 +82,7 @@ export default function Sidebar({
                     onSelectTab(item.id);
                     if (onCloseMobile) onCloseMobile();
                   }}
-                  className={`relative flex w-full items-center justify-between overflow-hidden rounded-xl px-3.5 py-2.5 text-left text-xs tracking-wide transition ${
+                  className={`relative flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-xs tracking-wide transition ${
                     collapsed ? "lg:justify-center lg:px-0" : ""
                   } ${
                     isActive
@@ -96,13 +97,13 @@ export default function Sidebar({
                   </div>
 
                   {item.id === "curators" && pendingCuratorsCount > 0 && (
-                    <span className={`rounded-full bg-champagne-300 px-2 py-0.5 text-[10px] font-semibold text-black ${collapsed ? "lg:absolute lg:-right-0.5 lg:-top-0.5 lg:px-1.5 lg:py-0 lg:text-[9px]" : ""}`}>
+                    <span className={`rounded-full bg-champagne-300 px-2 py-0.5 text-[10px] font-semibold text-black ${collapsed ? "lg:absolute lg:-right-1 lg:-top-1 lg:px-1.5 lg:py-0 lg:text-[9px]" : ""}`}>
                       {pendingCuratorsCount}
                     </span>
                   )}
 
                   {item.id === "moderation" && pendingReportsCount > 0 && (
-                    <span className={`rounded-full border border-red-400/40 bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold text-red-300 ${collapsed ? "lg:absolute lg:-right-0.5 lg:-top-0.5 lg:px-1.5 lg:py-0 lg:text-[9px]" : ""}`}>
+                    <span className={`rounded-full border border-red-400/40 bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold text-red-300 ${collapsed ? "lg:absolute lg:-right-1 lg:-top-1 lg:px-1.5 lg:py-0 lg:text-[9px]" : ""}`}>
                       {pendingReportsCount}
                     </span>
                   )}
@@ -116,11 +117,11 @@ export default function Sidebar({
             <p className={`px-3 pb-2 text-[10px] uppercase tracking-[0.25em] text-zinc-600 ${collapsed ? "lg:hidden" : ""}`}>
               Platform
             </p>
-            <Link href="/home" title="Lihat Galeri (/home)" className={`flex w-full items-center gap-3.5 rounded-xl px-3.5 py-2 text-xs text-zinc-400 transition hover:bg-white/[0.04] hover:text-champagne-50 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
+            <Link href="/home" title="Lihat Galeri" onClick={onCloseMobile} className={`flex w-full items-center gap-3.5 rounded-xl px-3.5 py-2 text-xs text-zinc-400 transition hover:bg-white/[0.04] hover:text-champagne-50 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
               <NavIcon name="home" className="h-[18px] w-[18px] shrink-0" />
-              <span className={collapsed ? "lg:hidden" : ""}>Lihat Galeri (/home)</span>
+              <span className={collapsed ? "lg:hidden" : ""}>Lihat Galeri</span>
             </Link>
-            <Link href="/profile" title="Pengaturan Profil" className={`flex w-full items-center gap-3.5 rounded-xl px-3.5 py-2 text-xs text-zinc-400 transition hover:bg-white/[0.04] hover:text-champagne-50 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
+            <Link href="/profile" title="Pengaturan Profil" onClick={onCloseMobile} className={`flex w-full items-center gap-3.5 rounded-xl px-3.5 py-2 text-xs text-zinc-400 transition hover:bg-white/[0.04] hover:text-champagne-50 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
               <NavIcon name="profile" className="h-[18px] w-[18px] shrink-0" />
               <span className={collapsed ? "lg:hidden" : ""}>Pengaturan Profil</span>
             </Link>
@@ -128,17 +129,23 @@ export default function Sidebar({
         </div>
 
         {/* Kartu Akun Admin di Bagian Bawah Sidebar */}
-        <div className="border-t border-white/[0.06] pt-4">
+        <div className="mt-6 border-t border-white/[0.06] pt-4">
           <div className={`glass flex items-center justify-between gap-2 rounded-2xl p-3 transition hover:border-champagne-300/25 ${collapsed ? "lg:flex-col lg:p-2" : ""}`}>
             <div className="flex items-center gap-3 overflow-hidden">
               <div title={adminUser?.display_name || "Administrator"} className="shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-champagne-200">
-                  {adminUser?.display_name ? adminUser.display_name.slice(0, 2).toUpperCase() : "AD"}
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-bold text-champagne-200">
+                  {adminUser?.avatar_url ? (
+                    <img src={adminUser.avatar_url} alt={adminUser.display_name || "Admin"} className="h-full w-full object-cover" />
+                  ) : adminUser?.display_name ? (
+                    adminUser.display_name.slice(0, 2).toUpperCase()
+                  ) : (
+                    "AD"
+                  )}
                 </div>
               </div>
               <div className={`truncate ${collapsed ? "lg:hidden" : ""}`}>
                 <p className="truncate text-xs font-medium text-white">{adminUser?.display_name || "Administrator"}</p>
-                <p className="truncate text-[10px] text-zinc-500">{adminUser?.email || "admin@aesthe.id"}</p>
+                {adminUser?.email && <p className="truncate text-[10px] text-zinc-500">{adminUser.email}</p>}
               </div>
             </div>
             <form action={logoutUserAction}>

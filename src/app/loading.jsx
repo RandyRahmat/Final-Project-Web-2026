@@ -1,5 +1,5 @@
-import { GalleryGridSkeleton } from "@/components/ui/page-skeletons";
+import { MinimalPageSkeleton } from "@/components/ui/page-skeletons";
 
 export default function Loading() {
-  return <GalleryGridSkeleton />;
+  return <MinimalPageSkeleton />;
 }

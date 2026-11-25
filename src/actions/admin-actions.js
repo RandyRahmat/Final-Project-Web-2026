@@ -5,6 +5,7 @@ import { unlink } from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { query, ensureReportsTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { parsePositiveInt } from "@/lib/validation";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -28,7 +29,7 @@ export async function verifyCuratorAction(curatorId, status) {
   const admin = await requireAdmin();
   if (!admin) return { error: "Akses ditolak. Khusus Admin." };
 
-  const targetId = Number(curatorId);
+  const targetId = parsePositiveInt(curatorId);
   if (!targetId || (status !== "Approved" && status !== "Rejected")) {
     return { error: "Status verifikasi tidak valid." };
   }
@@ -46,6 +47,7 @@ export async function verifyCuratorAction(curatorId, status) {
   }
 
   revalidatePath("/admin");
+  revalidatePath("/home");
   revalidatePath("/pending-curator");
   revalidatePath("/curator");
   return { success: true };
@@ -56,14 +58,14 @@ export async function deleteUserAction(targetUserId) {
   const admin = await requireAdmin();
   if (!admin) return { error: "Akses ditolak. Khusus Admin." };
 
-  const targetId = Number(targetUserId);
+  const targetId = parsePositiveInt(targetUserId);
   if (!targetId) return { error: "ID pengguna tidak valid." };
 
   if (targetId === Number(admin.id)) {
     return { error: "Admin tidak dapat menghapus akunnya sendiri." };
   }
 
-  const targetResult = await query("SELECT id, role FROM users WHERE id = $1", [targetId]);
+  const targetResult = await query("SELECT id, role, username, avatar_url FROM users WHERE id = $1", [targetId]);
   if (targetResult.rows.length === 0) {
     return { error: "Pengguna tidak ditemukan." };
   }
@@ -72,8 +74,35 @@ export async function deleteUserAction(targetUserId) {
     return { error: "Tidak dapat menghapus akun Admin lain." };
   }
 
+  const [artFilesRes, bannerFilesRes] = await Promise.all([
+    query("SELECT image_url FROM artworks WHERE user_id = $1", [targetId]),
+    query("SELECT banner_url FROM challenges WHERE curator_id = $1", [targetId]),
+  ]);
+
+  const localFilesToDelete = [
+    targetResult.rows[0].avatar_url,
+    ...artFilesRes.rows.map((r) => r.image_url),
+    ...bannerFilesRes.rows.map((r) => r.banner_url),
+  ].filter((url) => typeof url === "string" && url.startsWith("/uploads/"));
+
   await query("DELETE FROM users WHERE id = $1 AND role IN ('Member', 'Curator')", [targetId]);
+
+  await Promise.all(
+    localFilesToDelete.map(async (fileUrl) => {
+      const safeFilename = path.basename(fileUrl);
+      const localFilePath = path.join(process.cwd(), "public", "uploads", safeFilename);
+      try {
+        await unlink(localFilePath);
+      } catch {
+        // Abaikan jika file sudah tidak ada
+      }
+    })
+  );
+
   revalidateAllPublic();
+  revalidatePath("/curator");
+  revalidatePath("/messages");
+  revalidatePath(`/creators/${targetResult.rows[0].username}`);
   return { success: true };
 }
 
@@ -82,7 +111,8 @@ export async function createCategoryAction(prevState, formData) {
   const admin = await requireAdmin();
   if (!admin) return { error: "Akses ditolak. Khusus Admin." };
 
-  const name = formData.get("name")?.trim();
+  const rawName = formData.get("name");
+  const name = typeof rawName === "string" ? rawName.trim() : "";
   if (!name) {
     return { error: "Nama kategori wajib diisi." };
   }
@@ -104,8 +134,8 @@ export async function updateCategoryAction(categoryId, name) {
   const admin = await requireAdmin();
   if (!admin) return { error: "Akses ditolak. Khusus Admin." };
 
-  const targetId = Number(categoryId);
-  const cleanName = (name || "").trim();
+  const targetId = parsePositiveInt(categoryId);
+  const cleanName = typeof name === "string" ? name.trim() : "";
   if (!targetId || !cleanName) {
     return { error: "Nama kategori tidak boleh kosong." };
   }
@@ -127,7 +157,7 @@ export async function deleteCategoryAction(categoryId) {
   const admin = await requireAdmin();
   if (!admin) return { error: "Akses ditolak. Khusus Admin." };
 
-  const targetId = Number(categoryId);
+  const targetId = parsePositiveInt(categoryId);
   if (!targetId) return { error: "ID kategori tidak valid." };
 
   const usage = await query("SELECT COUNT(*)::int AS total FROM artworks WHERE category_id = $1", [targetId]);
@@ -145,7 +175,7 @@ export async function dismissReportAction(artworkId) {
   const admin = await requireAdmin();
   if (!admin) return { error: "Akses ditolak. Khusus Admin." };
 
-  const targetArtworkId = Number(artworkId);
+  const targetArtworkId = parsePositiveInt(artworkId);
   if (!targetArtworkId) return { error: "ID karya tidak valid." };
 
   await ensureReportsTable();
@@ -158,6 +188,7 @@ export async function dismissReportAction(artworkId) {
   );
 
   revalidatePath("/admin");
+  revalidatePath("/home");
   return { success: true };
 }
 
@@ -165,7 +196,7 @@ export async function takeDownArtworkAction(artworkId) {
   const admin = await requireAdmin();
   if (!admin) return { error: "Akses ditolak. Khusus Admin." };
 
-  const targetArtworkId = Number(artworkId);
+  const targetArtworkId = parsePositiveInt(artworkId);
   if (!targetArtworkId) return { error: "ID karya tidak valid." };
 
   await ensureReportsTable();
@@ -191,5 +222,6 @@ export async function takeDownArtworkAction(artworkId) {
   }
 
   revalidateAllPublic();
+  revalidatePath(`/artworks/${targetArtworkId}`);
   return { success: true };
 }

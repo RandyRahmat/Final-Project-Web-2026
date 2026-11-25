@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { query, ensureCollectionsTables } from "@/lib/db";
+import { query, ensureCollectionsTables, getOngoingChallengesCount } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import FavoritesClient from "@/components/favorites-client";
 
@@ -73,10 +73,11 @@ export default async function FavoritesPage() {
     [currentUser.id]
   );
 
-  // 3. Ambil daftar kategori untuk filter di halaman Favorites
-  const categoriesResult = await query(
-    "SELECT id, name FROM categories ORDER BY name ASC"
-  );
+  // 3. Ambil daftar kategori & jumlah challenge ongoing
+  const [categoriesResult, ongoingChallengesCount] = await Promise.all([
+    query("SELECT id, name FROM categories ORDER BY name ASC"),
+    getOngoingChallengesCount(),
+  ]);
 
   return (
     <FavoritesClient
@@ -84,6 +85,7 @@ export default async function FavoritesPage() {
       artworks={favoritesResult.rows}
       collections={collectionsResult.rows}
       categories={categoriesResult.rows}
+      ongoingChallengesCount={ongoingChallengesCount}
     />
   );
 }

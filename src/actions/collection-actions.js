@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { query, ensureCollectionsTables } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { parsePositiveInt } from "@/lib/validation";
 
 export async function createCollectionAction(prevState, formData) {
   const user = await getCurrentUser();
@@ -10,8 +11,10 @@ export async function createCollectionAction(prevState, formData) {
     return { error: "Hanya Member yang dapat membuat moodboard koleksi." };
   }
 
-  const name = formData.get("name")?.trim();
-  const description = formData.get("description")?.trim() || "";
+  const rawName = formData.get("name");
+  const rawDescription = formData.get("description");
+  const name = typeof rawName === "string" ? rawName.trim() : "";
+  const description = typeof rawDescription === "string" ? rawDescription.trim() : "";
 
   if (!name) {
     return { error: "Nama moodboard wajib diisi." };
@@ -48,9 +51,11 @@ export async function updateCollectionAction(prevState, formData) {
     return { error: "Aksi tidak diizinkan." };
   }
 
-  const collectionId = Number(formData.get("collectionId"));
-  const name = formData.get("name")?.trim();
-  const description = formData.get("description")?.trim() || "";
+  const collectionId = parsePositiveInt(formData.get("collectionId"));
+  const rawName = formData.get("name");
+  const rawDescription = formData.get("description");
+  const name = typeof rawName === "string" ? rawName.trim() : "";
+  const description = typeof rawDescription === "string" ? rawDescription.trim() : "";
 
   if (!collectionId || !name) {
     return { error: "Nama moodboard wajib diisi." };
@@ -93,7 +98,7 @@ export async function deleteCollectionAction(collectionId) {
     return { error: "Aksi tidak diizinkan." };
   }
 
-  const targetId = Number(collectionId);
+  const targetId = parsePositiveInt(collectionId);
   if (!targetId) {
     return { error: "Moodboard tidak valid." };
   }
@@ -119,8 +124,8 @@ export async function toggleArtworkInCollectionAction(collectionId, artworkId) {
     return { error: "Hanya Member yang dapat mengatur moodboard." };
   }
 
-  const targetCollectionId = Number(collectionId);
-  const targetArtworkId = Number(artworkId);
+  const targetCollectionId = parsePositiveInt(collectionId);
+  const targetArtworkId = parsePositiveInt(artworkId);
 
   if (!targetCollectionId || !targetArtworkId) {
     return { error: "Data koleksi atau karya tidak valid." };

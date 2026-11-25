@@ -98,18 +98,27 @@ export default function AdminDashboardClient({
   }, [categories, q]);
 
   const runAction = async (key, fn, successMessage) => {
+    if (busyKey) return null;
     setBusyKey(key);
     setNotice({ type: "", text: "" });
-    const res = await fn();
-    setBusyKey("");
-    if (res?.error) {
-      setNotice({ type: "error", text: res.error });
-      toast.error("Tindakan gagal", res.error);
-    } else if (successMessage) {
-      setNotice({ type: "success", text: successMessage });
-      toast.success(successMessage);
+    try {
+      const res = await fn();
+      if (res?.error) {
+        setNotice({ type: "error", text: res.error });
+        toast.error("Tindakan gagal", res.error);
+      } else if (successMessage) {
+        setNotice({ type: "success", text: successMessage });
+        toast.success(successMessage);
+      }
+      return res;
+    } catch {
+      const msg = "Terjadi kesalahan jaringan. Silakan coba lagi.";
+      setNotice({ type: "error", text: msg });
+      toast.error("Tindakan gagal", msg);
+      return { error: msg };
+    } finally {
+      setBusyKey("");
     }
-    return res;
   };
 
   const handleVerifyCurator = async (curator, status) => {
@@ -204,7 +213,10 @@ export default function AdminDashboardClient({
     <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       <Sidebar
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          setNotice({ type: "", text: "" });
+        }}
         pendingCuratorsCount={pendingCurators.length}
         pendingReportsCount={moderationQueue.length}
         adminUser={adminUser}
@@ -415,9 +427,9 @@ export default function AdminDashboardClient({
                 <div className="space-y-5">
                   {filteredModeration.map((item) => (
                     <div key={item.artwork_id} className="glass spotlight grid grid-cols-1 gap-5 rounded-2xl border border-white/15 p-5 lg:grid-cols-12">
-                      <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-900 lg:col-span-3">
-                        <img src={item.artwork_image_url} alt={item.artwork_title} className="h-48 w-full object-cover" />
-                      </div>
+                      <Link href={`/artworks/${item.artwork_id}`} className="block overflow-hidden rounded-xl border border-white/10 bg-zinc-900 transition hover:border-champagne-300/50 lg:col-span-3">
+                        <img src={item.artwork_image_url} alt={item.artwork_title} className="h-48 w-full object-cover transition duration-500 hover:scale-105" />
+                      </Link>
 
                       <div className="flex flex-col justify-between lg:col-span-9">
                         <div>
@@ -426,7 +438,9 @@ export default function AdminDashboardClient({
                               <span className="rounded-full border border-champagne-300/30 bg-champagne-400/10 px-2.5 py-0.5 text-[9px] uppercase tracking-wider text-champagne-200">
                                 {item.category_name}
                               </span>
-                              <h3 className="font-display mt-2 text-2xl text-white">{item.artwork_title}</h3>
+                              <Link href={`/artworks/${item.artwork_id}`} className="font-display mt-2 block text-2xl text-white transition hover:text-champagne-200">
+                                {item.artwork_title} ↗
+                              </Link>
                               <p className="text-xs text-zinc-400">
                                 Kreator:{" "}
                                 <Link href={`/creators/${item.artist_username}`} className="text-champagne-200 underline hover:text-white">
@@ -517,7 +531,14 @@ export default function AdminDashboardClient({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.05]">
-                    {filteredUsers.map((u) => {
+                    {filteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-5 py-12 text-center text-xs text-zinc-400">
+                          Tidak ada pengguna yang sesuai dengan filter pencarian.
+                        </td>
+                      </tr>
+                    ) : (
+                    filteredUsers.map((u) => {
                       const canDelete = u.role !== "Admin" && Number(u.id) !== Number(adminUser.id);
                       return (
                         <tr key={u.id} className="transition hover:bg-white/[0.03]">
@@ -558,7 +579,7 @@ export default function AdminDashboardClient({
                           </td>
                         </tr>
                       );
-                    })}
+                    }))}
                   </tbody>
                 </table>
               </div>
@@ -570,7 +591,7 @@ export default function AdminDashboardClient({
             <section className="max-w-3xl space-y-6">
               <div>
                 <p className="eyebrow">CATEGORY MANAGEMENT</p>
-                <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">Manajemen Kategori Karya ({categories.length})</h2>
+                <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">Manajemen Kategori Karya ({filteredCategories.length})</h2>
               </div>
 
               {/* Form Tambah Kategori */}
@@ -606,7 +627,12 @@ export default function AdminDashboardClient({
 
               {/* Daftar Kategori */}
               <div className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/15">
-                {filteredCategories.map((cat) => {
+                {filteredCategories.length === 0 ? (
+                  <p className="px-5 py-10 text-center text-xs text-zinc-400">
+                    Tidak ada kategori yang sesuai dengan pencarian.
+                  </p>
+                ) : (
+                filteredCategories.map((cat) => {
                   const isEditingThis = editingCatId === cat.id;
                   return (
                     <div key={cat.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 transition hover:bg-white/[0.02]">
@@ -614,8 +640,18 @@ export default function AdminDashboardClient({
                         <div className="flex flex-1 items-center gap-2">
                           <input
                             type="text"
+                            autoFocus
                             value={editingCatName}
                             onChange={(e) => setEditingCatName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSaveCategoryEdit(cat.id);
+                              } else if (e.key === "Escape") {
+                                setEditingCatId(null);
+                                setEditingCatName("");
+                              }
+                            }}
                             className="input-lux flex-1 py-1.5"
                           />
                           <button
@@ -667,7 +703,7 @@ export default function AdminDashboardClient({
                       )}
                     </div>
                   );
-                })}
+                }))}
               </div>
             </section>
           )}

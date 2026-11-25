@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 const ToastContext = createContext(null);
 
@@ -8,6 +8,14 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const idCounterRef = useRef(1);
   const timersRef = useRef(new Map());
+
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      timers.clear();
+    };
+  }, []);
 
   const dismiss = useCallback((id) => {
     const timer = timersRef.current.get(id);
@@ -18,20 +26,30 @@ export function ToastProvider({ children }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const push = useCallback(
-    ({ type = "success", title, description = "", duration = 3200 }) => {
-      if (!title) return;
-      const id = idCounterRef.current++;
-      setToasts((prev) => [...prev.slice(-3), { id, type, title, description, duration }]);
+  const push = useCallback(({ type = "success", title, description = "", duration = 3200 }) => {
+    if (!title) return;
+    const id = idCounterRef.current++;
 
-      const timer = window.setTimeout(() => {
-        timersRef.current.delete(id);
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, duration);
-      timersRef.current.set(id, timer);
-    },
-    []
-  );
+    setToasts((prev) => {
+      if (prev.length >= 4) {
+        const evicted = prev.slice(0, prev.length - 3);
+        evicted.forEach((old) => {
+          const oldTimer = timersRef.current.get(old.id);
+          if (oldTimer) {
+            window.clearTimeout(oldTimer);
+            timersRef.current.delete(old.id);
+          }
+        });
+      }
+      return [...prev.slice(-3), { id, type, title, description, duration }];
+    });
+
+    const timer = window.setTimeout(() => {
+      timersRef.current.delete(id);
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, duration);
+    timersRef.current.set(id, timer);
+  }, []);
 
   const api = useMemo(
     () => ({
@@ -47,11 +65,11 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={api}>
       {children}
 
-      {/* TOAST STACK */}
+      {/* TOAST STACK — diposisikan di kanan atas agar tidak pernah menimpa BackToTop atau MobileBottomNav */}
       <div
         aria-live="polite"
         aria-atomic="false"
-        className="pointer-events-none fixed inset-x-4 bottom-24 z-[170] flex flex-col items-end gap-2.5 sm:inset-x-auto sm:right-6 sm:w-[340px] lg:bottom-6"
+        className="pointer-events-none fixed inset-x-4 top-20 z-[170] flex flex-col items-end gap-2.5 sm:inset-x-auto sm:right-6 sm:w-[360px] lg:top-6"
       >
         {toasts.map((item) => {
           const isError = item.type === "error";
@@ -60,7 +78,7 @@ export function ToastProvider({ children }) {
           return (
             <div
               key={item.id}
-              role="status"
+              role={isError ? "alert" : "status"}
               className={`toast-in pointer-events-auto relative w-full overflow-hidden rounded-2xl border bg-[#111115]/95 px-4 py-3.5 text-zinc-100 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.9)] backdrop-blur-md ${
                 isError
                   ? "border-rose-400/35"
@@ -98,7 +116,9 @@ export function ToastProvider({ children }) {
                 <div className="min-w-0 flex-1 pr-2">
                   <p className="text-xs font-medium leading-snug text-white">{item.title}</p>
                   {item.description && (
-                    <p className="mt-0.5 truncate text-[10px] text-zinc-400">{item.description}</p>
+                    <p className="mt-0.5 break-words text-[10px] leading-relaxed text-zinc-400">
+                      {item.description}
+                    </p>
                   )}
                 </div>
 

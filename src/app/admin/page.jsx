@@ -19,15 +19,13 @@ export default async function AdminDashboardPage() {
 
   // 1. Data Admin yang sedang login
   const adminResult = await query(
-    "SELECT id, display_name, username, email FROM users WHERE id = $1",
+    "SELECT id, display_name, username, email, avatar_url FROM users WHERE id = $1 AND role = 'Admin'",
     [currentUser.id]
   );
-  const adminUser = adminResult.rows[0] || {
-    id: currentUser.id,
-    display_name: currentUser.displayName,
-    username: currentUser.username,
-    email: "",
-  };
+  if (adminResult.rows.length === 0) {
+    redirect("/");
+  }
+  const adminUser = adminResult.rows[0];
 
   // 2. Query Agregasi Statistik Platform
   const roleStatsResult = await query(
@@ -46,7 +44,7 @@ export default async function AdminDashboardPage() {
     `SELECT
       (SELECT COUNT(*)::int FROM artworks) AS total_artworks,
       (SELECT COUNT(*)::int FROM reports WHERE status = 'Pending') AS pending_reports,
-      (SELECT COUNT(*)::int FROM challenges WHERE end_date >= NOW()) AS active_challenges,
+      (SELECT COUNT(*)::int FROM challenges WHERE (start_date IS NULL OR start_date <= NOW()) AND end_date >= NOW()) AS active_challenges,
       (SELECT COUNT(*)::int FROM users WHERE role = 'Curator' AND curator_status = 'Pending') AS pending_curators`
   );
   const summary = summaryStatsResult.rows[0] || {

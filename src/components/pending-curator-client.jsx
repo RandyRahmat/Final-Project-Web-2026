@@ -28,10 +28,16 @@ export default function PendingCuratorClient({ curator }) {
     if (!confirmed) return;
     setDeleting(true);
     setError("");
-    const res = await deleteRejectedCuratorAccountAction();
-    setDeleting(false);
-    if (res?.error) {
-      setError(res.error);
+    try {
+      const res = await deleteRejectedCuratorAccountAction();
+      if (res?.error) {
+        setError(res.error);
+      }
+    } catch (err) {
+      if (err?.digest?.startsWith("NEXT_REDIRECT")) throw err;
+      setError("Gagal menghapus akun. Silakan coba lagi.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -99,7 +105,7 @@ export default function PendingCuratorClient({ curator }) {
           )}
 
           <Link href="/home" className="btn-ghost block w-full rounded-full py-2.5 text-[10px] uppercase tracking-[0.18em]">
-            Jelajahi Galeri (/home)
+            Jelajahi Galeri
           </Link>
 
           <form action={logoutUserAction}>

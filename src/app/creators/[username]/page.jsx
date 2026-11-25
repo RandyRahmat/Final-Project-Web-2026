@@ -1,13 +1,18 @@
 import { notFound } from "next/navigation";
 import { query, ensureUserProfileColumns, ensureFollowsTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { safeDecodeURIComponent } from "@/lib/validation";
 import CreatorProfileClient from "@/components/creator-profile-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function CreatorProfilePage({ params }) {
   const { username } = await params;
-  const decodedUsername = decodeURIComponent(username).toLowerCase();
+  const decoded = safeDecodeURIComponent(username);
+  if (!decoded) {
+    notFound();
+  }
+  const decodedUsername = decoded.toLowerCase();
 
   await ensureUserProfileColumns();
   await ensureFollowsTable();
@@ -17,7 +22,7 @@ export default async function CreatorProfilePage({ params }) {
 
   // 1. Ambil data publik kreator berdasarkan username
   const creatorResult = await query(
-    `SELECT id, display_name, username, role, avatar_url, bio, external_link
+    `SELECT id, display_name, username, role, curator_status, avatar_url, bio, external_link
      FROM users
      WHERE LOWER(username) = $1`,
     [decodedUsername]
@@ -28,6 +33,9 @@ export default async function CreatorProfilePage({ params }) {
   }
 
   const creator = creatorResult.rows[0];
+  if (creator.role === "Curator" && creator.curator_status !== "Approved") {
+    notFound();
+  }
 
   // 2. Ambil semua karya milik kreator tersebut beserta reaksi & favorit user aktif
   const artworksResult = await query(

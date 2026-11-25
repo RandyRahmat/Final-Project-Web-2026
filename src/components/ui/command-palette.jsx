@@ -1,123 +1,172 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import NavIcon from "@/components/ui/nav-icon";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 
 const QUICK_PAGES = [
-  { id: "page-home", title: "Home", subtitle: "Beranda & karya unggulan", href: "/home", icon: "home", keywords: "home beranda utama" },
-  { id: "page-explore", title: "Explore Gallery", subtitle: "Jelajahi karya, tag & kreator", href: "/explore", icon: "explore", keywords: "explore jelajah galeri cari" },
-  { id: "page-challenges", title: "Challenges & Events", subtitle: "Kompetisi seni aktif & pemenang", href: "/challenges", icon: "challenges", keywords: "challenge event lomba kompetisi" },
-  { id: "page-favorites", title: "Favorites & Moodboards", subtitle: "Koleksi karya tersimpan", href: "/favorites", icon: "favorites", keywords: "favorites favorit moodboard simpan" },
-  { id: "page-messages", title: "Messages", subtitle: "Pesan langsung antar pengguna", href: "/messages", icon: "messages", keywords: "messages pesan chat inbox dm" },
-  { id: "page-profile", title: "My Profile", subtitle: "Kelola profil, karya & akun", href: "/profile", icon: "profile", keywords: "profile profil akun saya" },
-  { id: "page-curator", title: "Curator Studio", subtitle: "Dashboard kelola challenge kurator", href: "/curator", icon: "curator", keywords: "curator kurator studio" },
-  { id: "page-admin", title: "Admin Console", subtitle: "Panel moderasi & manajemen platform", href: "/admin", icon: "admin", keywords: "admin console moderasi" },
+  { id: "page-home", title: "Home", subtitle: "Beranda & karya unggulan", href: "/home", icon: "home", keywords: "home beranda utama", roles: "all" },
+  { id: "page-explore", title: "Explore Gallery", subtitle: "Jelajahi karya, tag & kreator", href: "/explore", icon: "explore", keywords: "explore jelajah galeri cari", roles: "all" },
+  { id: "page-challenges", title: "Challenges & Events", subtitle: "Kompetisi seni aktif & pemenang", href: "/challenges", icon: "challenges", keywords: "challenge event lomba kompetisi", roles: "all" },
+  { id: "page-favorites", title: "Favorites & Moodboards", subtitle: "Koleksi karya tersimpan", href: "/favorites", icon: "favorites", keywords: "favorites favorit moodboard simpan", roles: ["Member"] },
+  { id: "page-messages", title: "Messages", subtitle: "Pesan langsung antar pengguna", href: "/messages", icon: "messages", keywords: "messages pesan chat inbox dm", roles: ["Member", "Curator", "Admin"] },
+  { id: "page-profile", title: "My Profile", subtitle: "Kelola profil, karya & akun", href: "/profile", icon: "profile", keywords: "profile profil akun saya", roles: ["Member", "Curator", "Admin"] },
+  { id: "page-curator", title: "Curator Studio", subtitle: "Dashboard kelola challenge kurator", href: "/curator", icon: "curator", keywords: "curator kurator studio", roles: ["CuratorApproved"] },
+  { id: "page-admin", title: "Admin Console", subtitle: "Panel moderasi & manajemen platform", href: "/admin", icon: "admin", keywords: "admin console moderasi", roles: ["Admin"] },
 ];
 
 export default function CommandPalette() {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [queryText, setQueryText] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const [userAccess, setUserAccess] = useState({ role: "Guest", curatorStatus: null });
   const [results, setResults] = useState({ artworks: [], creators: [], challenges: [] });
+  const [resolvedQuery, setResolvedQuery] = useState("");
   const inputRef = useRef(null);
+  const openRef = useRef(false);
+  const itemRefs = useRef(new Map());
+
+  const isDisabledRoute = pathname === "/";
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   const openPalette = useCallback(() => {
+    if (isDisabledRoute) return;
     setOpen(true);
     setActiveIndex(0);
-  }, []);
+    setSearchError(false);
+  }, [isDisabledRoute]);
 
   const closePalette = useCallback(() => {
     setOpen(false);
     setQueryText("");
     setActiveIndex(0);
+    setLoading(false);
+    setSearchError(false);
   }, []);
 
   // Global Ctrl+K / Cmd+K shortcut & custom trigger event
   useEffect(() => {
+    if (isDisabledRoute) return;
+
     const onKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((prev) => {
-          const next = !prev;
-          if (!next) setQueryText("");
-          setActiveIndex(0);
-          return next;
-        });
-      } else if (e.key === "Escape") {
-        setOpen(false);
+        if (openRef.current) {
+          closePalette();
+        } else {
+          openPalette();
+        }
+      } else if (e.key === "Escape" && openRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        closePalette();
       }
     };
 
     const onCustomOpen = () => openPalette();
 
-    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("aesthe:open-command", onCustomOpen);
     return () => {
-      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keydown", onKeyDown, true);
       window.removeEventListener("aesthe:open-command", onCustomOpen);
     };
-  }, [openPalette]);
+  }, [isDisabledRoute, openPalette, closePalette]);
 
-  // Focus input & lock scroll while open
+  // Focus input & lock scroll while open (ref-counted)
+  useBodyScrollLock(open && !isDisabledRoute);
+
   useEffect(() => {
-    if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (!open || isDisabledRoute) return;
     const t = window.setTimeout(() => inputRef.current?.focus(), 20);
     return () => {
-      document.body.style.overflow = prevOverflow;
       window.clearTimeout(t);
     };
-  }, [open]);
+  }, [open, isDisabledRoute]);
 
   // Debounced live search fetch from PostgreSQL API
   useEffect(() => {
-    if (!open) return;
+    if (!open || isDisabledRoute) return;
     const controller = new AbortController();
+    const trimmed = queryText.trim();
+
     const timer = window.setTimeout(async () => {
       setLoading(true);
+      setSearchError(false);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(queryText.trim())}`, {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
           signal: controller.signal,
         });
-        if (res.ok) {
-          const data = await res.json();
+        if (!res.ok) {
+          throw new Error("Search failed");
+        }
+        const data = await res.json();
+        if (!controller.signal.aborted) {
+          setUserAccess({
+            role: data.role || "Guest",
+            curatorStatus: data.curatorStatus || null,
+          });
           setResults({
             artworks: data.artworks || [],
             creators: data.creators || [],
             challenges: data.challenges || [],
           });
+          setResolvedQuery(trimmed);
         }
       } catch (err) {
-        if (err.name !== "AbortError") {
+        if (!controller.signal.aborted && err?.name !== "AbortError") {
+          setSearchError(true);
           setResults({ artworks: [], creators: [], challenges: [] });
+          setResolvedQuery(trimmed);
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
-    }, queryText.trim() ? 180 : 0);
+    }, trimmed ? 180 : 0);
 
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [open, queryText]);
+  }, [open, isDisabledRoute, queryText]);
 
   const flatItems = useMemo(() => {
     const q = queryText.trim().toLowerCase();
-    const pages = QUICK_PAGES.filter(
-      (p) => !q || p.title.toLowerCase().includes(q) || p.subtitle.toLowerCase().includes(q) || p.keywords.includes(q)
-    ).slice(0, q ? 4 : 5);
+    const { role, curatorStatus } = userAccess;
+
+    const allowedPages = QUICK_PAGES.filter((p) => {
+      if (p.roles === "all") return true;
+      if (p.roles.includes("CuratorApproved")) {
+        return role === "Curator" && curatorStatus === "Approved";
+      }
+      return p.roles.includes(role);
+    });
+
+    const pages = allowedPages
+      .filter(
+        (p) =>
+          !q ||
+          p.title.toLowerCase().includes(q) ||
+          p.subtitle.toLowerCase().includes(q) ||
+          p.keywords.includes(q)
+      )
+      .slice(0, q ? 4 : 5);
 
     const items = [];
+    const showingSearchResults = Boolean(resolvedQuery);
 
     for (const art of results.artworks) {
       items.push({
         id: `art-${art.id}`,
-        group: q ? "Karya Ditemukan" : "Karya Populer",
+        group: showingSearchResults ? "Karya Ditemukan" : "Karya Populer",
         title: art.title,
         subtitle: `${art.artist_name} · ${art.category_name}`,
         href: `/artworks/${art.id}`,
@@ -140,7 +189,7 @@ export default function CommandPalette() {
     for (const ch of results.challenges) {
       items.push({
         id: `challenge-${ch.id}`,
-        group: q ? "Challenges" : "Challenge Aktif",
+        group: showingSearchResults ? "Challenges" : "Challenge Aktif",
         title: ch.title,
         subtitle: ch.prize ? `Hadiah: ${ch.prize}` : "Kompetisi Aesthe",
         href: `/challenges/${ch.id}`,
@@ -160,9 +209,15 @@ export default function CommandPalette() {
     }
 
     return items;
-  }, [queryText, results]);
+  }, [queryText, results, resolvedQuery, userAccess]);
 
   const safeActiveIndex = flatItems.length > 0 ? Math.min(activeIndex, flatItems.length - 1) : 0;
+
+  useEffect(() => {
+    if (!open || flatItems.length === 0) return;
+    const node = itemRefs.current.get(safeActiveIndex);
+    node?.scrollIntoView({ block: "nearest" });
+  }, [open, safeActiveIndex, flatItems.length]);
 
   const navigateTo = useCallback(
     (href) => {
@@ -172,16 +227,16 @@ export default function CommandPalette() {
     [closePalette, router]
   );
 
-  const handleInputKeyDown = (e) => {
+  const handlePaletteKeyDown = (e) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (flatItems.length > 0) {
-        setActiveIndex((prev) => (prev + 1) % flatItems.length);
+        setActiveIndex((safeActiveIndex + 1) % flatItems.length);
       }
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (flatItems.length > 0) {
-        setActiveIndex((prev) => (prev - 1 + flatItems.length) % flatItems.length);
+        setActiveIndex((safeActiveIndex - 1 + flatItems.length) % flatItems.length);
       }
     } else if (e.key === "Enter" && flatItems[safeActiveIndex]) {
       e.preventDefault();
@@ -189,7 +244,7 @@ export default function CommandPalette() {
     }
   };
 
-  if (!open) return null;
+  if (!open || isDisabledRoute) return null;
 
   const grouped = flatItems.reduce((acc, item, index) => {
     if (!acc[item.group]) acc[item.group] = [];
@@ -199,10 +254,12 @@ export default function CommandPalette() {
 
   return (
     <div
+      data-command-palette-open="true"
       role="dialog"
       aria-modal="true"
       aria-label="Quick Search Command Palette"
       onClick={closePalette}
+      onKeyDown={handlePaletteKeyDown}
       className="modal-overlay fixed inset-0 z-[160] flex items-start justify-center bg-black/75 px-4 pt-[10vh] backdrop-blur-md"
     >
       <div
@@ -222,7 +279,6 @@ export default function CommandPalette() {
               setQueryText(e.target.value);
               setActiveIndex(0);
             }}
-            onKeyDown={handleInputKeyDown}
             placeholder="Cari karya, kreator, challenge, atau pindah halaman..."
             className="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none"
           />
@@ -240,6 +296,11 @@ export default function CommandPalette() {
 
         {/* RESULTS LIST */}
         <div data-lenis-prevent className="overflow-y-auto px-3 py-3">
+          {searchError && (
+            <p className="mb-2 px-3 text-[11px] text-rose-300">
+              Pencarian server sedang terkendala. Menampilkan navigasi cepat yang tersedia.
+            </p>
+          )}
           {flatItems.length === 0 ? (
             <div className="py-10 text-center">
               <p className="font-display text-xl text-zinc-300">Tidak ada hasil ditemukan</p>
@@ -258,6 +319,10 @@ export default function CommandPalette() {
                       return (
                         <button
                           key={item.id}
+                          ref={(el) => {
+                            if (el) itemRefs.current.set(item.flatIndex, el);
+                            else itemRefs.current.delete(item.flatIndex);
+                          }}
                           type="button"
                           onMouseEnter={() => setActiveIndex(item.flatIndex)}
                           onClick={() => navigateTo(item.href)}

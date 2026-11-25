@@ -5,6 +5,16 @@ const nextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  async headers() {
+    return [
+      {
+        source: "/uploads/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

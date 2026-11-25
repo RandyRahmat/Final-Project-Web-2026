@@ -31,9 +31,107 @@ const MARQUEE_COLUMNS = [
   ],
 ];
 
+function ForgotPasswordFlow({ email, onEmailChange, onBackToLogin }) {
+  const [verifyResetState, verifyResetAction, isVerifyingReset] = useActionState(verifyAccountForResetAction, null);
+  const [resetState, resetFormAction, isResetting] = useActionState(resetPasswordAction, null);
+
+  const isResetVerified = Boolean(verifyResetState?.verified && verifyResetState?.resetToken);
+  const activeError = isResetVerified ? resetState?.error : verifyResetState?.error;
+  const isSubmitting = isResetVerified ? isResetting : isVerifyingReset;
+
+  return (
+    <>
+      <div className="mb-6 flex flex-col items-center text-center">
+        <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow mb-3 h-10 w-10 object-contain mix-blend-screen" />
+        <h3 className="font-display text-3xl tracking-wide text-white">Pulihkan Kata Sandi</h3>
+        <p className="mt-1 text-xs text-zinc-400">
+          {isResetVerified
+            ? `Akun ${verifyResetState.displayName} terverifikasi. Buat kata sandi baru.`
+            : "Verifikasi email dan username akun untuk mengatur ulang kata sandi."}
+        </p>
+      </div>
+
+      {activeError && (
+        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+          {activeError}
+        </div>
+      )}
+
+      {resetState?.success ? (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs leading-relaxed text-emerald-300">
+            {resetState.message}
+          </div>
+          <button type="button" onClick={onBackToLogin} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
+            Kembali ke Login
+          </button>
+        </div>
+      ) : isResetVerified ? (
+        <form key="forgot-reset-form" action={resetFormAction} className="space-y-4">
+          <input type="hidden" name="resetToken" value={verifyResetState.resetToken} />
+
+          <div>
+            <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi Baru</label>
+            <input type="password" name="newPassword" required minLength={6} placeholder="Minimal 6 karakter" className="input-lux" />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Konfirmasi Kata Sandi</label>
+            <input type="password" name="confirmPassword" required minLength={6} placeholder="Ulangi kata sandi baru" className="input-lux" />
+          </div>
+
+          <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
+            {isSubmitting ? "Menyimpan..." : "Simpan Kata Sandi Baru"}
+          </button>
+
+          <button type="button" onClick={onBackToLogin} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
+            &larr; Kembali ke halaman masuk
+          </button>
+        </form>
+      ) : (
+        <form key="forgot-verify-form" action={verifyResetAction} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email Terdaftar</label>
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(e) => onEmailChange(e.target.value)}
+              required
+              placeholder="name@example.com"
+              className="input-lux"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username Terdaftar</label>
+            <input
+              type="text"
+              name="username"
+              required
+              autoFocus={Boolean(email.trim())}
+              placeholder="Username_Terdaftar"
+              className="input-lux"
+            />
+          </div>
+
+          <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
+            {isSubmitting ? "Memverifikasi..." : "Verifikasi Akun"}
+          </button>
+
+          <button type="button" onClick={onBackToLogin} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
+            &larr; Kembali ke halaman masuk
+          </button>
+        </form>
+      )}
+    </>
+  );
+}
+
 export default function WelcomePage() {
   const [step, setStep] = useState(0);
   const [authMode, setAuthMode] = useState("login");
+  const [forgotSessionKey, setForgotSessionKey] = useState(0);
   const [selectedRole, setSelectedRole] = useState("Member");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -41,10 +139,11 @@ export default function WelcomePage() {
 
   const [loginState, loginFormAction, isLoginPending] = useActionState(loginUserAction, null);
   const [registerState, registerFormAction, isRegisterPending] = useActionState(registerUserAction, null);
-  const [verifyResetState, verifyResetAction, isVerifyingReset] = useActionState(verifyAccountForResetAction, null);
-  const [resetState, resetFormAction, isResetting] = useActionState(resetPasswordAction, null);
 
   const switchAuthMode = (mode) => {
+    if (mode === "forgot") {
+      setForgotSessionKey((k) => k + 1);
+    }
     setAuthMode(mode);
     setShowPassword(false);
   };
@@ -80,23 +179,8 @@ export default function WelcomePage() {
     };
   }, []);
 
-  const isResetVerified = Boolean(verifyResetState?.verified && verifyResetState?.resetToken);
-  const activeError =
-    authMode === "login"
-      ? loginState?.error
-      : authMode === "register"
-      ? registerState?.error
-      : isResetVerified
-      ? resetState?.error
-      : verifyResetState?.error;
-  const isSubmitting =
-    authMode === "login"
-      ? isLoginPending
-      : authMode === "register"
-      ? isRegisterPending
-      : isResetVerified
-      ? isResetting
-      : isVerifyingReset;
+  const activeError = authMode === "login" ? loginState?.error : registerState?.error;
+  const isSubmitting = authMode === "login" ? isLoginPending : isRegisterPending;
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-transparent text-zinc-100 select-none">
@@ -229,100 +313,34 @@ export default function WelcomePage() {
               data-lenis-prevent
               className="max-h-[80vh] overflow-x-hidden overflow-y-auto rounded-3xl p-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-h-[84vh] sm:p-9"
             >
-              <div className="mb-6 flex flex-col items-center text-center">
-              <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow mb-3 h-10 w-10 object-contain mix-blend-screen" />
-              <h3 className="font-display text-3xl tracking-wide text-white">
-                {authMode === "login"
-                  ? "Masuk ke Akun Aesthe"
-                  : authMode === "register"
-                  ? "Buat Akun Baru"
-                  : "Pulihkan Kata Sandi"}
-              </h3>
-              <p className="mt-1 text-xs text-zinc-400">
-                {authMode === "login"
-                  ? "Masukkan kredensial untuk mengelola karya dan portofolio."
-                  : authMode === "register"
-                  ? "Bergabung sebagai kreator atau kurator pameran."
-                  : isResetVerified
-                  ? `Akun ${verifyResetState.displayName} terverifikasi. Buat kata sandi baru.`
-                  : "Verifikasi email dan username akun untuk mengatur ulang kata sandi."}
-              </p>
-            </div>
+              {authMode === "forgot" ? (
+                <ForgotPasswordFlow
+                  key={forgotSessionKey}
+                  email={email}
+                  onEmailChange={setEmail}
+                  onBackToLogin={() => switchAuthMode("login")}
+                />
+              ) : (
+                <>
+                  <div className="mb-6 flex flex-col items-center text-center">
+                    <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow mb-3 h-10 w-10 object-contain mix-blend-screen" />
+                    <h3 className="font-display text-3xl tracking-wide text-white">
+                      {authMode === "login" ? "Masuk ke Akun Aesthe" : "Buat Akun Baru"}
+                    </h3>
+                    <p className="mt-1 text-xs text-zinc-400">
+                      {authMode === "login"
+                        ? "Masukkan kredensial untuk mengelola karya dan portofolio."
+                        : "Bergabung sebagai kreator atau kurator pameran."}
+                    </p>
+                  </div>
 
-            {activeError && (
-              <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
-                {activeError}
-              </div>
-            )}
+                  {activeError && (
+                    <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                      {activeError}
+                    </div>
+                  )}
 
-            {authMode === "forgot" && resetState?.success ? (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs leading-relaxed text-emerald-300">
-                  {resetState.message}
-                </div>
-                <button type="button" onClick={() => switchAuthMode("login")} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
-                  Kembali ke Login
-                </button>
-              </div>
-            ) : authMode === "forgot" && isResetVerified ? (
-              <form key="forgot-reset-form" action={resetFormAction} className="space-y-4">
-                <input type="hidden" name="resetToken" value={verifyResetState.resetToken} />
-
-                <div>
-                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi Baru</label>
-                  <input type="password" name="newPassword" required minLength={6} placeholder="Minimal 6 karakter" className="input-lux" />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Konfirmasi Kata Sandi</label>
-                  <input type="password" name="confirmPassword" required minLength={6} placeholder="Ulangi kata sandi baru" className="input-lux" />
-                </div>
-
-                <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
-                  {isSubmitting ? "Menyimpan..." : "Simpan Kata Sandi Baru"}
-                </button>
-
-                <button type="button" onClick={() => switchAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
-                  &larr; Kembali ke halaman masuk
-                </button>
-              </form>
-            ) : authMode === "forgot" ? (
-              <form key="forgot-verify-form" action={verifyResetAction} className="space-y-4">
-                <div>
-                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email Terdaftar</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="name@example.com"
-                    className="input-lux"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username Terdaftar</label>
-                  <input
-                    type="text"
-                    name="username"
-                    required
-                    autoFocus={Boolean(email.trim())}
-                    placeholder="Username_Terdaftar"
-                    className="input-lux"
-                  />
-                </div>
-
-                <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
-                  {isSubmitting ? "Memverifikasi..." : "Verifikasi Akun"}
-                </button>
-
-                <button type="button" onClick={() => switchAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
-                  &larr; Kembali ke halaman masuk
-                </button>
-              </form>
-            ) : (
-              <form key={authMode === "login" ? "login-form" : "register-form"} action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
+                  <form key={authMode === "login" ? "login-form" : "register-form"} action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
                 {authMode === "register" && (
                   <>
                     <div>
@@ -425,6 +443,7 @@ export default function WelcomePage() {
                   {isSubmitting ? "Memproses..." : authMode === "login" ? "Masuk Sekarang" : "Daftar Sekarang"}
                 </button>
               </form>
+              </>
             )}
 
             {/* FOOTER DI DALAM KARTU: PENGALIH DAFTAR/MASUK + JELAJAHI TANPA AKUN */}

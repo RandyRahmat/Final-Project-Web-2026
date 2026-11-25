@@ -15,7 +15,6 @@ export default function AppSidebar({
   onCloseMobile,
   onOpenUpload,
   challengesCount,
-  favoritesCount,
   publicPortfolioUsername,
 }) {
   const role = currentUser?.role || "Guest";
@@ -27,6 +26,7 @@ export default function AppSidebar({
 
   const displayName = currentUser?.displayName || currentUser?.display_name || "User";
   const avatarUrl = currentUser?.avatarUrl || currentUser?.avatar_url || null;
+  const portfolioUsername = publicPortfolioUsername || currentUser?.username || null;
 
   const navItemClass = (isActive) =>
     `group relative overflow-hidden flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] transition-all duration-300 ${
@@ -40,11 +40,12 @@ export default function AppSidebar({
   return (
     <>
       {mobileMenu && (
-        <div onClick={onCloseMobile} className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden" />
+        <div onClick={onCloseMobile} className="fixed inset-0 z-[45] bg-black/70 backdrop-blur-sm lg:hidden" />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0a0a0b]/92 px-6 py-7 backdrop-blur-md transition-all duration-300 lg:translate-x-0 ${
+        data-lenis-prevent
+        className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col overflow-y-auto border-r border-white/[0.07] bg-[#0a0a0b]/92 px-6 py-7 backdrop-blur-md transition-all duration-300 lg:translate-x-0 ${
           mobileMenu ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "lg:w-[78px] lg:px-3" : "lg:w-[250px]"}`}
       >
@@ -96,11 +97,6 @@ export default function AppSidebar({
                 {activeItem === "favorites" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
                 <NavIcon name="favorites" className={`h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110 ${activeItem === "favorites" ? "text-champagne-300" : ""}`} />
                 <span className={collapsed ? "lg:hidden" : ""}>Favorites</span>
-                {typeof favoritesCount === "number" && (
-                  <span className={`ml-auto rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200 ${collapsed ? "lg:hidden" : ""}`}>
-                    {favoritesCount}
-                  </span>
-                )}
               </Link>
             )}
 
@@ -108,7 +104,7 @@ export default function AppSidebar({
               {activeItem === "challenges" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
               <NavIcon name="challenges" className={`h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110 ${activeItem === "challenges" ? "text-champagne-300" : ""}`} />
               <span className={collapsed ? "lg:hidden" : ""}>Challenges</span>
-              {typeof challengesCount === "number" && (
+              {typeof challengesCount === "number" && challengesCount > 0 && (
                 <span className={`ml-auto rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200 ${collapsed ? "lg:hidden" : ""}`}>
                   {challengesCount}
                 </span>
@@ -152,8 +148,8 @@ export default function AppSidebar({
               </Link>
             )}
 
-            {isMember && publicPortfolioUsername && (
-              <Link href={`/creators/${publicPortfolioUsername}`} title="Public Portfolio" onClick={onCloseMobile} className={navItemClass(false)}>
+            {isMember && portfolioUsername && (
+              <Link href={`/creators/${portfolioUsername}`} title="Public Portfolio" onClick={onCloseMobile} className={navItemClass(false)}>
                 <NavIcon name="portfolio" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className={collapsed ? "lg:hidden" : ""}>Public Portfolio</span>
               </Link>
@@ -215,7 +211,7 @@ export default function AppSidebar({
             )}
 
             {isGuest && (
-              <Link href="/" title="Login / Register" onClick={onCloseMobile} className={navItemClass(false)}>
+              <Link href="/?step=login" title="Login / Register" onClick={onCloseMobile} className={navItemClass(false)}>
                 <NavIcon name="login" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className={collapsed ? "lg:hidden" : ""}>Login / Register</span>
               </Link>
@@ -259,12 +255,12 @@ export default function AppSidebar({
             </div>
           ) : (
             <div className={`glass flex items-center gap-3 rounded-2xl p-2.5 ${collapsed ? "lg:flex-col lg:gap-1.5 lg:p-2" : ""}`}>
-              <Link href="/" title="Sign In" onClick={onCloseMobile} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-800 text-xs text-zinc-400 transition hover:border-champagne-300/40 hover:text-champagne-200">
+              <Link href="/?step=login" title="Sign In" onClick={onCloseMobile} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-800 text-xs text-zinc-400 transition hover:border-champagne-300/40 hover:text-champagne-200">
                 G
               </Link>
               <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
                 <p className="truncate text-xs font-medium leading-tight text-white">Guest</p>
-                <Link href="/" onClick={onCloseMobile} className="text-[10px] text-zinc-400 transition hover:text-champagne-200">
+                <Link href="/?step=login" onClick={onCloseMobile} className="text-[10px] text-zinc-400 transition hover:text-champagne-200">
                   Sign In
                 </Link>
               </div>

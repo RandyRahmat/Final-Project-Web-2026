@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
-import { sendMessageAction } from "@/actions/message-actions";
+import { markConversationReadAction, sendMessageAction } from "@/actions/message-actions";
 
 function formatTime(dateValue) {
   if (!dateValue) return "";
@@ -12,51 +12,115 @@ function formatTime(dateValue) {
   return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 }
 
+function mergeMessages(prev, incoming) {
+  const byId = new Map();
+  for (const item of prev || []) {
+    if (item && item.id != null) byId.set(item.id, item);
+  }
+  for (const item of incoming || []) {
+    if (item && item.id != null) byId.set(item.id, item);
+  }
+  return Array.from(byId.values()).sort((a, b) => {
+    const timeDiff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    if (timeDiff !== 0) return timeDiff;
+    return Number(a.id) - Number(b.id);
+  });
+}
+
+function mergeConversations(prev, incoming, activePartnerId) {
+  if (!Array.isArray(incoming)) return prev;
+  const incomingIds = new Set(incoming.map((c) => Number(c.id)));
+  const extras = (prev || []).filter((c) => !incomingIds.has(Number(c.id)));
+  return [...extras, ...incoming].map((c) =>
+    Number(c.id) === Number(activePartnerId) ? { ...c, unread_count: 0 } : c
+  );
+}
+
 export default function MessagesClient({
   currentUser,
   initialConversations,
   initialPartnerId,
   initialMessages,
+  ongoingChallengesCount = 0,
 }) {
   const [conversations, setConversations] = useState(initialConversations);
   const [selectedPartnerId, setSelectedPartnerId] = useState(initialPartnerId);
   const [messages, setMessages] = useState(initialMessages);
+  const [mobileView, setMobileView] = useState(initialPartnerId ? "chat" : "list");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   const [error, setError] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
-  const bottomRef = useRef(null);
+  const messagesListRef = useRef(null);
+  const activePartnerRef = useRef(initialPartnerId);
+  const sendingRef = useRef(false);
+  const selectAbortRef = useRef(null);
 
-  const activePartner = conversations.find((c) => c.id === selectedPartnerId) || null;
+  const activePartner = conversations.find((c) => Number(c.id) === Number(selectedPartnerId)) || null;
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, selectedPartnerId]);
+    activePartnerRef.current = selectedPartnerId;
+  }, [selectedPartnerId]);
 
-  // Polling ringan tiap 5 detik untuk pesan masuk baru di percakapan aktif
+  useEffect(() => {
+    return () => {
+      selectAbortRef.current?.abort();
+    };
+  }, []);
+
+  // Tandai percakapan awal sebagai dibaca dari client saat benar-benar dibuka (bukan saat SSR GET/prefetch)
+  useEffect(() => {
+    if (!initialPartnerId) return;
+    let cancelled = false;
+    markConversationReadAction(initialPartnerId)
+      .then(() => {
+        if (!cancelled) {
+          setConversations((prev) =>
+            prev.map((c) => (Number(c.id) === Number(initialPartnerId) ? { ...c, unread_count: 0 } : c))
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [initialPartnerId]);
+
+  // Scroll hanya di dalam container pesan (bukan seluruh window browser)
+  useEffect(() => {
+    const el = messagesListRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages.length, selectedPartnerId, mobileView]);
+
+  // Polling ringan tiap 5 detik untuk pesan masuk baru & pembaruan unread seluruh percakapan
   useEffect(() => {
     if (!selectedPartnerId) return;
-    let cancelled = false;
+    const partnerId = selectedPartnerId;
+    let activeController = null;
 
     const fetchLatest = async () => {
+      if (sendingRef.current || Number(activePartnerRef.current) !== Number(partnerId)) return;
+      activeController?.abort();
+      const controller = new AbortController();
+      activeController = controller;
+
       try {
-        const res = await fetch(`/api/messages?with=${selectedPartnerId}`, { cache: "no-store" });
+        const res = await fetch(`/api/messages?with=${partnerId}&includeConversations=1`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (!res.ok) return;
         const data = await res.json();
-        if (!cancelled && Array.isArray(data.messages)) {
-          setMessages(data.messages);
-          const last = data.messages[data.messages.length - 1];
-          if (last) {
-            setConversations((prev) =>
-              prev.map((c) =>
-                c.id === selectedPartnerId
-                  ? { ...c, last_message: last.content, last_message_at: last.created_at, unread_count: 0 }
-                  : c
-              )
-            );
-          }
+        if (controller.signal.aborted || Number(activePartnerRef.current) !== Number(partnerId)) return;
+
+        if (Array.isArray(data.messages)) {
+          setMessages((prev) => mergeMessages(prev, data.messages));
+        }
+        if (Array.isArray(data.conversations)) {
+          setConversations((prev) => mergeConversations(prev, data.conversations, partnerId));
         }
       } catch {
         // Abaikan error jaringan sementara saat polling
@@ -65,54 +129,104 @@ export default function MessagesClient({
 
     const interval = setInterval(fetchLatest, 5000);
     return () => {
-      cancelled = true;
+      activeController?.abort();
       clearInterval(interval);
     };
   }, [selectedPartnerId]);
 
   const handleSelectPartner = async (partnerId) => {
+    setMobileView("chat");
+    if (Number(partnerId) === Number(selectedPartnerId)) return;
+
+    selectAbortRef.current?.abort();
+    const controller = new AbortController();
+    selectAbortRef.current = controller;
+
+    activePartnerRef.current = partnerId;
     setSelectedPartnerId(partnerId);
+    setMessages([]);
+    setDraft("");
     setError("");
     setLoadingChat(true);
+
     try {
-      const res = await fetch(`/api/messages?with=${partnerId}`, { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data.messages || []);
+      const res = await fetch(`/api/messages?with=${partnerId}&includeConversations=1`, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted || Number(activePartnerRef.current) !== Number(partnerId)) return;
+
+      if (!res.ok) {
+        setError("Gagal memuat percakapan. Silakan coba lagi.");
+        return;
+      }
+
+      const data = await res.json();
+      if (controller.signal.aborted || Number(activePartnerRef.current) !== Number(partnerId)) return;
+
+      setMessages(Array.isArray(data.messages) ? data.messages : []);
+      if (Array.isArray(data.conversations)) {
+        setConversations((prev) => mergeConversations(prev, data.conversations, partnerId));
+      } else {
         setConversations((prev) =>
-          prev.map((c) => (c.id === partnerId ? { ...c, unread_count: 0 } : c))
+          prev.map((c) => (Number(c.id) === Number(partnerId) ? { ...c, unread_count: 0 } : c))
         );
       }
+    } catch (err) {
+      if (err?.name !== "AbortError" && Number(activePartnerRef.current) === Number(partnerId)) {
+        setError("Gagal memuat percakapan. Periksa koneksi internetmu.");
+      }
     } finally {
-      setLoadingChat(false);
+      if (!controller.signal.aborted && Number(activePartnerRef.current) === Number(partnerId)) {
+        setLoadingChat(false);
+      }
     }
   };
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!selectedPartnerId || !draft.trim() || sending) return;
+    const targetPartnerId = selectedPartnerId;
+    const textToSend = draft.trim();
+    if (!targetPartnerId || !textToSend || sendingRef.current) return;
 
+    sendingRef.current = true;
     setSending(true);
     setError("");
-    const textToSend = draft.trim();
-    const res = await sendMessageAction(selectedPartnerId, textToSend);
-    setSending(false);
 
-    if (res?.error) {
-      setError(res.error);
-      return;
-    }
+    try {
+      const res = await sendMessageAction(targetPartnerId, textToSend);
 
-    if (res?.message) {
-      setMessages((prev) => [...prev, res.message]);
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === selectedPartnerId
-            ? { ...c, last_message: res.message.content, last_message_at: res.message.created_at }
-            : c
-        )
-      );
-      setDraft("");
+      if (res?.error) {
+        if (Number(activePartnerRef.current) === Number(targetPartnerId)) {
+          setError(res.error);
+        }
+        return;
+      }
+
+      if (res?.message) {
+        setConversations((prev) => {
+          const updated = prev.map((c) =>
+            Number(c.id) === Number(targetPartnerId)
+              ? { ...c, last_message: res.message.content, last_message_at: res.message.created_at, unread_count: 0 }
+              : c
+          );
+          const targetConv = updated.find((c) => Number(c.id) === Number(targetPartnerId));
+          if (!targetConv) return updated;
+          return [targetConv, ...updated.filter((c) => Number(c.id) !== Number(targetPartnerId))];
+        });
+
+        if (Number(activePartnerRef.current) === Number(targetPartnerId)) {
+          setMessages((prev) => mergeMessages(prev, [res.message]));
+          setDraft("");
+        }
+      }
+    } catch {
+      if (Number(activePartnerRef.current) === Number(targetPartnerId)) {
+        setError("Gagal mengirim pesan. Silakan coba lagi.");
+      }
+    } finally {
+      sendingRef.current = false;
+      setSending(false);
     }
   };
 
@@ -125,6 +239,7 @@ export default function MessagesClient({
         onToggleCollapse={toggleSidebarCollapsed}
         mobileMenu={mobileMenu}
         onCloseMobile={() => setMobileMenu(false)}
+        challengesCount={ongoingChallengesCount}
       />
 
       {/* MAIN CONTENT */}
@@ -143,16 +258,16 @@ export default function MessagesClient({
           </Link>
         </header>
 
-        <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col px-5 py-6 sm:px-8 lg:px-12">
-          <div className="glass grid min-h-[calc(100vh-140px)] flex-1 grid-cols-1 overflow-hidden rounded-3xl border border-white/15 md:grid-cols-12">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col px-4 py-4 sm:px-8 sm:py-6 lg:px-12">
+          <div className="glass grid h-[calc(100dvh-110px)] grid-cols-1 overflow-hidden rounded-3xl border border-white/15 sm:h-[calc(100dvh-132px)] md:grid-cols-12">
             {/* KOLOM KIRI: DAFTAR PERCAKAPAN */}
-            <section className="flex flex-col border-b border-white/[0.08] md:col-span-4 md:border-b-0 md:border-r">
-              <div className="border-b border-white/[0.06] px-5 py-4">
+            <section className={`${mobileView === "chat" && activePartner ? "hidden md:flex" : "flex"} min-h-0 flex-col border-b border-white/[0.08] md:col-span-4 md:border-b-0 md:border-r`}>
+              <div className="shrink-0 border-b border-white/[0.06] px-5 py-4">
                 <h1 className="font-display text-2xl text-white">Pesan Pribadi</h1>
                 <p className="mt-0.5 text-[10px] text-zinc-500">{conversations.length} percakapan</p>
               </div>
 
-              <div className="flex-1 overflow-y-auto">
+              <div data-lenis-prevent className="min-h-0 flex-1 overflow-y-auto">
                 {conversations.length === 0 ? (
                   <div className="px-6 py-16 text-center">
                     <p className="text-xs text-zinc-400">Belum ada percakapan.</p>
@@ -162,7 +277,7 @@ export default function MessagesClient({
                   </div>
                 ) : (
                   conversations.map((conv) => {
-                    const isSelected = conv.id === selectedPartnerId;
+                    const isSelected = Number(conv.id) === Number(selectedPartnerId);
                     return (
                       <button
                         key={conv.id}
@@ -204,34 +319,45 @@ export default function MessagesClient({
             </section>
 
             {/* KOLOM KANAN: RUANG CHAT */}
-            <section className="flex flex-col md:col-span-8">
+            <section className={`${mobileView === "list" && conversations.length > 0 ? "hidden md:flex" : "flex"} min-h-0 flex-col md:col-span-8`}>
               {activePartner ? (
                 <>
                   {/* CHAT HEADER */}
-                  <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
-                    <Link href={`/creators/${activePartner.username}`} className="flex items-center gap-3 transition hover:opacity-80">
-                      <div className="shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
-                        <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-semibold text-white">
-                          {activePartner.avatar_url ? (
-                            <img src={activePartner.avatar_url} alt={activePartner.display_name} className="h-full w-full object-cover" />
-                          ) : (
-                            activePartner.display_name?.charAt(0).toUpperCase() || "U"
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-white">{activePartner.display_name}</p>
-                        <p className="text-[10px] text-champagne-300/80">@{activePartner.username} &bull; {activePartner.role}</p>
-                      </div>
-                    </Link>
+                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/[0.06] px-4 py-3.5 sm:px-6 sm:py-4">
+                    <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setMobileView("list")}
+                        aria-label="Kembali ke daftar percakapan"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-sm text-zinc-300 transition hover:border-champagne-300/40 hover:text-white md:hidden"
+                      >
+                        &larr;
+                      </button>
 
-                    <Link href={`/creators/${activePartner.username}`} className="btn-ghost rounded-full px-3 py-1 text-[10px]">
+                      <Link href={`/creators/${activePartner.username}`} className="flex min-w-0 items-center gap-3 transition hover:opacity-80">
+                        <div className="shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-semibold text-white">
+                            {activePartner.avatar_url ? (
+                              <img src={activePartner.avatar_url} alt={activePartner.display_name} className="h-full w-full object-cover" />
+                            ) : (
+                              activePartner.display_name?.charAt(0).toUpperCase() || "U"
+                            )}
+                          </div>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-medium text-white">{activePartner.display_name}</p>
+                          <p className="truncate text-[10px] text-champagne-300/80">@{activePartner.username} &bull; {activePartner.role}</p>
+                        </div>
+                      </Link>
+                    </div>
+
+                    <Link href={`/creators/${activePartner.username}`} className="btn-ghost shrink-0 rounded-full px-3 py-1 text-[10px]">
                       Lihat Profil ↗
                     </Link>
                   </div>
 
                   {/* CHAT MESSAGES LIST */}
-                  <div className="flex-1 space-y-3 overflow-y-auto px-6 py-5">
+                  <div ref={messagesListRef} data-lenis-prevent className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-6">
                     {loadingChat ? (
                       <p className="py-12 text-center text-xs text-zinc-500">Memuat percakapan...</p>
                     ) : messages.length === 0 ? (
@@ -254,11 +380,10 @@ export default function MessagesClient({
                         );
                       })
                     )}
-                    <div ref={bottomRef} />
                   </div>
 
                   {/* CHAT INPUT */}
-                  <div className="border-t border-white/[0.06] p-4">
+                  <div className="shrink-0 border-t border-white/[0.06] p-3.5 sm:p-4">
                     {error && (
                       <p className="mb-2 text-[11px] text-red-400">{error}</p>
                     )}

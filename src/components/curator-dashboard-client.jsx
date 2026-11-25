@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
 import NavIcon from "@/components/ui/nav-icon";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import { useToast } from "@/components/ui/toast-provider";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { logoutUserAction } from "@/actions/auth-actions";
 import {
@@ -55,37 +56,102 @@ export default function CuratorDashboardClient({ curator, challenges, submission
   const [deletingId, setDeletingId] = useState(null);
   const [selectingSubId, setSelectingSubId] = useState(null);
   const [actionError, setActionError] = useState("");
+  const bannerBlobRef = useRef("");
+  const editBannerBlobRef = useRef("");
 
-  const closeCreateModal = () => {
+  useBodyScrollLock(showCreateModal || Boolean(editingChallenge));
+
+  const revokeBannerBlob = useCallback(() => {
+    if (bannerBlobRef.current) {
+      URL.revokeObjectURL(bannerBlobRef.current);
+      bannerBlobRef.current = "";
+    }
+  }, []);
+
+  const revokeEditBannerBlob = useCallback(() => {
+    if (editBannerBlobRef.current) {
+      URL.revokeObjectURL(editBannerBlobRef.current);
+      editBannerBlobRef.current = "";
+    }
+  }, []);
+
+  const closeCreateModal = useCallback(() => {
+    revokeBannerBlob();
     setShowCreateModal(false);
     setBannerPreview("");
-  };
+  }, [revokeBannerBlob]);
 
-  const closeEditModal = () => {
+  const closeEditModal = useCallback(() => {
+    revokeEditBannerBlob();
     setEditingChallenge(null);
     setEditBannerPreview("");
-  };
+  }, [revokeEditBannerBlob]);
+
+  useEffect(() => {
+    return () => {
+      revokeBannerBlob();
+      revokeEditBannerBlob();
+    };
+  }, [revokeBannerBlob, revokeEditBannerBlob]);
+
+  useEffect(() => {
+    if (!showCreateModal && !editingChallenge) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (editingChallenge) closeEditModal();
+        else if (showCreateModal) closeCreateModal();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showCreateModal, editingChallenge, closeCreateModal, closeEditModal]);
 
   const [createState, createFormAction, isCreating] = useActionState(async (prevState, formData) => {
-    const res = await createChallengeAction(prevState, formData);
-    if (res?.success) {
-      closeCreateModal();
-      toast.success("Challenge baru berhasil dibuat");
-    } else if (res?.error) {
-      toast.error("Gagal membuat challenge", res.error);
+    formData.set("tzOffset", String(new Date().getTimezoneOffset()));
+    const file = formData.get("bannerFile");
+    if (file && typeof file === "object" && file.size > 8 * 1024 * 1024) {
+      const msg = "Ukuran gambar banner maksimal 8 MB.";
+      toast.error("Gagal membuat challenge", msg);
+      return { error: msg };
     }
-    return res;
+    try {
+      const res = await createChallengeAction(prevState, formData);
+      if (res?.success) {
+        closeCreateModal();
+        toast.success("Challenge baru berhasil dibuat");
+      } else if (res?.error) {
+        toast.error("Gagal membuat challenge", res.error);
+      }
+      return res;
+    } catch {
+      const msg = "Gagal mengirim data challenge. Pastikan ukuran gambar ≤ 8 MB dan koneksi stabil.";
+      toast.error("Gagal membuat challenge", msg);
+      return { error: msg };
+    }
   }, null);
 
   const [editState, editFormAction, isEditing] = useActionState(async (prevState, formData) => {
-    const res = await updateChallengeAction(prevState, formData);
-    if (res?.success) {
-      closeEditModal();
-      toast.success("Challenge berhasil diperbarui");
-    } else if (res?.error) {
-      toast.error("Gagal memperbarui challenge", res.error);
+    formData.set("tzOffset", String(new Date().getTimezoneOffset()));
+    const file = formData.get("bannerFile");
+    if (file && typeof file === "object" && file.size > 8 * 1024 * 1024) {
+      const msg = "Ukuran gambar banner maksimal 8 MB.";
+      toast.error("Gagal memperbarui challenge", msg);
+      return { error: msg };
     }
-    return res;
+    try {
+      const res = await updateChallengeAction(prevState, formData);
+      if (res?.success) {
+        closeEditModal();
+        toast.success("Challenge berhasil diperbarui");
+      } else if (res?.error) {
+        toast.error("Gagal memperbarui challenge", res.error);
+      }
+      return res;
+    } catch {
+      const msg = "Gagal memperbarui challenge. Pastikan ukuran gambar ≤ 8 MB dan koneksi stabil.";
+      toast.error("Gagal memperbarui challenge", msg);
+      return { error: msg };
+    }
   }, null);
 
   const stats = useMemo(() => {
@@ -124,33 +190,47 @@ export default function CuratorDashboardClient({ curator, challenges, submission
     if (!confirmed) return;
     setDeletingId(ch.id);
     setActionError("");
-    const res = await deleteChallengeAction(ch.id);
-    setDeletingId(null);
-    if (res?.error) {
-      setActionError(res.error);
-      toast.error("Gagal menghapus challenge", res.error);
-    } else {
-      if (managingChallengeId === ch.id) {
-        setManagingChallengeId(null);
+    try {
+      const res = await deleteChallengeAction(ch.id);
+      if (res?.error) {
+        setActionError(res.error);
+        toast.error("Gagal menghapus challenge", res.error);
+      } else {
+        if (managingChallengeId === ch.id) {
+          setManagingChallengeId(null);
+        }
+        toast.success("Challenge dihapus", ch.title);
       }
-      toast.success("Challenge dihapus", ch.title);
+    } catch {
+      setActionError("Gagal menghapus challenge. Silakan coba lagi.");
+      toast.error("Gagal menghapus challenge", "Terjadi gangguan jaringan.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const handleSelectWinner = async (challengeId, submissionId, rank) => {
+    if (selectingSubId) return;
     setSelectingSubId(submissionId);
     setActionError("");
-    const res = await selectChallengeWinnerAction(challengeId, submissionId, rank);
-    setSelectingSubId(null);
-    if (res?.error) {
-      setActionError(res.error);
-      toast.error("Gagal menetapkan pemenang", res.error);
-    } else {
-      toast.success(rank ? `Juara #${rank} berhasil ditetapkan` : "Status juara dibatalkan");
+    try {
+      const res = await selectChallengeWinnerAction(challengeId, submissionId, rank);
+      if (res?.error) {
+        setActionError(res.error);
+        toast.error("Gagal menetapkan pemenang", res.error);
+      } else {
+        toast.success(rank ? `Juara #${rank} berhasil ditetapkan` : "Status juara dibatalkan");
+      }
+    } catch {
+      setActionError("Gagal menetapkan pemenang. Silakan coba lagi.");
+      toast.error("Gagal menetapkan pemenang", "Terjadi gangguan jaringan.");
+    } finally {
+      setSelectingSubId(null);
     }
   };
 
   const openEditModal = (ch) => {
+    revokeEditBannerBlob();
     setEditingChallenge(ch);
     setEditBannerPreview(ch.banner_url || "");
   };
@@ -159,15 +239,15 @@ export default function CuratorDashboardClient({ curator, challenges, submission
     <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       {/* MOBILE OVERLAY */}
       {mobileMenu && (
-        <div onClick={() => setMobileMenu(false)} className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden" />
+        <div onClick={() => setMobileMenu(false)} className="fixed inset-0 z-[45] bg-black/70 backdrop-blur-sm lg:hidden" />
       )}
 
       {/* SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0a0a0b]/92 px-6 py-7 backdrop-blur-md transition-all duration-300 lg:translate-x-0 ${mobileMenu ? "translate-x-0" : "-translate-x-full"} ${sidebarCollapsed ? "lg:w-[78px] lg:px-3" : "lg:w-[250px]"}`}>
+      <aside data-lenis-prevent className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col overflow-y-auto border-r border-white/[0.07] bg-[#0a0a0b]/92 px-6 py-7 backdrop-blur-md transition-all duration-300 lg:translate-x-0 ${mobileMenu ? "translate-x-0" : "-translate-x-full"} ${sidebarCollapsed ? "lg:w-[78px] lg:px-3" : "lg:w-[250px]"}`}>
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-champagne-400/25 to-transparent" />
 
         <div className={`mb-10 flex items-center ${sidebarCollapsed ? "justify-between lg:flex-col lg:gap-3" : "justify-between"}`}>
-          <Link href="/home" title="Aesthe" className="flex items-center gap-3 overflow-hidden">
+          <Link href="/home" title="Aesthe" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 overflow-hidden">
             <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow h-9 w-9 shrink-0 object-contain mix-blend-screen" />
             <div className={sidebarCollapsed ? "lg:hidden" : ""}>
               <h1 className="bg-gradient-to-r from-white to-champagne-200 bg-clip-text text-[17px] font-medium tracking-[0.35em] text-transparent">AESTHE</h1>
@@ -229,7 +309,12 @@ export default function CuratorDashboardClient({ curator, challenges, submission
         <div className="mt-10">
           <p className={`mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600 ${sidebarCollapsed ? "lg:hidden" : ""}`}>NAVIGASI PUBLIK</p>
           {sidebarCollapsed && <div className="mb-3 hidden h-px w-full bg-white/[0.07] lg:block" />}
-          <nav className="space-y-1">
+          <nav
+            onClick={(e) => {
+              if (e.target.closest("a")) setMobileMenu(false);
+            }}
+            className="space-y-1"
+          >
             <Link href="/home" title="Home" className={`flex w-full items-center gap-4 rounded-lg px-4 py-2.5 text-[12px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-champagne-50 ${sidebarCollapsed ? "lg:justify-center lg:px-0" : ""}`}>
               <NavIcon name="home" className="h-[18px] w-[18px] shrink-0" />
               <span className={sidebarCollapsed ? "lg:hidden" : ""}>Home</span>
@@ -353,9 +438,9 @@ export default function CuratorDashboardClient({ curator, challenges, submission
                   {managingSubmissions.map((sub) => {
                     const isEnded = getChallengeStatus(managingChallenge) === "ended";
                     return (
-                      <div key={sub.id} data-reveal>
+                      <div key={sub.id}>
                         <article className="card-lux spotlight glass overflow-hidden rounded-2xl border border-white/15">
-                          <div className="relative aspect-[4/3] overflow-hidden bg-zinc-900">
+                          <Link href={`/artworks/${sub.artwork_id}`} className="relative block aspect-[4/3] overflow-hidden bg-zinc-900">
                             <img src={sub.artwork_image_url} alt={sub.artwork_title} className="h-full w-full object-cover transition duration-700 hover:scale-105" />
                             <span className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[8px] tracking-wider text-white backdrop-blur-md">
                               {sub.category_name.toUpperCase()}
@@ -365,10 +450,12 @@ export default function CuratorDashboardClient({ curator, challenges, submission
                                 ♛ Juara #{sub.winner_rank}
                               </span>
                             )}
-                          </div>
+                          </Link>
 
                           <div className="p-4">
-                            <h3 className="font-display truncate text-xl text-white">{sub.artwork_title}</h3>
+                            <Link href={`/artworks/${sub.artwork_id}`} className="font-display block truncate text-xl text-white transition hover:text-champagne-200">
+                              {sub.artwork_title}
+                            </Link>
                             <Link href={`/creators/${sub.artist_username}`} className="mt-0.5 inline-block text-[11px] text-zinc-400 transition hover:text-champagne-200">
                               {sub.artist_name} (@{sub.artist_username})
                             </Link>
@@ -387,7 +474,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
                                       <button
                                         key={opt.rank}
                                         type="button"
-                                        disabled={selectingSubId === sub.id}
+                                        disabled={Boolean(selectingSubId)}
                                         onClick={() => handleSelectWinner(managingChallenge.id, sub.id, isCurrent ? null : opt.rank)}
                                         className={`rounded-lg border px-2.5 py-1.5 text-[10px] transition disabled:opacity-50 ${
                                           isCurrent
@@ -402,7 +489,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
                                   {sub.winner_rank && (
                                     <button
                                       type="button"
-                                      disabled={selectingSubId === sub.id}
+                                      disabled={Boolean(selectingSubId)}
                                       onClick={() => handleSelectWinner(managingChallenge.id, sub.id, null)}
                                       className="ml-auto rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-[10px] text-red-300 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
                                     >
@@ -553,12 +640,18 @@ export default function CuratorDashboardClient({ curator, challenges, submission
 
       {/* MODAL CREATE CHALLENGE */}
       {showCreateModal && (
-        <div onClick={closeCreateModal} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl p-7">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-challenge-title"
+          onClick={closeCreateModal}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
                 <p className="eyebrow">NEW CHALLENGE</p>
-                <h2 className="font-display mt-1.5 text-3xl text-white">Buat Challenge Baru</h2>
+                <h2 id="create-challenge-title" className="font-display mt-1.5 text-3xl text-white">Buat Challenge Baru</h2>
               </div>
               <button type="button" onClick={closeCreateModal} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>
@@ -599,8 +692,15 @@ export default function CuratorDashboardClient({ curator, challenges, submission
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   required
                   onChange={(e) => {
+                    revokeBannerBlob();
                     const f = e.target.files?.[0];
-                    setBannerPreview(f ? URL.createObjectURL(f) : "");
+                    if (f) {
+                      const url = URL.createObjectURL(f);
+                      bannerBlobRef.current = url;
+                      setBannerPreview(url);
+                    } else {
+                      setBannerPreview("");
+                    }
                   }}
                   className="input-lux file:mr-3 file:rounded-md file:border-0 file:bg-champagne-200 file:px-3 file:py-1 file:text-[10px] file:font-semibold file:text-black"
                 />
@@ -631,12 +731,18 @@ export default function CuratorDashboardClient({ curator, challenges, submission
 
       {/* MODAL EDIT CHALLENGE */}
       {editingChallenge && (
-        <div onClick={closeEditModal} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl p-7">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-challenge-title"
+          onClick={closeEditModal}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
                 <p className="eyebrow">EDIT CHALLENGE</p>
-                <h2 className="font-display mt-1.5 text-3xl text-white">Perbarui Challenge</h2>
+                <h2 id="edit-challenge-title" className="font-display mt-1.5 text-3xl text-white">Perbarui Challenge</h2>
               </div>
               <button type="button" onClick={closeEditModal} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>
@@ -678,8 +784,15 @@ export default function CuratorDashboardClient({ curator, challenges, submission
                   name="bannerFile"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={(e) => {
+                    revokeEditBannerBlob();
                     const f = e.target.files?.[0];
-                    if (f) setEditBannerPreview(URL.createObjectURL(f));
+                    if (f) {
+                      const url = URL.createObjectURL(f);
+                      editBannerBlobRef.current = url;
+                      setEditBannerPreview(url);
+                    } else {
+                      setEditBannerPreview(editingChallenge?.banner_url || "");
+                    }
                   }}
                   className="input-lux file:mr-3 file:rounded-md file:border-0 file:bg-champagne-200 file:px-3 file:py-1 file:text-[10px] file:font-semibold file:text-black"
                 />

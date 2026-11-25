@@ -2,24 +2,37 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import { useToast } from "@/components/ui/toast-provider";
+import ReactionPicker, { REACTIONS } from "@/components/ui/reaction-picker";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 import { sendMessageAction } from "@/actions/message-actions";
 import { toggleFollowAction } from "@/actions/profile-actions";
 
-const REACTIONS = [
-  { type: "love", icon: "❤️", label: "Love" },
-  { type: "wow", icon: "😮", label: "Wow" },
-  { type: "fire", icon: "🔥", label: "Fire" },
-  { type: "inspire", icon: "✧", label: "Inspire" },
-  { type: "applause", icon: "👏", label: "Applause" },
-];
+function mergeMessages(prev, incoming) {
+  const byId = new Map();
+  for (const item of prev || []) {
+    if (item && item.id != null) byId.set(item.id, item);
+  }
+  for (const item of incoming || []) {
+    if (item && item.id != null) byId.set(item.id, item);
+  }
+  return Array.from(byId.values()).sort((a, b) => {
+    const timeDiff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    if (timeDiff !== 0) return timeDiff;
+    return Number(a.id) - Number(b.id);
+  });
+}
 
 export default function CreatorProfileClient({ currentUser, creator, artworks, followStats }) {
+  const router = useRouter();
   const openAuthPrompt = useAuthPrompt();
   const toast = useToast();
   const [togglingFollow, setTogglingFollow] = useState(false);
+  const [pendingReactionId, setPendingReactionId] = useState(null);
+  const [pendingFavoriteId, setPendingFavoriteId] = useState(null);
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [loadingChat, setLoadingChat] = useState(false);
@@ -27,37 +40,57 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState("");
   const chatBottomRef = useRef(null);
+  const sendingRef = useRef(false);
 
   const role = currentUser?.role || "Guest";
   const isGuest = !currentUser;
   const isMember = role === "Member";
   const isOwnProfile = Number(currentUser?.id) === Number(creator.id);
 
+  useBodyScrollLock(showChat && !isGuest && !isOwnProfile);
+
+  useEffect(() => {
+    if (!showChat) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setShowChat(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showChat]);
+
   const totalReactions = artworks.reduce((sum, art) => sum + (art.total_reactions || 0), 0);
 
   useEffect(() => {
     if (!showChat || isGuest || isOwnProfile) return;
-    let cancelled = false;
+    let activeController = null;
 
     const loadMessages = async () => {
+      if (sendingRef.current) return;
+      activeController?.abort();
+      const controller = new AbortController();
+      activeController = controller;
+
       try {
-        const res = await fetch(`/api/messages?with=${creator.id}`, { cache: "no-store" });
+        const res = await fetch(`/api/messages?with=${creator.id}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (!res.ok) return;
         const data = await res.json();
-        if (!cancelled && Array.isArray(data.messages)) {
-          setChatMessages(data.messages);
+        if (!controller.signal.aborted && Array.isArray(data.messages)) {
+          setChatMessages((prev) => mergeMessages(prev, data.messages));
         }
       } catch {
         // Abaikan error sementara saat polling
       } finally {
-        if (!cancelled) setLoadingChat(false);
+        if (!controller.signal.aborted) setLoadingChat(false);
       }
     };
 
     loadMessages();
     const interval = setInterval(loadMessages, 5000);
     return () => {
-      cancelled = true;
+      activeController?.abort();
       clearInterval(interval);
     };
   }, [showChat, isGuest, isOwnProfile, creator.id]);
@@ -78,13 +111,23 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
     }
     if (!isMember || isOwnProfile || togglingFollow) return;
     setTogglingFollow(true);
-    const wasFollowing = Boolean(followStats?.isFollowing);
-    await toggleFollowAction(creator.id);
-    setTogglingFollow(false);
-    if (wasFollowing) {
-      toast.info(`Berhenti mengikuti @${creator.username}`, creator.display_name);
-    } else {
-      toast.success(`Mengikuti @${creator.username}`, creator.display_name);
+    const wasFollowing = Boolean(followStats?.is_following);
+    try {
+      const res = await toggleFollowAction(creator.id);
+      if (res?.error) {
+        toast.error("Gagal memperbarui follow", res.error);
+        return;
+      }
+      router.refresh();
+      if (wasFollowing) {
+        toast.info(`Berhenti mengikuti @${creator.username}`, creator.display_name);
+      } else {
+        toast.success(`Mengikuti @${creator.username}`, creator.display_name);
+      }
+    } catch {
+      toast.error("Gagal memperbarui follow", "Terjadi gangguan jaringan.");
+    } finally {
+      setTogglingFollow(false);
     }
   };
 
@@ -97,26 +140,35 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
       return;
     }
     setChatError("");
+    setChatMessages([]);
     setLoadingChat(true);
     setShowChat(true);
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!draft.trim() || sending) return;
+    if (!draft.trim() || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     setChatError("");
-    const res = await sendMessageAction(creator.id, draft.trim());
-    setSending(false);
-    if (res?.error) {
-      setChatError(res.error);
-      toast.error("Pesan gagal terkirim", res.error);
-      return;
-    }
-    if (res?.message) {
-      setChatMessages((prev) => [...prev, res.message]);
-      setDraft("");
-      toast.success("Pesan terkirim", `Ke ${creator.display_name}`);
+    try {
+      const res = await sendMessageAction(creator.id, draft.trim());
+      if (res?.error) {
+        setChatError(res.error);
+        toast.error("Pesan gagal terkirim", res.error);
+        return;
+      }
+      if (res?.message) {
+        setChatMessages((prev) => mergeMessages(prev, [res.message]));
+        setDraft("");
+        toast.success("Pesan terkirim", `Ke ${creator.display_name}`);
+      }
+    } catch {
+      setChatError("Gagal mengirim pesan. Silakan coba lagi.");
+      toast.error("Pesan gagal terkirim", "Terjadi gangguan jaringan.");
+    } finally {
+      sendingRef.current = false;
+      setSending(false);
     }
   };
 
@@ -128,11 +180,26 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
       });
       return;
     }
-    if (!isMember) return;
+    if (!isMember || pendingReactionId === artworkId) return;
     const target = artworks.find((a) => a.id === artworkId);
     const r = REACTIONS.find((x) => x.type === reactionType) || REACTIONS[0];
-    await reactArtworkAction(artworkId, reactionType);
-    toast.success(target?.user_reaction === reactionType ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`, target?.title);
+    setPendingReactionId(artworkId);
+    try {
+      const res = await reactArtworkAction(artworkId, reactionType);
+      if (res?.error) {
+        toast.error("Gagal mengirim reaksi", res.error);
+        return;
+      }
+      router.refresh();
+      toast.success(
+        target?.user_reaction === reactionType ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`,
+        target?.title
+      );
+    } catch {
+      toast.error("Gagal mengirim reaksi", "Terjadi gangguan jaringan.");
+    } finally {
+      setPendingReactionId(null);
+    }
   };
 
   const handleFavorite = async (artworkId) => {
@@ -143,15 +210,23 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
       });
       return;
     }
-    if (!isMember) return;
+    if (!isMember || pendingFavoriteId === artworkId) return;
     const target = artworks.find((a) => a.id === artworkId);
     const wasFav = Boolean(target?.is_favorited);
-    await toggleFavoriteAction(artworkId);
-    toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", target?.title);
-  };
-
-  const getReactionDisplay = (type) => {
-    return REACTIONS.find((r) => r.type === type) || REACTIONS[0];
+    setPendingFavoriteId(artworkId);
+    try {
+      const res = await toggleFavoriteAction(artworkId);
+      if (res?.error) {
+        toast.error("Gagal memperbarui Favorites", res.error);
+        return;
+      }
+      router.refresh();
+      toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", target?.title);
+    } catch {
+      toast.error("Gagal memperbarui Favorites", "Terjadi gangguan jaringan.");
+    } finally {
+      setPendingFavoriteId(null);
+    }
   };
 
   return (
@@ -227,43 +302,48 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {!isOwnProfile && (isMember || isGuest) && (
-                <button
-                  type="button"
-                  disabled={togglingFollow}
-                  onClick={handleToggleFollow}
-                  className={`rounded-full px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition disabled:opacity-50 ${
-                    isMember && followStats?.is_following
-                      ? "btn-ghost hover:border-red-400/50 hover:bg-red-500/15 hover:text-red-300"
-                      : "btn-gold"
-                  }`}
-                >
-                  <span>{isMember && followStats?.is_following ? "✓ Following" : "＋ Follow"}</span>
-                </button>
-              )}
+            <div className="flex w-full shrink-0 flex-col gap-3 md:w-[360px]">
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="glass min-w-0 rounded-2xl border border-white/10 px-2 py-3 text-center">
+                  <p className="font-display text-2xl text-gold">{followStats?.followers_count || 0}</p>
+                  <p className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-zinc-500">Followers</p>
+                </div>
+                <div className="glass min-w-0 rounded-2xl border border-white/10 px-2 py-3 text-center">
+                  <p className="font-display text-2xl text-gold">{artworks.length}</p>
+                  <p className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-zinc-500">Karya</p>
+                </div>
+                <div className="glass min-w-0 rounded-2xl border border-white/10 px-2 py-3 text-center">
+                  <p className="font-display text-2xl text-gold">{totalReactions}</p>
+                  <p className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-zinc-500">Reaksi</p>
+                </div>
+              </div>
+
               {!isOwnProfile && (
-                <button
-                  type="button"
-                  onClick={handleOpenChat}
-                  className="btn-ghost rounded-full px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em]"
-                >
-                  <span>✉</span>
-                  <span>Kirim Pesan</span>
-                </button>
+                <div className="flex items-center gap-2.5">
+                  {(isMember || isGuest) && (
+                    <button
+                      type="button"
+                      disabled={togglingFollow}
+                      onClick={handleToggleFollow}
+                      className={`flex-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition disabled:opacity-50 ${
+                        isMember && followStats?.is_following
+                          ? "btn-ghost hover:border-red-400/50 hover:bg-red-500/15 hover:text-red-300"
+                          : "btn-gold"
+                      }`}
+                    >
+                      <span>{isMember && followStats?.is_following ? "✓ Following" : "＋ Follow"}</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleOpenChat}
+                    className="btn-ghost flex-1 whitespace-nowrap rounded-full px-3.5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em]"
+                  >
+                    <span>✉</span>
+                    <span>Kirim Pesan</span>
+                  </button>
+                </div>
               )}
-              <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
-                <p className="font-display text-2xl text-gold">{followStats?.followers_count || 0}</p>
-                <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Followers</p>
-              </div>
-              <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
-                <p className="font-display text-2xl text-gold">{artworks.length}</p>
-                <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Karya</p>
-              </div>
-              <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
-                <p className="font-display text-2xl text-gold">{totalReactions}</p>
-                <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Reaksi</p>
-              </div>
             </div>
           </div>
         </section>
@@ -282,15 +362,17 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
           {artworks.length === 0 ? (
             <div className="glass rounded-2xl border border-white/10 px-6 py-20 text-center">
-              <p className="text-sm text-zinc-400">Kreator ini belum mengunggah karya apa pun.</p>
+              <p className="text-sm text-zinc-400">
+                {creator.role === "Curator"
+                  ? "Kurator pameran & penyelenggara kompetisi resmi di komunitas Aesthe."
+                  : "Kreator ini belum mengunggah karya apa pun."}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {artworks.map((art) => {
-                const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
-
                 return (
-                  <article key={art.id} data-reveal className="group relative min-w-0">
+                  <article key={art.id} className="group relative min-w-0">
                     <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/15 bg-zinc-900">
                       <Link href={`/artworks/${art.id}`} className="block h-full w-full">
                         <img
@@ -343,33 +425,12 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                       <p className="truncate text-[11px] text-zinc-400">{art.description}</p>
 
                       {isMember ? (
-                        <div className="group/react relative flex shrink-0 items-center">
-                          <div className="glass pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full px-2.5 py-1.5 opacity-0 transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
-                            {REACTIONS.map((r) => (
-                              <button
-                                key={r.type}
-                                type="button"
-                                onClick={() => handleReaction(art.id, r.type)}
-                                title={r.label}
-                                className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:scale-125 hover:bg-white/10"
-                              >
-                                {r.icon}
-                              </button>
-                            ))}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleReaction(art.id, userReaction ? userReaction.type : "love")}
-                            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] transition ${
-                              userReaction
-                                ? "border-rose-500/50 bg-rose-500/15 font-medium text-rose-300"
-                                : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/30 hover:text-white"
-                            }`}
-                          >
-                            <span>{userReaction ? userReaction.icon : "♥"}</span>
-                            <span>{art.total_reactions}</span>
-                          </button>
-                        </div>
+                        <ReactionPicker
+                          userReaction={art.user_reaction}
+                          totalReactions={art.total_reactions}
+                          onReact={(type) => handleReaction(art.id, type)}
+                          disabled={pendingReactionId === art.id}
+                        />
                       ) : isGuest ? (
                         <button
                           type="button"
@@ -396,8 +457,14 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
       {/* QUICK PRIVATE MESSAGE MODAL */}
       {showChat && !isGuest && !isOwnProfile && (
-        <div onClick={() => setShowChat(false)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel flex h-[540px] max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-3xl">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Kirim pesan ke ${creator.display_name}`}
+          onClick={() => setShowChat(false)}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel flex h-[540px] max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-3xl">
             <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
               <div className="flex items-center gap-3">
                 <div className="shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">

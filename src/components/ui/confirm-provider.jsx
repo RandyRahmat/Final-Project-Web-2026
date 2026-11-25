@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 
 const ConfirmContext = createContext(null);
 
@@ -36,10 +37,10 @@ export function ConfirmProvider({ children }) {
     });
   }, []);
 
+  useBodyScrollLock(Boolean(dialog));
+
   useEffect(() => {
     if (!dialog) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -50,10 +51,18 @@ export function ConfirmProvider({ children }) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [dialog, closeWith]);
+
+  useEffect(() => {
+    return () => {
+      if (resolverRef.current) {
+        resolverRef.current(false);
+        resolverRef.current = null;
+      }
+    };
+  }, []);
 
   const isDanger = dialog?.variant !== "gold";
 
@@ -63,9 +72,10 @@ export function ConfirmProvider({ children }) {
 
       {dialog && (
         <div
-          role="dialog"
+          role="alertdialog"
           aria-modal="true"
           aria-labelledby="confirm-dialog-title"
+          aria-describedby="confirm-dialog-desc"
           onClick={() => closeWith(false)}
           className="modal-overlay fixed inset-0 z-[150] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
         >
@@ -91,13 +101,14 @@ export function ConfirmProvider({ children }) {
             <h3 id="confirm-dialog-title" className="font-display text-2xl text-white">
               {dialog.title}
             </h3>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+            <p id="confirm-dialog-desc" className="mt-2 text-xs leading-relaxed text-zinc-400">
               {dialog.message}
             </p>
 
             <div className="mt-6 flex items-center justify-end gap-2.5">
               <button
                 type="button"
+                autoFocus={isDanger}
                 onClick={() => closeWith(false)}
                 className="btn-ghost rounded-xl px-4 py-2.5 text-[11px] font-medium tracking-wide"
               >
@@ -105,7 +116,7 @@ export function ConfirmProvider({ children }) {
               </button>
               <button
                 type="button"
-                autoFocus
+                autoFocus={!isDanger}
                 onClick={() => closeWith(true)}
                 className={
                   isDanger

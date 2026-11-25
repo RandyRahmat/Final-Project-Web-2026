@@ -49,6 +49,11 @@ export default function ChallengesClient({ currentUser, challenges }) {
     });
   }, [challenges, statusFilter, search]);
 
+  const ongoingChallengesCount = useMemo(
+    () => challenges.filter((ch) => getChallengeStatus(ch) === "active").length,
+    [challenges]
+  );
+
   return (
     <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       <AppSidebar
@@ -58,7 +63,7 @@ export default function ChallengesClient({ currentUser, challenges }) {
         onToggleCollapse={toggleSidebarCollapsed}
         mobileMenu={mobileMenu}
         onCloseMobile={() => setMobileMenu(false)}
-        challengesCount={challenges.length}
+        challengesCount={ongoingChallengesCount}
       />
 
       {/* MAIN CONTENT */}
@@ -82,7 +87,7 @@ export default function ChallengesClient({ currentUser, challenges }) {
           <div className="flex items-center gap-3">
             <QuickSearchIconButton />
 
-            <Link href={currentUser ? "/profile" : "/"} className="flex items-center gap-3 transition hover:opacity-85">
+            <Link href={currentUser ? "/profile" : "/?step=login"} className="flex items-center gap-3 transition hover:opacity-85">
               <div className="hidden text-right sm:block">
                 <p className="text-[11px] font-medium">{currentUser ? currentUser.displayName : "Guest Visitor"}</p>
                 <p className="mt-0.5 text-[9px] text-zinc-600">{currentUser ? `${role.toUpperCase()} ACCOUNT` : "PUBLIC VIEW"}</p>
@@ -92,7 +97,7 @@ export default function ChallengesClient({ currentUser, challenges }) {
                   {currentUser?.avatarUrl ? (
                     <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
                   ) : (
-                    currentUser ? currentUser.displayName.charAt(0) : "G"
+                    currentUser?.displayName?.charAt(0) || "G"
                   )}
                 </div>
               </div>
@@ -101,7 +106,7 @@ export default function ChallengesClient({ currentUser, challenges }) {
         </header>
 
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
-          <section data-reveal className="flex flex-wrap items-end justify-between gap-4">
+          <section className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="mb-3 flex items-center gap-2.5">
                 <p className="eyebrow">COMPETITIONS &amp; EVENTS</p>
@@ -173,13 +178,25 @@ export default function ChallengesClient({ currentUser, challenges }) {
           {filteredChallenges.length === 0 ? (
             <div className="glass mt-12 rounded-2xl border border-white/10 px-6 py-20 text-center">
               <p className="text-sm text-zinc-400">Belum ada challenge yang sesuai dengan filter.</p>
+              {(statusFilter !== "all" || search.trim()) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setSearch("");
+                  }}
+                  className="btn-ghost mt-4 rounded-full px-5 py-2 text-[10px] uppercase tracking-[0.16em]"
+                >
+                  Reset Filter ↺
+                </button>
+              )}
             </div>
           ) : (
             <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {filteredChallenges.map((ch) => {
                 const status = getChallengeStatus(ch);
                 return (
-                  <div key={ch.id} data-reveal className="h-full">
+                  <div key={ch.id} className="h-full">
                     <Link
                       href={`/challenges/${ch.id}`}
                       className="card-lux spotlight glass group flex h-full flex-col overflow-hidden rounded-2xl border border-white/15 transition hover:border-champagne-300/45"

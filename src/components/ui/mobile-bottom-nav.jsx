@@ -47,8 +47,12 @@ export default function MobileBottomNav({ currentUser, activeItem = "home" }) {
       { id: "home", label: "Home", href: "/home", icon: "home" },
       { id: "explore", label: "Explore", href: "/explore", icon: "explore" },
       { id: "challenges", label: "Events", href: "/challenges", icon: "challenges" },
-      { id: "login", label: "Masuk", href: "/", icon: "login" },
+      { id: "login", label: "Masuk", href: "/?step=login", icon: "login" },
     ];
+  }
+
+  if (activeItem === "messages") {
+    return null;
   }
 
   const count = items.length;
@@ -60,7 +64,7 @@ export default function MobileBottomNav({ currentUser, activeItem = "home" }) {
     <nav
       data-mobile-nav="true"
       aria-label="Navigasi bawah mobile"
-      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-[430px] select-none lg:hidden"
+      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-auto max-w-[430px] select-none lg:hidden"
     >
       <div className="relative h-[64px] w-full">
         {/* LATAR MELENGKUNG (NOTCHED GLASS BAR) */}
@@ -69,10 +73,10 @@ export default function MobileBottomNav({ currentUser, activeItem = "home" }) {
             {/* Segmen Kiri */}
             <div
               style={{
-                width: `calc((100% - 32px) * ${ratio} - 18px)`,
+                width: `max(16px, calc((100% - 32px) * ${ratio} - 18px))`,
                 transition: "width 480ms cubic-bezier(0.22, 1, 0.36, 1)",
               }}
-              className="h-[64px] shrink-0 rounded-l-[16px] border-y border-l border-white/[0.16] bg-[#101013]/95 backdrop-blur-md"
+              className="h-[64px] min-w-[16px] shrink-0 rounded-l-[16px] border-y border-l border-white/[0.16] bg-[#101013]/95 backdrop-blur-md"
             />
 
             {/* Segmen Kurva U-Notch Tengah (fixed 68px agar kurva selalu presisi) */}
@@ -106,7 +110,7 @@ export default function MobileBottomNav({ currentUser, activeItem = "home" }) {
             </svg>
 
             {/* Segmen Kanan */}
-            <div className="h-[64px] flex-1 rounded-r-[16px] border-y border-r border-white/[0.16] bg-[#101013]/95 backdrop-blur-md" />
+            <div className="h-[64px] min-w-[16px] flex-1 rounded-r-[16px] border-y border-r border-white/[0.16] bg-[#101013]/95 backdrop-blur-md" />
           </div>
         ) : (
           <div className="pointer-events-none absolute inset-0 rounded-[16px] border border-white/[0.16] bg-[#101013]/95 shadow-[0_18px_36px_rgba(0,0,0,0.88)] backdrop-blur-md" />

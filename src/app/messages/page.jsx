@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { query, ensureUserProfileColumns, ensureDirectMessagesTable } from "@/lib/db";
+import { query, ensureUserProfileColumns, ensureDirectMessagesTable, getOngoingChallengesCount } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import MessagesClient from "@/components/messages-client";
 
@@ -87,15 +87,9 @@ export default async function MessagesPage({ searchParams }) {
   }
 
   // 3. Ambil riwayat pesan awal untuk percakapan yang sedang terpilih
+  // Penandaan is_read = TRUE dilakukan dari client saat room benar-benar dibuka (bukan saat GET SSR / prefetch)
   let initialMessages = [];
   if (initialPartnerId) {
-    await query(
-      `UPDATE direct_messages
-       SET is_read = TRUE
-       WHERE sender_id = $1 AND receiver_id = $2 AND is_read = FALSE`,
-      [initialPartnerId, currentUser.id]
-    );
-
     const messagesResult = await query(
       `SELECT id, sender_id, receiver_id, content, is_read, created_at
        FROM direct_messages
@@ -105,19 +99,18 @@ export default async function MessagesPage({ searchParams }) {
       [currentUser.id, initialPartnerId]
     );
     initialMessages = messagesResult.rows;
-
-    const selectedConv = conversations.find((c) => c.id === initialPartnerId);
-    if (selectedConv) {
-      selectedConv.unread_count = 0;
-    }
   }
+
+  const ongoingChallengesCount = await getOngoingChallengesCount();
 
   return (
     <MessagesClient
+      key={`${initialPartnerId || "empty"}-${targetUsername || "default"}`}
       currentUser={currentUser}
       initialConversations={conversations}
       initialPartnerId={initialPartnerId}
       initialMessages={initialMessages}
+      ongoingChallengesCount={ongoingChallengesCount}
     />
   );
 }

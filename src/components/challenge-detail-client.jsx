@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import { useToast } from "@/components/ui/toast-provider";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import {
   submitArtworkToChallengeAction,
   withdrawSubmissionAction,
@@ -73,6 +74,10 @@ export default function ChallengeDetailClient({
     return res;
   }, null);
 
+  const effectiveArtworkId = memberArtworks.some((a) => Number(a.id) === Number(selectedArtworkId))
+    ? selectedArtworkId
+    : memberArtworks[0]?.id || "";
+
   const status = getChallengeStatus(challenge);
   const isActive = status === "active";
   const isEnded = status === "ended";
@@ -82,6 +87,17 @@ export default function ChallengeDetailClient({
     currentUser?.role === "Curator" &&
     currentUser?.curatorStatus === "Approved" &&
     Number(currentUser?.id) === Number(challenge.curator_id);
+
+  useBodyScrollLock(showSubmitModal && isMember && isActive);
+
+  useEffect(() => {
+    if (!showSubmitModal) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setShowSubmitModal(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showSubmitModal]);
 
   const winners = isEnded
     ? submissions
@@ -99,26 +115,39 @@ export default function ChallengeDetailClient({
     if (!confirmed) return;
     setWithdrawing(true);
     setActionError("");
-    const res = await withdrawSubmissionAction(challenge.id);
-    setWithdrawing(false);
-    if (res?.error) {
-      setActionError(res.error);
-      toast.error("Gagal menarik submisi", res.error);
-    } else {
-      toast.info("Submisi berhasil ditarik", challenge.title);
+    try {
+      const res = await withdrawSubmissionAction(challenge.id);
+      if (res?.error) {
+        setActionError(res.error);
+        toast.error("Gagal menarik submisi", res.error);
+      } else {
+        toast.info("Submisi berhasil ditarik", challenge.title);
+      }
+    } catch {
+      setActionError("Gagal menarik submisi. Silakan coba lagi.");
+      toast.error("Gagal menarik submisi", "Terjadi gangguan jaringan.");
+    } finally {
+      setWithdrawing(false);
     }
   };
 
   const handleSelectWinner = async (submissionId, rank) => {
+    if (selectingSubId) return;
     setSelectingSubId(submissionId);
     setActionError("");
-    const res = await selectChallengeWinnerAction(challenge.id, submissionId, rank);
-    setSelectingSubId(null);
-    if (res?.error) {
-      setActionError(res.error);
-      toast.error("Gagal menetapkan juara", res.error);
-    } else {
-      toast.success(rank ? `Juara #${rank} ditetapkan` : "Status juara dibatalkan", challenge.title);
+    try {
+      const res = await selectChallengeWinnerAction(challenge.id, submissionId, rank);
+      if (res?.error) {
+        setActionError(res.error);
+        toast.error("Gagal menetapkan juara", res.error);
+      } else {
+        toast.success(rank ? `Juara #${rank} ditetapkan` : "Status juara dibatalkan", challenge.title);
+      }
+    } catch {
+      setActionError("Gagal menetapkan juara. Silakan coba lagi.");
+      toast.error("Gagal menetapkan juara", "Terjadi gangguan jaringan.");
+    } finally {
+      setSelectingSubId(null);
     }
   };
 
@@ -268,7 +297,7 @@ export default function ChallengeDetailClient({
                 )}
 
                 {isGuest && isActive && (
-                  <Link href="/" className="btn-gold w-full rounded-full py-3 text-center text-[10px] uppercase tracking-[0.2em]">
+                  <Link href="/?step=login" className="btn-gold w-full rounded-full py-3 text-center text-[10px] uppercase tracking-[0.2em]">
                     Login sebagai Member untuk Ikut
                   </Link>
                 )}
@@ -397,7 +426,7 @@ export default function ChallengeDetailClient({
                               <button
                                 key={opt.rank}
                                 type="button"
-                                disabled={selectingSubId === sub.id}
+                                disabled={Boolean(selectingSubId)}
                                 onClick={() => handleSelectWinner(sub.id, isCurrentRank ? null : opt.rank)}
                                 className={`rounded-lg border px-2.5 py-1.5 text-[10px] transition disabled:opacity-50 ${
                                   isCurrentRank
@@ -412,7 +441,7 @@ export default function ChallengeDetailClient({
                           {sub.winner_rank && (
                             <button
                               type="button"
-                              disabled={selectingSubId === sub.id}
+                              disabled={Boolean(selectingSubId)}
                               onClick={() => handleSelectWinner(sub.id, null)}
                               className="ml-auto rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-[10px] text-red-300 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
                             >
@@ -432,12 +461,18 @@ export default function ChallengeDetailClient({
 
       {/* MODAL SUBMIT YOUR WORK (KHUSUS MEMBER) */}
       {showSubmitModal && isMember && isActive && (
-        <div onClick={() => setShowSubmitModal(false)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-lg rounded-3xl p-7">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="submit-work-title"
+          onClick={() => setShowSubmitModal(false)}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
                 <p className="eyebrow">CHALLENGE ENTRY</p>
-                <h2 className="font-display mt-1.5 text-3xl text-white">Submit Your Work</h2>
+                <h2 id="submit-work-title" className="font-display mt-1.5 text-3xl text-white">Submit Your Work</h2>
               </div>
               <button type="button" onClick={() => setShowSubmitModal(false)} className="text-xl text-zinc-500 transition hover:text-white">
                 ×
@@ -460,15 +495,15 @@ export default function ChallengeDetailClient({
             ) : (
               <form action={submitFormAction} className="mt-5 space-y-4">
                 <input type="hidden" name="challengeId" value={challenge.id} />
-                <input type="hidden" name="artworkId" value={selectedArtworkId} />
+                <input type="hidden" name="artworkId" value={effectiveArtworkId} />
 
                 <p className="text-xs text-zinc-400">
                   Pilih 1 karya dari portofoliomu untuk didaftarkan ke <span className="text-champagne-200">{challenge.title}</span>:
                 </p>
 
-                <div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto pr-1">
+                <div data-lenis-prevent className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto pr-1">
                   {memberArtworks.map((art) => {
-                    const isSelected = Number(selectedArtworkId) === Number(art.id);
+                    const isSelected = Number(effectiveArtworkId) === Number(art.id);
                     return (
                       <button
                         key={art.id}
@@ -494,7 +529,7 @@ export default function ChallengeDetailClient({
 
                 <button
                   type="submit"
-                  disabled={isSubmitting || !selectedArtworkId}
+                  disabled={isSubmitting || !effectiveArtworkId}
                   className="btn-gold w-full rounded-xl py-3 text-[10px] uppercase tracking-[0.2em]"
                 >
                   {isSubmitting ? "Mendaftarkan..." : "Kirim Submisi Karya"}

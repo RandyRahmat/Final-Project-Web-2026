@@ -4,7 +4,9 @@ import { useActionState, useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link";
 import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import ReactionPicker, { REACTIONS } from "@/components/ui/reaction-picker";
 import { useToast } from "@/components/ui/toast-provider";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import {
   reactArtworkAction,
   toggleFavoriteAction,
@@ -12,14 +14,6 @@ import {
   deleteCommentAction,
   reportArtworkAction,
 } from "@/actions/artwork-actions";
-
-const REACTIONS = [
-  { type: "love", icon: "❤️", label: "Love" },
-  { type: "wow", icon: "😮", label: "Wow" },
-  { type: "fire", icon: "🔥", label: "Fire" },
-  { type: "inspire", icon: "✧", label: "Inspire" },
-  { type: "applause", icon: "👏", label: "Applause" },
-];
 
 const REPORT_REASONS = [
   "Plagiat / Pelanggaran Hak Cipta",
@@ -108,12 +102,22 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     setIsDragging(false);
   };
 
+  useBodyScrollLock(lightboxOpen || showReportModal);
+
+  useEffect(() => {
+    if (!showReportModal) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setShowReportModal(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showReportModal]);
+
   useEffect(() => {
     if (!lightboxOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
 
     const onKeyDown = (e) => {
+      if (document.querySelector('[data-command-palette-open="true"]')) return;
       if (e.key === "Escape") closeLightbox();
       else if (e.key === "+" || e.key === "=") handleZoomIn();
       else if (e.key === "-") handleZoomOut();
@@ -121,7 +125,6 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     };
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [lightboxOpen, closeLightbox, handleZoomIn, handleZoomOut, handleResetZoom]);
@@ -130,10 +133,6 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
   const isGuest = !currentUser;
   const isMember = role === "Member";
   const isOwnArtwork = Number(currentUser?.id) === Number(artwork.artist_id);
-
-  const userReaction = artwork.user_reaction
-    ? REACTIONS.find((r) => r.type === artwork.user_reaction) || REACTIONS[0]
-    : null;
 
   const [commentState, commentFormAction, isCommenting] = useActionState(async (prevState, formData) => {
     const res = await addCommentAction(prevState, formData);
@@ -177,7 +176,11 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     if (!isMember) return;
     const removing = artwork.user_reaction === reactionType;
     const r = REACTIONS.find((x) => x.type === reactionType) || REACTIONS[0];
-    await reactArtworkAction(artwork.id, reactionType);
+    const res = await reactArtworkAction(artwork.id, reactionType);
+    if (res?.error) {
+      toast.error("Gagal mengirim reaksi", res.error);
+      return;
+    }
     toast.success(removing ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`, artwork.title);
   };
 
@@ -191,7 +194,11 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     }
     if (!isMember) return;
     const wasFav = Boolean(artwork.is_favorited);
-    await toggleFavoriteAction(artwork.id);
+    const res = await toggleFavoriteAction(artwork.id);
+    if (res?.error) {
+      toast.error("Gagal memperbarui Favorites", res.error);
+      return;
+    }
     toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", artwork.title);
   };
 
@@ -216,9 +223,18 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     });
     if (!ok) return;
     setDeletingCommentId(commentId);
-    await deleteCommentAction(commentId, artwork.id);
-    setDeletingCommentId(null);
-    toast.success("Komentar dihapus");
+    try {
+      const res = await deleteCommentAction(commentId, artwork.id);
+      if (res?.error) {
+        toast.error("Gagal menghapus komentar", res.error);
+      } else {
+        toast.success("Komentar dihapus");
+      }
+    } catch {
+      toast.error("Gagal menghapus komentar", "Terjadi gangguan jaringan.");
+    } finally {
+      setDeletingCommentId(null);
+    }
   };
 
   return (
@@ -299,7 +315,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
                 <span className="text-[11px] text-zinc-500">Diunggah {formatDate(artwork.created_at)}</span>
               </div>
 
-              <h1 className="font-display mt-4 text-3xl leading-[1.08] text-white sm:text-4xl lg:text-5xl">
+              <h1 className="font-display mt-4 break-words text-3xl leading-[1.08] text-white sm:text-4xl lg:text-5xl">
                 {artwork.title}
               </h1>
 
@@ -326,7 +342,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
               {/* DESKRIPSI */}
               <div className="mt-6">
                 <p className="eyebrow">DESKRIPSI KARYA</p>
-                <p className="mt-2.5 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">
+                <p className="mt-2.5 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-300">
                   {artwork.description}
                 </p>
               </div>
@@ -348,34 +364,13 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
               <div className="flex flex-wrap items-center gap-2.5">
                 {/* REACTION */}
                 {isMember ? (
-                  <div className="group/react relative flex items-center">
-                    <div className="glass pointer-events-none absolute bottom-full left-0 mb-2 flex items-center gap-1 rounded-full px-2.5 py-1.5 opacity-0 transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
-                      {REACTIONS.map((r) => (
-                        <button
-                          key={r.type}
-                          type="button"
-                          onClick={() => handleReaction(r.type)}
-                          title={r.label}
-                          className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:scale-125 hover:bg-white/10"
-                        >
-                          {r.icon}
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleReaction(userReaction ? userReaction.type : "love")}
-                      className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs transition ${
-                        userReaction
-                          ? "border-rose-500/50 bg-rose-500/15 font-medium text-rose-300"
-                          : "border-white/15 bg-white/[0.04] text-zinc-200 hover:border-champagne-300/50 hover:text-champagne-100"
-                      }`}
-                    >
-                      <span>{userReaction ? userReaction.icon : "♥"}</span>
-                      <span>{artwork.total_reactions} Reaksi</span>
-                    </button>
-                  </div>
+                  <ReactionPicker
+                    userReaction={artwork.user_reaction}
+                    totalReactions={artwork.total_reactions}
+                    onReact={(type) => handleReaction(type)}
+                    align="left"
+                    size="md"
+                  />
                 ) : isGuest ? (
                   <button
                     type="button"
@@ -486,7 +481,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
           ) : isGuest ? (
             <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/35 px-5 py-4 text-xs text-zinc-400">
               <span>Masuk sebagai Member untuk ikut menulis komentar pada karya ini.</span>
-              <Link href="/" className="btn-gold rounded-full px-4 py-1.5 text-[10px] uppercase tracking-wider">
+              <Link href="/?step=login" className="btn-gold rounded-full px-4 py-1.5 text-[10px] uppercase tracking-wider">
                 Masuk Sekarang
               </Link>
             </div>
@@ -531,7 +526,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
                         </button>
                       )}
                     </div>
-                    <p className="mt-3 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{cm.content}</p>
+                    <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-300">{cm.content}</p>
                   </div>
                 );
               })}
@@ -604,19 +599,19 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
             </div>
           </div>
 
-          {/* AREA GAMBAR INTERAKTIF */}
+          {/* AREA GAMBAR INTERAKTIF — klik area gelap di luar gambar akan menutup Lightbox */}
           <div
-            onClick={(e) => e.stopPropagation()}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerLeave={handlePointerUp}
             onDoubleClick={handleDoubleClickZoom}
-            className={`relative flex flex-1 items-center justify-center overflow-hidden p-4 sm:p-8 ${
+            className={`relative flex flex-1 touch-none items-center justify-center overflow-hidden p-4 sm:p-8 ${
               zoom > 1 ? (isDragging ? "cursor-grabbing" : "cursor-grab") : "cursor-zoom-in"
             }`}
           >
             <div
+              onClick={(e) => e.stopPropagation()}
               style={{
                 transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
                 transition: isDragging ? "none" : "transform 260ms cubic-bezier(0.22,1,0.36,1)",
@@ -643,12 +638,18 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
 
       {/* MODAL REPORT ARTWORK */}
       {showReportModal && isMember && !isOwnArtwork && (
-        <div onClick={() => setShowReportModal(false)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-md rounded-3xl p-7">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-artwork-title"
+          onClick={() => setShowReportModal(false)}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[9px] tracking-[0.3em] text-red-400">REPORT ARTWORK</p>
-                <h2 className="font-display mt-1 text-3xl text-white">Laporkan Karya</h2>
+                <h2 id="report-artwork-title" className="font-display mt-1 text-3xl text-white">Laporkan Karya</h2>
               </div>
               <button type="button" onClick={() => setShowReportModal(false)} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>

@@ -6,14 +6,15 @@ import {
   ensureReportsTable,
 } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { parsePositiveInt } from "@/lib/validation";
 import ArtworkDetailClient from "@/components/artwork-detail-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function ArtworkDetailPage({ params }) {
   const { id } = await params;
-  const artworkId = Number(id);
-  if (!artworkId || Number.isNaN(artworkId)) {
+  const artworkId = parsePositiveInt(id);
+  if (!artworkId) {
     notFound();
   }
 

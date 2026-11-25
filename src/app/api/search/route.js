@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(request) {
   try {
@@ -7,7 +8,8 @@ export async function GET(request) {
     const raw = (searchParams.get("q") || "").trim();
     const pattern = `%${raw}%`;
 
-    const [artworksRes, creatorsRes, challengesRes] = await Promise.all([
+    const [currentUser, artworksRes, creatorsRes, challengesRes] = await Promise.all([
+      getCurrentUser(),
       raw
         ? query(
             `SELECT a.id, a.title, a.image_url, c.name AS category_name, u.display_name AS artist_name
@@ -36,7 +38,7 @@ export async function GET(request) {
         ? query(
             `SELECT id, display_name, username, avatar_url, role
              FROM users
-             WHERE role IN ('Member', 'Curator')
+             WHERE (role = 'Member' OR (role = 'Curator' AND curator_status = 'Approved'))
                AND (display_name ILIKE $1 OR username ILIKE $1)
              ORDER BY display_name ASC
              LIMIT 4`,
@@ -63,19 +65,24 @@ export async function GET(request) {
         : query(
             `SELECT id, title, prize, end_date
              FROM challenges
-             WHERE end_date >= NOW()
+             WHERE (start_date IS NULL OR start_date <= NOW()) AND end_date >= NOW()
              ORDER BY end_date ASC
              LIMIT 3`
           ),
     ]);
 
     return NextResponse.json({
+      role: currentUser?.role || "Guest",
+      curatorStatus: currentUser?.curatorStatus || null,
       artworks: artworksRes.rows,
       creators: creatorsRes.rows,
       challenges: challengesRes.rows,
     });
   } catch (error) {
     console.error("Search API error:", error);
-    return NextResponse.json({ artworks: [], creators: [], challenges: [] }, { status: 500 });
+    return NextResponse.json(
+      { role: "Guest", curatorStatus: null, artworks: [], creators: [], challenges: [] },
+      { status: 500 }
+    );
   }
 }

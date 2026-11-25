@@ -50,7 +50,8 @@ export default function BackToTop() {
     if (document.documentElement.classList.contains("lenis")) {
       window.dispatchEvent(new Event("aesthe:scroll-top"));
     } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     }
   };
 
@@ -58,9 +59,11 @@ export default function BackToTop() {
     <button
       type="button"
       onClick={handleClick}
+      tabIndex={visible ? 0 : -1}
+      aria-hidden={!visible}
       aria-label="Kembali ke atas"
       title="Kembali ke atas"
-      className={`group fixed bottom-24 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-[#101014]/90 text-champagne-200 shadow-[0_14px_34px_-8px_rgba(0,0,0,0.9),0_0_24px_-8px_rgba(212,175,106,0.35)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-300/60 hover:bg-[#17171c] hover:text-champagne-100 lg:bottom-6 lg:right-6 ${
+      className={`group fixed bottom-[calc(6.75rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-[#101014]/90 text-champagne-200 shadow-[0_14px_34px_-8px_rgba(0,0,0,0.9),0_0_24px_-8px_rgba(212,175,106,0.35)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-300/60 hover:bg-[#17171c] hover:text-champagne-100 lg:bottom-6 lg:right-6 ${
         visible ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
       }`}
     >

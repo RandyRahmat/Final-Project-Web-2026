@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
 import { useToast } from "@/components/ui/toast-provider";
+import { openUploadModal } from "@/components/ui/upload-artwork-modal";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import {
   updateProfileAction,
@@ -24,6 +26,7 @@ export default function ProfileClient({
   favoritesCount,
   followersCount = 0,
   followingList = [],
+  ongoingChallengesCount = 0,
 }) {
   const confirm = useConfirm();
   const toast = useToast();
@@ -37,13 +40,54 @@ export default function ProfileClient({
   const [deletingId, setDeletingId] = useState(null);
   const [unfollowingId, setUnfollowingId] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatar_url || "");
+  const avatarBlobRef = useRef("");
 
-  const [profileState, profileFormAction, isSavingProfile] = useActionState(updateProfileAction, null);
-  const [accountState, accountFormAction, isSavingAccount] = useActionState(updateAccountAction, null);
+  useBodyScrollLock(Boolean(editingArt));
+
+  useEffect(() => {
+    return () => {
+      if (avatarBlobRef.current) {
+        URL.revokeObjectURL(avatarBlobRef.current);
+        avatarBlobRef.current = "";
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!editingArt) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setEditingArt(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [editingArt]);
+
+  const [profileState, profileFormAction, isSavingProfile] = useActionState(async (prevState, formData) => {
+    const res = await updateProfileAction(prevState, formData);
+    if (res?.success) {
+      toast.success("Profil diperbarui", res.message);
+    } else if (res?.error) {
+      toast.error("Gagal memperbarui profil", res.error);
+    }
+    return res;
+  }, null);
+
+  const [accountState, accountFormAction, isSavingAccount] = useActionState(async (prevState, formData) => {
+    const res = await updateAccountAction(prevState, formData);
+    if (res?.success) {
+      toast.success("Pengaturan akun diperbarui", res.message);
+    } else if (res?.error) {
+      toast.error("Gagal memperbarui akun", res.error);
+    }
+    return res;
+  }, null);
   const [editArtState, editArtFormAction, isSavingArt] = useActionState(async (prevState, formData) => {
     const res = await updateArtworkAction(prevState, formData);
     if (res?.success) {
       setEditingArt(null);
+      toast.success("Detail karya berhasil diperbarui");
+    } else if (res?.error) {
+      toast.error("Gagal memperbarui karya", res.error);
     }
     return res;
   }, null);
@@ -52,8 +96,16 @@ export default function ProfileClient({
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (avatarBlobRef.current) {
+      URL.revokeObjectURL(avatarBlobRef.current);
+      avatarBlobRef.current = "";
+    }
+    if (!file) {
+      setAvatarPreview(profile.avatar_url || "");
+      return;
+    }
     const objectUrl = URL.createObjectURL(file);
+    avatarBlobRef.current = objectUrl;
     setAvatarPreview(objectUrl);
   };
 
@@ -66,17 +118,35 @@ export default function ProfileClient({
     });
     if (!confirmed) return;
     setDeletingId(artworkId);
-    await deleteArtworkAction(artworkId);
-    setDeletingId(null);
-    toast.success("Karya berhasil dihapus", title);
+    try {
+      const res = await deleteArtworkAction(artworkId);
+      if (res?.error) {
+        toast.error("Gagal menghapus karya", res.error);
+      } else {
+        toast.success("Karya berhasil dihapus", title);
+      }
+    } catch {
+      toast.error("Gagal menghapus karya", "Terjadi gangguan jaringan.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleUnfollow = async (creatorId) => {
     const target = followingList.find((c) => c.id === creatorId);
     setUnfollowingId(creatorId);
-    await toggleFollowAction(creatorId);
-    setUnfollowingId(null);
-    toast.info("Berhenti mengikuti kreator", target ? `@${target.username}` : "");
+    try {
+      const res = await toggleFollowAction(creatorId);
+      if (res?.error) {
+        toast.error("Gagal memperbarui follow", res.error);
+      } else {
+        toast.info("Berhenti mengikuti kreator", target ? `@${target.username}` : "");
+      }
+    } catch {
+      toast.error("Gagal memperbarui follow", "Terjadi gangguan jaringan.");
+    } finally {
+      setUnfollowingId(null);
+    }
   };
 
   const tabs = isMember
@@ -107,6 +177,7 @@ export default function ProfileClient({
         onToggleCollapse={toggleSidebarCollapsed}
         mobileMenu={mobileMenu}
         onCloseMobile={() => setMobileMenu(false)}
+        challengesCount={ongoingChallengesCount}
         publicPortfolioUsername={profile.username}
       />
 
@@ -183,7 +254,7 @@ export default function ProfileClient({
               </div>
 
               {isMember && (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
                     <p className="font-display text-2xl text-gold">{myArtworks.length}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Artworks</p>
@@ -244,22 +315,22 @@ export default function ProfileClient({
                   <h2 className="font-display text-3xl text-white">Karya yang Diunggah</h2>
                   <p className="mt-1 text-xs text-zinc-500">Kelola detail karya atau hapus karya milikmu sendiri.</p>
                 </div>
-                <Link href="/home" className="btn-gold rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.15em]">
+                <button type="button" onClick={openUploadModal} className="btn-gold rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.15em]">
                   ＋ Unggah Baru
-                </Link>
+                </button>
               </div>
 
               {myArtworks.length === 0 ? (
                 <div className="glass rounded-2xl border border-white/10 px-6 py-16 text-center">
                   <p className="text-sm text-zinc-400">Kamu belum mengunggah karya apa pun.</p>
-                  <Link href="/home" className="btn-gold mt-4 inline-flex rounded-full px-5 py-2 text-[10px] uppercase tracking-[0.18em]">
-                    Upload di Home
-                  </Link>
+                  <button type="button" onClick={openUploadModal} className="btn-gold mt-4 inline-flex rounded-full px-5 py-2 text-[10px] uppercase tracking-[0.18em]">
+                    ＋ Unggah Karya Pertama
+                  </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {myArtworks.map((art) => (
-                    <div key={art.id} data-reveal>
+                    <div key={art.id}>
                       <article className="card-lux spotlight glass overflow-hidden rounded-2xl border border-white/15">
                         <div className="relative aspect-[4/3] overflow-hidden bg-zinc-900">
                           <img src={art.image_url} alt={art.title} className="h-full w-full object-cover transition duration-700 hover:scale-105" />
@@ -382,11 +453,17 @@ export default function ProfileClient({
                     const isEnded = new Date(sub.challenge_end_date) < new Date();
                     return (
                       <div key={sub.id} className="glass spotlight flex flex-col gap-4 rounded-2xl border border-white/15 p-4 transition hover:border-champagne-300/40 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-4">
-                          <img src={sub.artwork_image_url} alt={sub.artwork_title} className="h-16 w-16 shrink-0 rounded-xl border border-white/15 object-cover" />
-                          <div>
-                            <p className="font-display text-lg text-white">{sub.artwork_title}</p>
-                            <p className="mt-0.5 text-xs text-zinc-400">Challenge: {sub.challenge_title}</p>
+                        <div className="flex min-w-0 items-center gap-4">
+                          <Link href={`/artworks/${sub.artwork_id}`} className="shrink-0 overflow-hidden rounded-xl border border-white/15 transition hover:border-champagne-300/50">
+                            <img src={sub.artwork_image_url} alt={sub.artwork_title} className="h-16 w-16 object-cover transition duration-500 hover:scale-105" />
+                          </Link>
+                          <div className="min-w-0">
+                            <Link href={`/artworks/${sub.artwork_id}`} className="font-display block truncate text-lg text-white transition hover:text-champagne-200">
+                              {sub.artwork_title}
+                            </Link>
+                            <Link href={`/challenges/${sub.challenge_id}`} className="mt-0.5 block truncate text-xs text-zinc-400 transition hover:text-champagne-200">
+                              Challenge: {sub.challenge_title} ↗
+                            </Link>
                             <p className="mt-1 text-[10px] text-champagne-300/90">Hadiah: {sub.challenge_prize}</p>
                           </div>
                         </div>
@@ -529,7 +606,7 @@ export default function ProfileClient({
                   </div>
 
                   <div className="border-t border-white/[0.08] pt-5">
-                    <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-zinc-500">Ubah Kata Sandi (Opsional)</p>
+                    <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-zinc-500">Verifikasi &amp; Ubah Kata Sandi</p>
 
                     <div className="space-y-4">
                       <div>
@@ -537,7 +614,8 @@ export default function ProfileClient({
                         <input
                           type="password"
                           name="currentPassword"
-                          placeholder="Kosongkan jika tidak mengubah kata sandi"
+                          required
+                          placeholder="Wajib diisi untuk mengubah email atau kata sandi"
                           className="input-lux"
                         />
                       </div>
@@ -583,12 +661,18 @@ export default function ProfileClient({
 
       {/* MODAL EDIT KARYA */}
       {editingArt && (
-        <div onClick={() => setEditingArt(null)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-lg rounded-3xl p-7 sm:p-8">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-artwork-title"
+          onClick={() => setEditingArt(null)}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl p-7 sm:p-8">
             <div className="flex items-start justify-between">
               <div>
                 <p className="eyebrow">EDIT ARTWORK</p>
-                <h2 className="font-display mt-1.5 text-3xl text-white">Perbarui Detail Karya</h2>
+                <h2 id="edit-artwork-title" className="font-display mt-1.5 text-3xl text-white">Perbarui Detail Karya</h2>
               </div>
               <button type="button" onClick={() => setEditingArt(null)} className="text-xl text-zinc-500 transition hover:text-white">
                 ×

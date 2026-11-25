@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
+import ReactionPicker, { getReactionDisplay } from "@/components/ui/reaction-picker";
 import { useToast } from "@/components/ui/toast-provider";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 import {
@@ -15,15 +17,7 @@ import {
   toggleArtworkInCollectionAction,
 } from "@/actions/collection-actions";
 
-const REACTIONS = [
-  { type: "love", icon: "❤️", label: "Love" },
-  { type: "wow", icon: "😮", label: "Wow" },
-  { type: "fire", icon: "🔥", label: "Fire" },
-  { type: "inspire", icon: "✧", label: "Inspire" },
-  { type: "applause", icon: "👏", label: "Applause" },
-];
-
-export default function FavoritesClient({ currentUser, artworks, collections = [], categories }) {
+export default function FavoritesClient({ currentUser, artworks, collections = [], categories, ongoingChallengesCount = 0 }) {
   const confirm = useConfirm();
   const toast = useToast();
   const [activeCollectionId, setActiveCollectionId] = useState("all");
@@ -102,13 +96,21 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
   const handleReaction = async (artworkId, reactionType = "love") => {
     const target = artworks.find((a) => a.id === artworkId);
     const r = getReactionDisplay(reactionType);
-    await reactArtworkAction(artworkId, reactionType);
+    const res = await reactArtworkAction(artworkId, reactionType);
+    if (res?.error) {
+      toast.error("Gagal mengirim reaksi", res.error);
+      return;
+    }
     toast.success(target?.user_reaction === reactionType ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`, target?.title);
   };
 
   const handleRemoveFavorite = async (artworkId) => {
     const target = artworks.find((a) => a.id === artworkId);
-    await toggleFavoriteAction(artworkId);
+    const res = await toggleFavoriteAction(artworkId);
+    if (res?.error) {
+      toast.error("Gagal menghapus dari Favorites", res.error);
+      return;
+    }
     toast.success("Dihapus dari Favorites", target?.title);
   };
 
@@ -121,12 +123,21 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
     });
     if (!confirmed) return;
     setDeletingColId(col.id);
-    await deleteCollectionAction(col.id);
-    setDeletingColId(null);
-    if (Number(activeCollectionId) === Number(col.id)) {
-      setActiveCollectionId("all");
+    try {
+      const res = await deleteCollectionAction(col.id);
+      if (res?.error) {
+        toast.error("Gagal menghapus moodboard", res.error);
+        return;
+      }
+      if (Number(activeCollectionId) === Number(col.id)) {
+        setActiveCollectionId("all");
+      }
+      toast.success("Moodboard dihapus", col.name);
+    } catch {
+      toast.error("Gagal menghapus moodboard", "Terjadi gangguan jaringan.");
+    } finally {
+      setDeletingColId(null);
     }
-    toast.success("Moodboard dihapus", col.name);
   };
 
   const handleToggleArtworkInCollection = async (collectionId, artworkId) => {
@@ -135,14 +146,35 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
     const col = collections.find((c) => Number(c.id) === Number(collectionId));
     const art = artworks.find((a) => a.id === artworkId);
     const alreadyIn = (art?.collection_ids || []).map(Number).includes(Number(collectionId));
-    await toggleArtworkInCollectionAction(collectionId, artworkId);
-    setTogglingKey("");
-    toast.success(alreadyIn ? "Dikeluarkan dari moodboard" : "Ditambahkan ke moodboard", col?.name);
+    try {
+      const res = await toggleArtworkInCollectionAction(collectionId, artworkId);
+      if (res?.error) {
+        toast.error("Gagal mengatur moodboard", res.error);
+        return;
+      }
+      toast.success(alreadyIn ? "Dikeluarkan dari moodboard" : "Ditambahkan ke moodboard", col?.name);
+    } catch {
+      toast.error("Gagal mengatur moodboard", "Terjadi gangguan jaringan.");
+    } finally {
+      setTogglingKey("");
+    }
   };
 
-  const getReactionDisplay = (type) => {
-    return REACTIONS.find((r) => r.type === type) || REACTIONS[0];
-  };
+  const anyModalOpen = showCreateModal || Boolean(editingCollection) || Boolean(liveAssigningArtwork);
+  useBodyScrollLock(anyModalOpen);
+
+  useEffect(() => {
+    if (!anyModalOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (liveAssigningArtwork) setAssigningArtwork(null);
+        else if (editingCollection) setEditingCollection(null);
+        else if (showCreateModal) setShowCreateModal(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [anyModalOpen, liveAssigningArtwork, editingCollection, showCreateModal]);
 
   const allCovers = artworks.slice(0, 3).map((a) => a.image_url);
 
@@ -155,7 +187,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
         onToggleCollapse={toggleSidebarCollapsed}
         mobileMenu={mobileMenu}
         onCloseMobile={() => setMobileMenu(false)}
-        favoritesCount={artworks.length}
+        challengesCount={ongoingChallengesCount}
       />
 
       {/* MAIN CONTENT */}
@@ -187,10 +219,10 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
               </div>
               <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
                 <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-medium uppercase">
-                  {currentUser.avatarUrl ? (
+                  {currentUser?.avatarUrl ? (
                     <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
                   ) : (
-                    currentUser.displayName.charAt(0)
+                    currentUser?.displayName?.charAt(0) || "M"
                   )}
                 </div>
               </div>
@@ -201,7 +233,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
         {/* PAGE CONTENT */}
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
           {/* HEADER FAVORITES */}
-          <section data-reveal className="flex flex-wrap items-end justify-between gap-4">
+          <section className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="mb-3 flex items-center gap-2.5">
                 <p className="eyebrow">PERSONAL COLLECTIONS</p>
@@ -446,7 +478,6 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
               {/* GRID KARYA FAVORIT */}
               <div className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {filteredArtworks.map((art) => {
-                  const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
                   const boardCount = (art.collection_ids || []).length;
 
                   return (
@@ -516,34 +547,11 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                           <p className="text-[10px] text-zinc-500">@{art.artist_username}</p>
                         </Link>
 
-                        <div className="group/react relative flex items-center">
-                          <div className="glass pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full px-2.5 py-1.5 opacity-0 transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
-                            {REACTIONS.map((r) => (
-                              <button
-                                key={r.type}
-                                type="button"
-                                onClick={() => handleReaction(art.id, r.type)}
-                                title={r.label}
-                                className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:scale-125 hover:bg-white/10"
-                              >
-                                {r.icon}
-                              </button>
-                            ))}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleReaction(art.id, userReaction ? userReaction.type : "love")}
-                            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] transition ${
-                              userReaction
-                                ? "border-rose-500/50 bg-rose-500/15 text-rose-300 font-medium"
-                                : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/30 hover:text-white"
-                            }`}
-                          >
-                            <span>{userReaction ? userReaction.icon : "♥"}</span>
-                            <span>{art.total_reactions}</span>
-                          </button>
-                        </div>
+                        <ReactionPicker
+                          userReaction={art.user_reaction}
+                          totalReactions={art.total_reactions}
+                          onReact={(type) => handleReaction(art.id, type)}
+                        />
                       </div>
                     </article>
                   );
@@ -600,12 +608,18 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
       {/* MODAL BUAT MOODBOARD BARU */}
       {showCreateModal && (
-        <div onClick={() => setShowCreateModal(false)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-md rounded-3xl p-7">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-moodboard-title"
+          onClick={() => setShowCreateModal(false)}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
                 <p className="eyebrow">NEW MOODBOARD</p>
-                <h2 className="font-display mt-1.5 text-3xl text-white">Buat Moodboard Baru</h2>
+                <h2 id="create-moodboard-title" className="font-display mt-1.5 text-3xl text-white">Buat Moodboard Baru</h2>
               </div>
               <button type="button" onClick={() => setShowCreateModal(false)} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>
@@ -653,12 +667,18 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
       {/* MODAL EDIT MOODBOARD */}
       {editingCollection && (
-        <div onClick={() => setEditingCollection(null)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-md rounded-3xl p-7">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-moodboard-title"
+          onClick={() => setEditingCollection(null)}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
                 <p className="eyebrow">EDIT MOODBOARD</p>
-                <h2 className="font-display mt-1.5 text-3xl text-white">Perbarui Moodboard</h2>
+                <h2 id="edit-moodboard-title" className="font-display mt-1.5 text-3xl text-white">Perbarui Moodboard</h2>
               </div>
               <button type="button" onClick={() => setEditingCollection(null)} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>
@@ -708,12 +728,18 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
       {/* MODAL CHECKLIST MASUKKAN KARYA KE MOODBOARD */}
       {liveAssigningArtwork && (
-        <div onClick={() => setAssigningArtwork(null)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-md rounded-3xl p-7">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="assign-moodboard-title"
+          onClick={() => setAssigningArtwork(null)}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
                 <p className="eyebrow">SAVE TO MOODBOARD</p>
-                <h2 className="font-display mt-1.5 text-2xl text-white">{liveAssigningArtwork.title}</h2>
+                <h2 id="assign-moodboard-title" className="font-display mt-1.5 text-2xl text-white">{liveAssigningArtwork.title}</h2>
               </div>
               <button type="button" onClick={() => setAssigningArtwork(null)} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>
@@ -733,8 +759,9 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                 </button>
               </div>
             ) : (
-              <div className="mt-5 space-y-2">
+              <div className="mt-5">
                 <p className="mb-3 text-xs text-zinc-400">Centang moodboard untuk mengelompokkan karya ini:</p>
+                <div data-lenis-prevent className="max-h-72 space-y-2 overflow-y-auto pr-1">
                 {collections.map((col) => {
                   const isIn = (liveAssigningArtwork.collection_ids || []).map(Number).includes(Number(col.id));
                   const busy = togglingKey === `${col.id}-${liveAssigningArtwork.id}`;
@@ -758,6 +785,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                     </button>
                   );
                 })}
+                </div>
               </div>
             )}
           </div>

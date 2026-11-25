@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import Link from "next/link";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 
 const AuthPromptContext = createContext(null);
 
@@ -26,10 +27,10 @@ export function AuthPromptProvider({ children }) {
     });
   }, []);
 
+  useBodyScrollLock(Boolean(prompt));
+
   useEffect(() => {
     if (!prompt) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -40,7 +41,6 @@ export function AuthPromptProvider({ children }) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [prompt, close]);

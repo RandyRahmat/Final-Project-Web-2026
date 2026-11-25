@@ -160,14 +160,38 @@ export function GalleryGridSkeleton() {
   );
 }
 
+function DetailSkeletonShell({ children }) {
+  return (
+    <div role="status" aria-label="Memuat halaman" className="min-h-screen w-full text-white">
+      <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#0a0a0b]/75 px-5 backdrop-blur-md sm:px-10">
+        <div className="flex items-center gap-3">
+          <Bone className="h-8 w-8 rounded-full" />
+          <Bone className="h-4 w-28 rounded-md" />
+        </div>
+        <div className="flex items-center gap-2.5">
+          <Bone className="h-8 w-20 rounded-full" />
+          <Bone className="h-8 w-24 rounded-full" />
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-[1400px] px-5 py-8 sm:px-10">{children}</main>
+    </div>
+  );
+}
+
+export function MinimalPageSkeleton() {
+  return (
+    <div role="status" aria-label="Memuat halaman" className="flex min-h-screen w-full items-center justify-center px-5">
+      <div className="flex flex-col items-center gap-4">
+        <span className="h-9 w-9 animate-spin rounded-full border-2 border-champagne-300/25 border-t-champagne-300" />
+        <Bone className="h-3 w-28 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 export function ArtworkDetailSkeleton() {
   return (
-    <WorkspaceSkeletonShell>
-      <div className="mb-6 flex items-center justify-between">
-        <Bone className="h-8 w-36 rounded-full" />
-        <Bone className="h-8 w-32 rounded-full" />
-      </div>
-
+    <DetailSkeletonShell>
       <div className="grid gap-8 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <Bone className="aspect-[4/3] w-full rounded-2xl" />
@@ -201,7 +225,60 @@ export function ArtworkDetailSkeleton() {
           </div>
         </div>
       </div>
-    </WorkspaceSkeletonShell>
+    </DetailSkeletonShell>
+  );
+}
+
+export function ChallengeDetailSkeleton() {
+  return (
+    <DetailSkeletonShell>
+      <Bone className="mb-8 h-64 w-full rounded-3xl sm:h-80" />
+      <div className="mb-10 grid gap-6 lg:grid-cols-12">
+        <div className="space-y-4 rounded-3xl border border-white/[0.07] bg-white/[0.02] p-6 lg:col-span-8">
+          <Bone className="h-3 w-28 rounded" />
+          <Bone className="h-8 w-3/4 rounded-lg" />
+          <Bone className="h-4 w-full rounded" />
+          <Bone className="h-4 w-5/6 rounded" />
+        </div>
+        <div className="space-y-4 rounded-3xl border border-white/[0.07] bg-white/[0.02] p-6 lg:col-span-4">
+          <Bone className="h-4 w-32 rounded" />
+          <Bone className="h-10 w-full rounded-xl" />
+          <Bone className="h-10 w-full rounded-full" />
+        </div>
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <Bone key={i} className="aspect-[4/3] w-full rounded-2xl" />
+        ))}
+      </div>
+    </DetailSkeletonShell>
+  );
+}
+
+export function CreatorProfileSkeleton() {
+  return (
+    <DetailSkeletonShell>
+      <div className="mb-10 flex flex-col gap-6 rounded-3xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-10 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-5">
+          <Bone className="h-24 w-24 shrink-0 rounded-full" />
+          <div className="space-y-2.5">
+            <Bone className="h-8 w-52 rounded-lg" />
+            <Bone className="h-3.5 w-28 rounded" />
+            <Bone className="h-4 w-72 max-w-full rounded" />
+          </div>
+        </div>
+        <div className="grid w-full grid-cols-3 gap-2.5 md:w-[360px]">
+          <Bone className="h-16 rounded-2xl" />
+          <Bone className="h-16 rounded-2xl" />
+          <Bone className="h-16 rounded-2xl" />
+        </div>
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <Bone key={i} className="aspect-[4/5] w-full rounded-2xl" />
+        ))}
+      </div>
+    </DetailSkeletonShell>
   );
 }
 

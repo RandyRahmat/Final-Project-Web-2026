@@ -8,6 +8,7 @@ async function getSessionFromRequest(request) {
   try {
     const secretKey = new TextEncoder().encode(process.env.JWT_SECRET);
     const { payload } = await jwtVerify(token, secretKey);
+    if (payload.purpose === "password_reset") return null;
     return payload;
   } catch {
     return null;
@@ -28,7 +29,6 @@ export async function proxy(request) {
   }
 
   const role = session.role;
-  const curatorStatus = session.curatorStatus;
 
   // 1. /favorites -> khusus Member
   if (pathname.startsWith("/favorites") && role !== "Member") {
@@ -40,24 +40,10 @@ export async function proxy(request) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 
-  // 3. /curator -> khusus Curator yang sudah Approved
-  if (pathname.startsWith("/curator")) {
-    if (role !== "Curator") {
-      return NextResponse.redirect(new URL("/home", request.url));
-    }
-    if (curatorStatus !== "Approved") {
-      return NextResponse.redirect(new URL("/pending-curator", request.url));
-    }
-  }
-
-  // 4. /pending-curator -> khusus Curator yang masih Pending / Rejected
-  if (pathname.startsWith("/pending-curator")) {
-    if (role !== "Curator") {
-      return NextResponse.redirect(new URL("/home", request.url));
-    }
-    if (curatorStatus === "Approved") {
-      return NextResponse.redirect(new URL("/curator", request.url));
-    }
+  // 3 & 4. /curator & /pending-curator -> khusus role Curator;
+  // pengecekan curator_status live dilakukan di Server Component agar tidak redirect loop saat status berubah di DB
+  if ((pathname.startsWith("/curator") || pathname.startsWith("/pending-curator")) && role !== "Curator") {
+    return NextResponse.redirect(new URL("/home", request.url));
   }
 
   // 5. /profile & /messages -> diizinkan untuk semua role yang sudah login

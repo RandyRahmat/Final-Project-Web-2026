@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 
 const SLIDE_DURATION_MS = 7000;
 
@@ -60,6 +61,9 @@ export default function ExhibitionMode({ artworks = [], initialIndex = 0, onClos
     try {
       stopAmbientAudio();
       const ctx = new AudioCtx();
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
       masterGain.gain.exponentialRampToValueAtTime(0.065, ctx.currentTime + 1.8);
@@ -113,14 +117,14 @@ export default function ExhibitionMode({ artworks = [], initialIndex = 0, onClos
   }, [stopAmbientAudio]);
 
   const toggleAudio = useCallback(() => {
-    setAudioOn((prev) => {
-      if (prev) {
-        stopAmbientAudio();
-        return false;
-      }
-      return startAmbientAudio();
-    });
-  }, [startAmbientAudio, stopAmbientAudio]);
+    if (audioOn) {
+      stopAmbientAudio();
+      setAudioOn(false);
+    } else {
+      const started = startAmbientAudio();
+      setAudioOn(started);
+    }
+  }, [audioOn, startAmbientAudio, stopAmbientAudio]);
 
   const handleClose = useCallback(() => {
     stopAmbientAudio();
@@ -137,28 +141,40 @@ export default function ExhibitionMode({ artworks = [], initialIndex = 0, onClos
     setIndex((i) => (i - 1 + total) % total);
   }, [total]);
 
-  // Bersihkan audio & kunci scroll body saat Mode Pameran aktif
+  // Bersihkan audio & kunci scroll body (ref-counted) saat Mode Pameran aktif
+  useBodyScrollLock(Boolean(currentArt));
+
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prevOverflow;
       stopAmbientAudio();
     };
   }, [stopAmbientAudio]);
 
-  // Autoplay tiap 7 detik
+  // Autoplay tiap 7 detik (reset timer otomatis setiap slide berubah secara manual)
   useEffect(() => {
     if (!isPlaying || total <= 1) return;
-    const timer = setInterval(() => {
+    const timer = window.setTimeout(() => {
       setIndex((i) => (i + 1) % total);
     }, SLIDE_DURATION_MS);
-    return () => clearInterval(timer);
-  }, [isPlaying, total]);
+    return () => window.clearTimeout(timer);
+  }, [isPlaying, total, activeIndex]);
 
-  // Shortcut keyboard: Esc, Left/Right, Space, M
+  // Shortcut keyboard: Esc, Left/Right, Space, M (abaikan saat input atau CommandPalette aktif)
   useEffect(() => {
     const onKeyDown = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (document.querySelector('[data-command-palette-open="true"]')) return;
+      const target = e.target;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
       if (e.key === "Escape") {
         handleClose();
       } else if (e.key === "ArrowRight") {
@@ -182,7 +198,12 @@ export default function ExhibitionMode({ artworks = [], initialIndex = 0, onClos
   const paddedTotal = String(total).padStart(2, "0");
 
   return (
-    <div className="modal-overlay fixed inset-0 z-[120] flex flex-col overflow-hidden bg-[#060607] text-zinc-100 select-none">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Mode Pameran"
+      className="modal-overlay fixed inset-0 z-[120] flex flex-col overflow-hidden bg-[#060607] text-zinc-100 select-none"
+    >
       <style>{`
         @keyframes exhibitionProgress {
           from { transform: scaleX(0); }
@@ -378,25 +399,27 @@ export default function ExhibitionMode({ artworks = [], initialIndex = 0, onClos
       {/* BOTTOM THUMBNAIL STRIP & PROGRESS */}
       <footer className="relative z-20 border-t border-white/[0.06] bg-black/50 backdrop-blur-xl">
         {showStrip && total > 1 && (
-          <div className="flex items-center justify-center gap-2 overflow-x-auto px-5 py-3">
-            {artworks.map((art, i) => {
-              const isActive = i === activeIndex;
-              return (
-                <button
-                  key={art.id}
-                  type="button"
-                  onClick={() => setIndex(i)}
-                  title={art.title}
-                  className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border transition-all duration-300 ${
-                    isActive
-                      ? "scale-110 border-champagne-300 shadow-[0_0_18px_rgba(212,175,106,0.55)]"
-                      : "border-white/10 opacity-45 hover:border-white/40 hover:opacity-90"
-                  }`}
-                >
-                  <img src={art.image_url} alt={art.title} className="h-full w-full object-cover" />
-                </button>
-              );
-            })}
+          <div data-lenis-prevent className="overflow-x-auto px-5 py-3">
+            <div className="mx-auto flex w-max items-center gap-2">
+              {artworks.map((art, i) => {
+                const isActive = i === activeIndex;
+                return (
+                  <button
+                    key={art.id}
+                    type="button"
+                    onClick={() => setIndex(i)}
+                    title={art.title}
+                    className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border transition-all duration-300 ${
+                      isActive
+                        ? "scale-110 border-champagne-300 shadow-[0_0_18px_rgba(212,175,106,0.55)]"
+                        : "border-white/10 opacity-45 hover:border-white/40 hover:opacity-90"
+                    }`}
+                  >
+                    <img src={art.image_url} alt={art.title} className="h-full w-full object-cover" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

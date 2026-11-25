@@ -1,12 +1,14 @@
 "use server";
 
+import crypto from "crypto";
 import path from "path";
 import { mkdir, unlink, writeFile } from "fs/promises";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { query, ensureChallengeColumns, ensureUserProfileColumns } from "@/lib/db";
-import { getCurrentUser, createSessionToken } from "@/lib/auth";
+import { query, withTransaction, ensureChallengeColumns, ensureUserProfileColumns } from "@/lib/db";
+import { getCurrentUser, createSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
+import { parsePositiveInt, verifyImageMagicBytes } from "@/lib/validation";
 
 const ALLOWED_BANNER_TYPES = new Map([
   ["image/jpeg", "jpg"],
@@ -17,10 +19,44 @@ const ALLOWED_BANNER_TYPES = new Map([
 
 const MAX_BANNER_BYTES = 8 * 1024 * 1024; // 8MB
 
+function parseDateTimeLocalToIso(raw, tzOffsetRaw) {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::(\d{2}))?$/.exec(trimmed);
+  if (!match) return null;
+
+  const [, datePart, timePart, secPart] = match;
+  const seconds = secPart || "00";
+
+  let offsetMinutes = new Date().getTimezoneOffset();
+  if (typeof tzOffsetRaw === "string" && /^-?\d+$/.test(tzOffsetRaw.trim())) {
+    const parsedOffset = Number(tzOffsetRaw.trim());
+    if (Number.isInteger(parsedOffset) && parsedOffset >= -840 && parsedOffset <= 840) {
+      offsetMinutes = parsedOffset;
+    }
+  }
+
+  // getTimezoneOffset() mengembalikan (UTC - lokal), sehingga UTC+8 bernilai -480
+  const totalEastMinutes = -offsetMinutes;
+  const sign = totalEastMinutes >= 0 ? "+" : "-";
+  const absMinutes = Math.abs(totalEastMinutes);
+  const hh = String(Math.floor(absMinutes / 60)).padStart(2, "0");
+  const mm = String(absMinutes % 60).padStart(2, "0");
+
+  const iso = `${datePart}T${timePart}:${seconds}${sign}${hh}:${mm}`;
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return { iso, date: parsed };
+}
+
 async function assertApprovedCurator(user) {
   if (!user || user.role !== "Curator") return false;
-  const res = await query("SELECT curator_status FROM users WHERE id = $1", [user.id]);
-  return res.rows.length > 0 && res.rows[0].curator_status === "Approved";
+  const res = await query("SELECT role, curator_status FROM users WHERE id = $1", [user.id]);
+  return (
+    res.rows.length > 0 &&
+    res.rows[0].role === "Curator" &&
+    res.rows[0].curator_status === "Approved"
+  );
 }
 
 async function saveBannerFile(bannerFile, curatorId) {
@@ -32,15 +68,19 @@ async function saveBannerFile(bannerFile, curatorId) {
     return { error: "Ukuran gambar banner maksimal 8 MB." };
   }
 
+  const buffer = Buffer.from(await bannerFile.arrayBuffer());
+  if (!verifyImageMagicBytes(buffer, bannerFile.type)) {
+    return { error: "Isi file banner tidak cocok dengan format gambar yang valid (JPG/PNG/WEBP/GIF)." };
+  }
+
   const uploadsDir = path.join(process.cwd(), "public", "uploads");
   await mkdir(uploadsDir, { recursive: true });
 
-  const filename = `challenge-${curatorId}-${Date.now()}.${ext}`;
+  const filename = `challenge-${curatorId}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
   const filepath = path.join(uploadsDir, filename);
-  const arrayBuffer = await bannerFile.arrayBuffer();
-  await writeFile(filepath, Buffer.from(arrayBuffer));
+  await writeFile(filepath, buffer);
 
-  return { bannerUrl: `/uploads/${filename}` };
+  return { bannerUrl: `/uploads/${filename}`, filepath };
 }
 
 async function removeLocalBanner(bannerUrl) {
@@ -60,8 +100,8 @@ export async function submitArtworkToChallengeAction(prevState, formData) {
     return { error: "Hanya Member yang dapat mendaftarkan karya ke challenge." };
   }
 
-  const challengeId = Number(formData.get("challengeId"));
-  const artworkId = Number(formData.get("artworkId"));
+  const challengeId = parsePositiveInt(formData.get("challengeId"));
+  const artworkId = parsePositiveInt(formData.get("artworkId"));
 
   if (!challengeId || !artworkId) {
     return { error: "Pilih salah satu karya dari portofoliomu untuk didaftarkan." };
@@ -118,6 +158,7 @@ export async function submitArtworkToChallengeAction(prevState, formData) {
 
   revalidatePath(`/challenges/${challengeId}`);
   revalidatePath("/challenges");
+  revalidatePath("/curator");
   revalidatePath("/profile");
   revalidatePath("/home");
 
@@ -130,7 +171,7 @@ export async function withdrawSubmissionAction(challengeId) {
     return { error: "Hanya Member yang dapat menarik submisi." };
   }
 
-  const targetChallengeId = Number(challengeId);
+  const targetChallengeId = parsePositiveInt(challengeId);
   if (!targetChallengeId) {
     return { error: "Challenge tidak valid." };
   }
@@ -161,6 +202,7 @@ export async function withdrawSubmissionAction(challengeId) {
 
   revalidatePath(`/challenges/${targetChallengeId}`);
   revalidatePath("/challenges");
+  revalidatePath("/curator");
   revalidatePath("/profile");
   revalidatePath("/home");
 
@@ -169,12 +211,13 @@ export async function withdrawSubmissionAction(challengeId) {
 
 export async function selectChallengeWinnerAction(challengeId, submissionId, rank) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "Curator" || user.curatorStatus !== "Approved") {
+  const isApproved = await assertApprovedCurator(user);
+  if (!isApproved) {
     return { error: "Hanya Curator terverifikasi yang dapat menentukan pemenang challenge." };
   }
 
-  const targetChallengeId = Number(challengeId);
-  const targetSubmissionId = Number(submissionId);
+  const targetChallengeId = parsePositiveInt(challengeId);
+  const targetSubmissionId = parsePositiveInt(submissionId);
   const parsedRank = rank === null || rank === "" ? null : Number(rank);
 
   if (!targetChallengeId || !targetSubmissionId) {
@@ -184,6 +227,8 @@ export async function selectChallengeWinnerAction(challengeId, submissionId, ran
   if (parsedRank !== null && ![1, 2, 3].includes(parsedRank)) {
     return { error: "Peringkat pemenang hanya boleh Juara 1, 2, atau 3." };
   }
+
+  await ensureChallengeColumns();
 
   // 1. Validasi kepemilikan challenge & validasi waktu di sisi backend
   const challengeResult = await query(
@@ -214,23 +259,31 @@ export async function selectChallengeWinnerAction(challengeId, submissionId, ran
     return { error: "Submisi tidak ditemukan pada challenge ini." };
   }
 
-  // 3. Setiap peringkat hanya untuk satu karya: kosongkan peringkat yang sama pada submisi lain
-  if (parsedRank !== null) {
-    await query(
-      `UPDATE challenge_submissions
-       SET winner_rank = NULL
-       WHERE challenge_id = $1 AND winner_rank = $2 AND id <> $3`,
-      [targetChallengeId, parsedRank, targetSubmissionId]
-    );
-  }
+  // 3 & 4. Jalankan secara atomik dalam transaksi (lock baris challenge agar anti race-condition)
+  try {
+    await withTransaction(async (client) => {
+      await client.query("SELECT id FROM challenges WHERE id = $1 FOR UPDATE", [targetChallengeId]);
 
-  // 4. Tetapkan (atau hapus) peringkat pada submisi terpilih
-  await query(
-    `UPDATE challenge_submissions
-     SET winner_rank = $1
-     WHERE id = $2 AND challenge_id = $3`,
-    [parsedRank, targetSubmissionId, targetChallengeId]
-  );
+      if (parsedRank !== null) {
+        await client.query(
+          `UPDATE challenge_submissions
+           SET winner_rank = NULL
+           WHERE challenge_id = $1 AND winner_rank = $2 AND id <> $3`,
+          [targetChallengeId, parsedRank, targetSubmissionId]
+        );
+      }
+
+      await client.query(
+        `UPDATE challenge_submissions
+         SET winner_rank = $1
+         WHERE id = $2 AND challenge_id = $3`,
+        [parsedRank, targetSubmissionId, targetChallengeId]
+      );
+    });
+  } catch (error) {
+    console.error("Select challenge winner error:", error);
+    return { error: "Gagal menyimpan peringkat juara. Silakan coba lagi." };
+  }
 
   revalidatePath(`/challenges/${targetChallengeId}`);
   revalidatePath("/challenges");
@@ -250,26 +303,35 @@ export async function createChallengeAction(prevState, formData) {
 
   await ensureChallengeColumns();
 
-  const title = formData.get("title")?.trim();
-  const description = formData.get("description")?.trim();
-  const rules = formData.get("rules")?.trim();
-  const prize = formData.get("prize")?.trim();
-  const startDateRaw = formData.get("startDate")?.trim();
-  const endDateRaw = formData.get("endDate")?.trim();
+  const rawTitle = formData.get("title");
+  const rawDescription = formData.get("description");
+  const rawRules = formData.get("rules");
+  const rawPrize = formData.get("prize");
+  const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
+  const description = typeof rawDescription === "string" ? rawDescription.trim() : "";
+  const rules = typeof rawRules === "string" ? rawRules.trim() : "";
+  const prize = typeof rawPrize === "string" ? rawPrize.trim() : "";
+  const startDateRaw = formData.get("startDate");
+  const endDateRaw = formData.get("endDate");
+  const tzOffsetRaw = formData.get("tzOffset");
   const bannerFile = formData.get("bannerFile");
 
   if (!title || !description || !rules || !prize || !startDateRaw || !endDateRaw) {
     return { error: "Semua field (judul, deskripsi, aturan, hadiah, tanggal mulai & selesai) wajib diisi." };
   }
 
-  const startDate = new Date(startDateRaw);
-  const endDate = new Date(endDateRaw);
+  if (title.length > 150 || prize.length > 150) {
+    return { error: "Judul dan hadiah challenge maksimal 150 karakter." };
+  }
 
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+  const parsedStart = parseDateTimeLocalToIso(startDateRaw, tzOffsetRaw);
+  const parsedEnd = parseDateTimeLocalToIso(endDateRaw, tzOffsetRaw);
+
+  if (!parsedStart || !parsedEnd) {
     return { error: "Format tanggal mulai atau tanggal selesai tidak valid." };
   }
 
-  if (endDate <= startDate) {
+  if (parsedEnd.date <= parsedStart.date) {
     return { error: "Tanggal selesai harus setelah tanggal mulai." };
   }
 
@@ -282,15 +344,27 @@ export async function createChallengeAction(prevState, formData) {
     return { error: saved.error };
   }
 
-  await query(
-    `INSERT INTO challenges (curator_id, title, description, rules, prize, start_date, end_date, banner_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-    [user.id, title, description, rules, prize, startDate.toISOString(), endDate.toISOString(), saved.bannerUrl]
-  );
+  try {
+    await query(
+      `INSERT INTO challenges (curator_id, title, description, rules, prize, start_date, end_date, banner_url)
+       VALUES (
+         $1, $2, $3, $4, $5,
+         ($6::timestamptz AT TIME ZONE current_setting('TIMEZONE')),
+         ($7::timestamptz AT TIME ZONE current_setting('TIMEZONE')),
+         $8
+       )`,
+      [user.id, title, description, rules, prize, parsedStart.iso, parsedEnd.iso, saved.bannerUrl]
+    );
+  } catch (error) {
+    if (saved.filepath) await unlink(saved.filepath).catch(() => {});
+    console.error("Create challenge DB error:", error);
+    return { error: "Gagal membuat challenge. Silakan coba lagi." };
+  }
 
   revalidatePath("/curator");
   revalidatePath("/challenges");
   revalidatePath("/home");
+  revalidatePath("/admin");
 
   return { success: true, message: "Challenge baru berhasil dibuat!" };
 }
@@ -304,27 +378,36 @@ export async function updateChallengeAction(prevState, formData) {
 
   await ensureChallengeColumns();
 
-  const challengeId = Number(formData.get("challengeId"));
-  const title = formData.get("title")?.trim();
-  const description = formData.get("description")?.trim();
-  const rules = formData.get("rules")?.trim();
-  const prize = formData.get("prize")?.trim();
-  const startDateRaw = formData.get("startDate")?.trim();
-  const endDateRaw = formData.get("endDate")?.trim();
+  const challengeId = parsePositiveInt(formData.get("challengeId"));
+  const rawTitle = formData.get("title");
+  const rawDescription = formData.get("description");
+  const rawRules = formData.get("rules");
+  const rawPrize = formData.get("prize");
+  const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
+  const description = typeof rawDescription === "string" ? rawDescription.trim() : "";
+  const rules = typeof rawRules === "string" ? rawRules.trim() : "";
+  const prize = typeof rawPrize === "string" ? rawPrize.trim() : "";
+  const startDateRaw = formData.get("startDate");
+  const endDateRaw = formData.get("endDate");
+  const tzOffsetRaw = formData.get("tzOffset");
   const bannerFile = formData.get("bannerFile");
 
   if (!challengeId || !title || !description || !rules || !prize || !startDateRaw || !endDateRaw) {
     return { error: "Semua field wajib diisi dengan benar." };
   }
 
-  const startDate = new Date(startDateRaw);
-  const endDate = new Date(endDateRaw);
+  if (title.length > 150 || prize.length > 150) {
+    return { error: "Judul dan hadiah challenge maksimal 150 karakter." };
+  }
 
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+  const parsedStart = parseDateTimeLocalToIso(startDateRaw, tzOffsetRaw);
+  const parsedEnd = parseDateTimeLocalToIso(endDateRaw, tzOffsetRaw);
+
+  if (!parsedStart || !parsedEnd) {
     return { error: "Format tanggal tidak valid." };
   }
 
-  if (endDate <= startDate) {
+  if (parsedEnd.date <= parsedStart.date) {
     return { error: "Tanggal selesai harus setelah tanggal mulai." };
   }
 
@@ -337,27 +420,47 @@ export async function updateChallengeAction(prevState, formData) {
     return { error: "Challenge tidak ditemukan atau bukan milikmu." };
   }
 
+  if (parsedEnd.date > new Date()) {
+    const winnersCheck = await query(
+      "SELECT 1 FROM challenge_submissions WHERE challenge_id = $1 AND winner_rank IS NOT NULL LIMIT 1",
+      [challengeId]
+    );
+    if (winnersCheck.rows.length > 0) {
+      return {
+        error: "Challenge yang sudah memiliki pemenang tidak dapat diperpanjang. Batalkan peringkat juara terlebih dahulu jika ingin membuka ulang.",
+      };
+    }
+  }
+
   let newBannerUrl = null;
+  let newFilepath = null;
   if (bannerFile && typeof bannerFile === "object" && bannerFile.size > 0) {
     const saved = await saveBannerFile(bannerFile, user.id);
     if (saved.error) {
       return { error: saved.error };
     }
     newBannerUrl = saved.bannerUrl;
+    newFilepath = saved.filepath;
   }
 
-  await query(
-    `UPDATE challenges
-     SET title = $1,
-         description = $2,
-         rules = $3,
-         prize = $4,
-         start_date = $5,
-         end_date = $6,
-         banner_url = COALESCE($7, banner_url)
-     WHERE id = $8 AND curator_id = $9`,
-    [title, description, rules, prize, startDate.toISOString(), endDate.toISOString(), newBannerUrl, challengeId, user.id]
-  );
+  try {
+    await query(
+      `UPDATE challenges
+       SET title = $1,
+           description = $2,
+           rules = $3,
+           prize = $4,
+           start_date = ($5::timestamptz AT TIME ZONE current_setting('TIMEZONE')),
+           end_date = ($6::timestamptz AT TIME ZONE current_setting('TIMEZONE')),
+           banner_url = COALESCE($7, banner_url)
+       WHERE id = $8 AND curator_id = $9`,
+      [title, description, rules, prize, parsedStart.iso, parsedEnd.iso, newBannerUrl, challengeId, user.id]
+    );
+  } catch (error) {
+    if (newFilepath) await unlink(newFilepath).catch(() => {});
+    console.error("Update challenge DB error:", error);
+    return { error: "Gagal memperbarui challenge. Silakan coba lagi." };
+  }
 
   if (newBannerUrl && existingResult.rows[0].banner_url) {
     await removeLocalBanner(existingResult.rows[0].banner_url);
@@ -367,6 +470,7 @@ export async function updateChallengeAction(prevState, formData) {
   revalidatePath("/challenges");
   revalidatePath(`/challenges/${challengeId}`);
   revalidatePath("/home");
+  revalidatePath("/admin");
 
   return { success: true, message: "Challenge berhasil diperbarui." };
 }
@@ -378,7 +482,7 @@ export async function deleteChallengeAction(challengeId) {
     return { error: "Hanya Curator terverifikasi yang dapat menghapus challenge." };
   }
 
-  const targetId = Number(challengeId);
+  const targetId = parsePositiveInt(challengeId);
   if (!targetId) {
     return { error: "Challenge tidak valid." };
   }
@@ -398,7 +502,10 @@ export async function deleteChallengeAction(challengeId) {
 
   revalidatePath("/curator");
   revalidatePath("/challenges");
+  revalidatePath(`/challenges/${targetId}`);
   revalidatePath("/home");
+  revalidatePath("/profile");
+  revalidatePath("/admin");
 
   return { success: true };
 }
@@ -409,7 +516,7 @@ export async function deleteRejectedCuratorAccountAction() {
     return { error: "Aksi tidak diizinkan." };
   }
 
-  const existing = await query("SELECT id, curator_status FROM users WHERE id = $1", [user.id]);
+  const existing = await query("SELECT id, curator_status, avatar_url FROM users WHERE id = $1", [user.id]);
   if (existing.rows.length === 0) {
     return { error: "Akun tidak ditemukan." };
   }
@@ -418,7 +525,11 @@ export async function deleteRejectedCuratorAccountAction() {
     return { error: "Penghapusan akun melalui halaman ini hanya tersedia jika pendaftaran Curator ditolak Admin." };
   }
 
+  const oldAvatar = existing.rows[0].avatar_url;
   await query("DELETE FROM users WHERE id = $1", [user.id]);
+  if (oldAvatar) {
+    await removeLocalBanner(oldAvatar);
+  }
 
   const cookieStore = await cookies();
   cookieStore.delete("aesthe_session");
@@ -455,11 +566,7 @@ export async function refreshCuratorSessionAction() {
   });
 
   const cookieStore = await cookies();
-  cookieStore.set("aesthe_session", token, {
-    httpOnly: true,
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  cookieStore.set("aesthe_session", token, SESSION_COOKIE_OPTIONS);
 
   if (fresh.curator_status === "Approved") {
     redirect("/curator");

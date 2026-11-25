@@ -1,5 +1,5 @@
-import { ChallengesSkeleton } from "@/components/ui/page-skeletons";
+import { ChallengeDetailSkeleton } from "@/components/ui/page-skeletons";
 
 export default function ChallengeDetailLoading() {
-  return <ChallengesSkeleton />;
+  return <ChallengeDetailSkeleton />;
 }

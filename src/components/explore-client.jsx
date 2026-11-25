@@ -6,19 +6,12 @@ import AppSidebar from "@/components/app-sidebar";
 import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import ExhibitionMode from "@/components/ui/exhibition-mode";
 import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
+import ReactionPicker, { getReactionDisplay } from "@/components/ui/reaction-picker";
 import { useToast } from "@/components/ui/toast-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 
-const REACTIONS = [
-  { type: "love", icon: "❤️", label: "Love" },
-  { type: "wow", icon: "😮", label: "Wow" },
-  { type: "fire", icon: "🔥", label: "Fire" },
-  { type: "inspire", icon: "✨", label: "Inspire" },
-  { type: "applause", icon: "👏", label: "Applause" },
-];
-
-export default function ExploreClient({ currentUser, artworks, categories, creators }) {
+export default function ExploreClient({ currentUser, artworks, categories, creators, ongoingChallengesCount = 0 }) {
   const openAuthPrompt = useAuthPrompt();
   const toast = useToast();
   const [activeCategory, setActiveCategory] = useState("All");
@@ -96,7 +89,11 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
     const target = artworks.find((a) => a.id === artworkId);
     const removing = target?.user_reaction === reactionType;
     const r = getReactionDisplay(reactionType);
-    await reactArtworkAction(artworkId, reactionType);
+    const res = await reactArtworkAction(artworkId, reactionType);
+    if (res?.error) {
+      toast.error("Gagal mengirim reaksi", res.error);
+      return;
+    }
     toast.success(removing ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`, target?.title);
   };
 
@@ -111,12 +108,12 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
     if (!isMember) return;
     const target = artworks.find((a) => a.id === artworkId);
     const wasFav = Boolean(target?.is_favorited);
-    await toggleFavoriteAction(artworkId);
+    const res = await toggleFavoriteAction(artworkId);
+    if (res?.error) {
+      toast.error("Gagal memperbarui Favorites", res.error);
+      return;
+    }
     toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", target?.title);
-  };
-
-  const getReactionDisplay = (type) => {
-    return REACTIONS.find((r) => r.type === type) || REACTIONS[0];
   };
 
   const resetFilters = () => {
@@ -136,6 +133,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
         onToggleCollapse={toggleSidebarCollapsed}
         mobileMenu={mobileMenu}
         onCloseMobile={() => setMobileMenu(false)}
+        challengesCount={ongoingChallengesCount}
       />
 
       {/* MAIN CONTENT */}
@@ -160,7 +158,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
           <div className="flex items-center gap-3">
             <QuickSearchIconButton />
 
-            <Link href={currentUser ? "/profile" : "/"} className="flex items-center gap-3 transition hover:opacity-85">
+            <Link href={currentUser ? "/profile" : "/?step=login"} className="flex items-center gap-3 transition hover:opacity-85">
               <div className="hidden text-right sm:block">
                 <p className="text-[11px] font-medium">{currentUser ? currentUser.displayName : "Guest Visitor"}</p>
                 <p className="mt-0.5 text-[9px] text-zinc-600">{currentUser ? `${role.toUpperCase()} ACCOUNT` : "PUBLIC VIEW"}</p>
@@ -170,7 +168,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                   {currentUser?.avatarUrl ? (
                     <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
                   ) : (
-                    currentUser ? currentUser.displayName.charAt(0) : "G"
+                    currentUser?.displayName?.charAt(0) || "G"
                   )}
                 </div>
               </div>
@@ -181,7 +179,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
         {/* PAGE CONTENT */}
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
           {/* EXPLORE HERO HEADER */}
-          <section data-reveal className="flex flex-wrap items-end justify-between gap-4">
+          <section className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="mb-3 flex items-center gap-2.5">
                 <p className="eyebrow">CURATED DISCOVERY</p>
@@ -447,8 +445,12 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                             }`}
                           >
                             <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
-                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white">
-                                {creator.display_name.charAt(0).toUpperCase()}
+                              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-semibold text-white">
+                                {creator.avatar_url ? (
+                                  <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
+                                ) : (
+                                  creator.display_name?.charAt(0).toUpperCase() || "C"
+                                )}
                               </div>
                             </div>
                             <div>
@@ -520,8 +522,6 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
 
             <div className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {filteredArtworks.map((art) => {
-                const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
-
                 return (
                   <article key={art.id} className="group relative min-w-0">
                     <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/15 bg-zinc-900">
@@ -581,34 +581,11 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                       </Link>
 
                       {isMember ? (
-                        <div className="group/react relative flex items-center">
-                          <div className="glass pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full px-2.5 py-1.5 opacity-0 transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
-                            {REACTIONS.map((r) => (
-                              <button
-                                key={r.type}
-                                type="button"
-                                onClick={() => handleReaction(art.id, r.type)}
-                                title={r.label}
-                                className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:scale-125 hover:bg-white/10"
-                              >
-                                {r.icon}
-                              </button>
-                            ))}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleReaction(art.id, userReaction ? userReaction.type : "love")}
-                            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] transition ${
-                              userReaction
-                                ? "border-rose-500/50 bg-rose-500/15 text-rose-300 font-medium"
-                                : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/30 hover:text-white"
-                            }`}
-                          >
-                            <span>{userReaction ? userReaction.icon : "♥"}</span>
-                            <span>{art.total_reactions}</span>
-                          </button>
-                        </div>
+                        <ReactionPicker
+                          userReaction={art.user_reaction}
+                          totalReactions={art.total_reactions}
+                          onReact={(type) => handleReaction(art.id, type)}
+                        />
                       ) : isGuest ? (
                         <button
                           type="button"

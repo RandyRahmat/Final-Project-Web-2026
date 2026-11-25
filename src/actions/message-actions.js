@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { query, ensureDirectMessagesTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { parsePositiveInt } from "@/lib/validation";
 
 export async function sendMessageAction(receiverId, content) {
   const user = await getCurrentUser();
@@ -10,10 +11,14 @@ export async function sendMessageAction(receiverId, content) {
     return { error: "Silakan masuk terlebih dahulu untuk mengirim pesan." };
   }
 
-  const targetId = Number(receiverId);
-  const text = (content || "").trim();
+  if (user.role === "Curator" && user.curatorStatus === "Rejected") {
+    return { error: "Akun Curator yang ditolak tidak dapat mengirim pesan pribadi." };
+  }
 
-  if (!targetId || Number.isNaN(targetId)) {
+  const targetId = parsePositiveInt(receiverId);
+  const text = typeof content === "string" ? content.trim() : "";
+
+  if (!targetId) {
     return { error: "Penerima pesan tidak valid." };
   }
 
@@ -44,6 +49,7 @@ export async function sendMessageAction(receiverId, content) {
   );
 
   revalidatePath("/messages");
+  revalidatePath("/home");
   return { success: true, message: inserted.rows[0] };
 }
 
@@ -51,8 +57,8 @@ export async function markConversationReadAction(partnerId) {
   const user = await getCurrentUser();
   if (!user) return { error: "Unauthorized" };
 
-  const targetId = Number(partnerId);
-  if (!targetId || Number.isNaN(targetId)) return { error: "Invalid partner" };
+  const targetId = parsePositiveInt(partnerId);
+  if (!targetId) return { error: "Invalid partner" };
 
   await ensureDirectMessagesTable();
 
@@ -64,5 +70,6 @@ export async function markConversationReadAction(partnerId) {
   );
 
   revalidatePath("/messages");
+  revalidatePath("/home");
   return { success: true };
 }

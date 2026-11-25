@@ -1,12 +1,14 @@
 "use server";
 
+import crypto from "crypto";
 import path from "path";
 import { mkdir, unlink, writeFile } from "fs/promises";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { query, ensureUserProfileColumns, ensureFollowsTable } from "@/lib/db";
-import { getCurrentUser, createSessionToken } from "@/lib/auth";
+import { getCurrentUser, createSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
+import { parsePositiveInt, verifyImageMagicBytes } from "@/lib/validation";
 
 const ALLOWED_IMAGE_TYPES = new Map([
   ["image/jpeg", "jpg"],
@@ -17,6 +19,17 @@ const ALLOWED_IMAGE_TYPES = new Map([
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5MB
 
+async function removeLocalUpload(fileUrl) {
+  if (!fileUrl || !fileUrl.startsWith("/uploads/")) return;
+  const safeFilename = path.basename(fileUrl);
+  const localPath = path.join(process.cwd(), "public", "uploads", safeFilename);
+  try {
+    await unlink(localPath);
+  } catch {
+    // Abaikan jika file sudah tidak ada di disk
+  }
+}
+
 export async function updateProfileAction(prevState, formData) {
   const user = await getCurrentUser();
   if (!user) {
@@ -25,13 +38,20 @@ export async function updateProfileAction(prevState, formData) {
 
   await ensureUserProfileColumns();
 
-  const displayName = formData.get("displayName")?.trim();
-  const bio = formData.get("bio")?.trim() || "";
-  const externalLink = formData.get("externalLink")?.trim() || "";
+  const rawDisplayName = formData.get("displayName");
+  const rawBio = formData.get("bio");
+  const rawExternalLink = formData.get("externalLink");
+  const displayName = typeof rawDisplayName === "string" ? rawDisplayName.trim() : "";
+  const bio = typeof rawBio === "string" ? rawBio.trim() : "";
+  const externalLink = typeof rawExternalLink === "string" ? rawExternalLink.trim() : "";
   const avatarFile = formData.get("avatar");
 
   if (!displayName) {
     return { error: "Nama tampilan wajib diisi." };
+  }
+
+  if (displayName.length > 100) {
+    return { error: "Nama tampilan maksimal 100 karakter." };
   }
 
   if (externalLink) {
@@ -45,7 +65,11 @@ export async function updateProfileAction(prevState, formData) {
     }
   }
 
+  const prevAvatarRes = await query("SELECT avatar_url FROM users WHERE id = $1", [user.id]);
+  const prevAvatarUrl = prevAvatarRes.rows[0]?.avatar_url || null;
+
   let newAvatarUrl = null;
+  let newAvatarFilepath = null;
   if (avatarFile && typeof avatarFile === "object" && avatarFile.size > 0) {
     const ext = ALLOWED_IMAGE_TYPES.get(avatarFile.type);
     if (!ext) {
@@ -55,30 +79,47 @@ export async function updateProfileAction(prevState, formData) {
       return { error: "Ukuran foto profil maksimal 5 MB." };
     }
 
+    const buffer = Buffer.from(await avatarFile.arrayBuffer());
+    if (!verifyImageMagicBytes(buffer, avatarFile.type)) {
+      return { error: "Isi file foto profil tidak cocok dengan format gambar yang valid (JPG/PNG/WEBP/GIF)." };
+    }
+
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
     await mkdir(uploadsDir, { recursive: true });
 
-    const filename = `avatar-${user.id}-${Date.now()}.${ext}`;
+    const filename = `avatar-${user.id}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
     const filepath = path.join(uploadsDir, filename);
-    const arrayBuffer = await avatarFile.arrayBuffer();
-    await writeFile(filepath, Buffer.from(arrayBuffer));
+    await writeFile(filepath, buffer);
 
     newAvatarUrl = `/uploads/${filename}`;
+    newAvatarFilepath = filepath;
   }
 
-  const updated = await query(
-    `UPDATE users
-     SET display_name = $1,
-         bio = $2,
-         external_link = $3,
-         avatar_url = COALESCE($4, avatar_url)
-     WHERE id = $5
-     RETURNING id, display_name, username, role, curator_status, avatar_url`,
-    [displayName, bio || null, externalLink || null, newAvatarUrl, user.id]
-  );
+  let updated;
+  try {
+    updated = await query(
+      `UPDATE users
+       SET display_name = $1,
+           bio = $2,
+           external_link = $3,
+           avatar_url = COALESCE($4, avatar_url)
+       WHERE id = $5
+       RETURNING id, display_name, username, role, curator_status, avatar_url`,
+      [displayName, bio || null, externalLink || null, newAvatarUrl, user.id]
+    );
+  } catch (error) {
+    if (newAvatarFilepath) await unlink(newAvatarFilepath).catch(() => {});
+    console.error("Update profile DB error:", error);
+    return { error: "Gagal memperbarui profil. Silakan coba lagi." };
+  }
 
   if (updated.rows.length === 0) {
+    if (newAvatarFilepath) await unlink(newAvatarFilepath).catch(() => {});
     return { error: "Pengguna tidak ditemukan." };
+  }
+
+  if (newAvatarUrl && prevAvatarUrl && prevAvatarUrl !== newAvatarUrl) {
+    await removeLocalUpload(prevAvatarUrl);
   }
 
   const freshUser = updated.rows[0];
@@ -92,16 +133,13 @@ export async function updateProfileAction(prevState, formData) {
   });
 
   const cookieStore = await cookies();
-  cookieStore.set("aesthe_session", token, {
-    httpOnly: true,
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  cookieStore.set("aesthe_session", token, SESSION_COOKIE_OPTIONS);
 
   revalidatePath("/profile");
   revalidatePath("/home");
   revalidatePath("/explore");
   revalidatePath("/favorites");
+  revalidatePath("/messages");
   revalidatePath(`/creators/${freshUser.username}`);
 
   return { success: true, message: "Informasi profil berhasil diperbarui." };
@@ -113,13 +151,29 @@ export async function updateAccountAction(prevState, formData) {
     return { error: "Silakan masuk terlebih dahulu." };
   }
 
-  const email = formData.get("email")?.trim().toLowerCase();
-  const currentPassword = formData.get("currentPassword") || "";
-  const newPassword = formData.get("newPassword") || "";
-  const confirmPassword = formData.get("confirmPassword") || "";
+  const rawEmail = formData.get("email");
+  const email = typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
+  const currentPassword = typeof formData.get("currentPassword") === "string" ? formData.get("currentPassword") : "";
+  const newPassword = typeof formData.get("newPassword") === "string" ? formData.get("newPassword") : "";
+  const confirmPassword = typeof formData.get("confirmPassword") === "string" ? formData.get("confirmPassword") : "";
 
-  if (!email) {
-    return { error: "Alamat email wajib diisi." };
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "Format alamat email tidak valid." };
+  }
+
+  const currentAccount = await query(
+    "SELECT email, password_hash FROM users WHERE id = $1",
+    [user.id]
+  );
+  if (currentAccount.rows.length === 0) {
+    return { error: "Akun tidak ditemukan." };
+  }
+
+  const isEmailChanging = email !== String(currentAccount.rows[0].email || "").toLowerCase();
+  const isPasswordChanging = Boolean(newPassword || confirmPassword);
+
+  if (!isEmailChanging && !isPasswordChanging) {
+    return { error: "Tidak ada perubahan pada email maupun kata sandi." };
   }
 
   const emailTaken = await query(
@@ -131,25 +185,25 @@ export async function updateAccountAction(prevState, formData) {
     return { error: "Email tersebut sudah digunakan oleh akun lain." };
   }
 
-  if (newPassword || confirmPassword) {
-    if (!currentPassword) {
-      return { error: "Masukkan kata sandi saat ini untuk mengganti kata sandi." };
-    }
+  if (!currentPassword) {
+    return {
+      error: isPasswordChanging
+        ? "Masukkan kata sandi saat ini untuk mengganti kata sandi."
+        : "Masukkan kata sandi saat ini untuk mengonfirmasi perubahan email.",
+    };
+  }
+
+  const isValid = await bcrypt.compare(currentPassword, currentAccount.rows[0].password_hash);
+  if (!isValid) {
+    return { error: "Kata sandi saat ini salah." };
+  }
+
+  if (isPasswordChanging) {
     if (newPassword.length < 6) {
       return { error: "Kata sandi baru minimal 6 karakter." };
     }
     if (newPassword !== confirmPassword) {
       return { error: "Konfirmasi kata sandi baru tidak cocok." };
-    }
-
-    const existing = await query("SELECT password_hash FROM users WHERE id = $1", [user.id]);
-    if (existing.rows.length === 0) {
-      return { error: "Akun tidak ditemukan." };
-    }
-
-    const isValid = await bcrypt.compare(currentPassword, existing.rows[0].password_hash);
-    if (!isValid) {
-      return { error: "Kata sandi saat ini salah." };
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
@@ -173,19 +227,34 @@ export async function updateArtworkAction(prevState, formData) {
     return { error: "Hanya Member yang dapat mengubah karyanya." };
   }
 
-  const artworkId = Number(formData.get("artworkId"));
-  const title = formData.get("title")?.trim();
-  const description = formData.get("description")?.trim();
-  const categoryId = Number(formData.get("categoryId"));
-  const rawTags = formData.get("tags")?.trim() || "";
+  const artworkId = parsePositiveInt(formData.get("artworkId"));
+  const rawTitle = formData.get("title");
+  const rawDescription = formData.get("description");
+  const rawTags = formData.get("tags");
+  const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
+  const description = typeof rawDescription === "string" ? rawDescription.trim() : "";
+  const categoryId = parsePositiveInt(formData.get("categoryId"));
 
-  const tags = rawTags
-    .split(",")
-    .map((tag) => tag.trim().toLowerCase())
-    .filter(Boolean);
+  const tags = Array.from(
+    new Set(
+      (typeof rawTags === "string" ? rawTags : "")
+        .split(",")
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean)
+    )
+  );
 
   if (!artworkId || !title || !description || !categoryId || tags.length === 0) {
     return { error: "Judul, deskripsi, kategori, dan minimal 1 tag wajib diisi." };
+  }
+
+  if (title.length > 150) {
+    return { error: "Judul karya maksimal 150 karakter." };
+  }
+
+  const categoryExists = await query("SELECT id FROM categories WHERE id = $1", [categoryId]);
+  if (categoryExists.rows.length === 0) {
+    return { error: "Kategori yang dipilih tidak ditemukan." };
   }
 
   const updated = await query(
@@ -204,6 +273,7 @@ export async function updateArtworkAction(prevState, formData) {
   revalidatePath("/home");
   revalidatePath("/explore");
   revalidatePath("/favorites");
+  revalidatePath(`/artworks/${artworkId}`);
   revalidatePath(`/creators/${user.username}`);
 
   return { success: true, message: "Detail karya berhasil diperbarui." };
@@ -215,30 +285,30 @@ export async function deleteArtworkAction(artworkId) {
     return { error: "Hanya Member yang dapat menghapus karyanya sendiri." };
   }
 
+  const targetArtworkId = parsePositiveInt(artworkId);
+  if (!targetArtworkId) {
+    return { error: "Karya tidak valid." };
+  }
+
   const deleted = await query(
     "DELETE FROM artworks WHERE id = $1 AND user_id = $2 RETURNING id, image_url",
-    [Number(artworkId), user.id]
+    [targetArtworkId, user.id]
   );
 
   if (deleted.rows.length === 0) {
     return { error: "Karya tidak ditemukan atau kamu tidak berhak menghapusnya." };
   }
 
-  const deletedImageUrl = deleted.rows[0].image_url;
-  if (deletedImageUrl && deletedImageUrl.startsWith("/uploads/")) {
-    const safeFilename = path.basename(deletedImageUrl);
-    const localFilePath = path.join(process.cwd(), "public", "uploads", safeFilename);
-    try {
-      await unlink(localFilePath);
-    } catch {
-      // Abaikan jika file sudah tidak ada di disk
-    }
-  }
+  await removeLocalUpload(deleted.rows[0].image_url);
 
   revalidatePath("/profile");
   revalidatePath("/home");
   revalidatePath("/explore");
   revalidatePath("/favorites");
+  revalidatePath("/challenges");
+  revalidatePath("/curator");
+  revalidatePath("/admin");
+  revalidatePath(`/artworks/${targetArtworkId}`);
   revalidatePath(`/creators/${user.username}`);
 
   return { success: true };
@@ -250,8 +320,8 @@ export async function toggleFollowAction(targetUserId) {
     return { error: "Silakan masuk sebagai Member untuk mengikuti kreator." };
   }
 
-  const targetId = Number(targetUserId);
-  if (!targetId || Number.isNaN(targetId)) {
+  const targetId = parsePositiveInt(targetUserId);
+  if (!targetId) {
     return { error: "Kreator tidak valid." };
   }
 
@@ -282,7 +352,7 @@ export async function toggleFollowAction(targetUserId) {
     following = false;
   } else {
     await query(
-      "INSERT INTO follows (follower_id, following_id) VALUES ($1, $2)",
+      "INSERT INTO follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT (follower_id, following_id) DO NOTHING",
       [user.id, targetId]
     );
     following = true;

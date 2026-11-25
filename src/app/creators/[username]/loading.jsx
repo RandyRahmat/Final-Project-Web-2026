@@ -1,5 +1,5 @@
-import { ProfileSkeleton } from "@/components/ui/page-skeletons";
+import { CreatorProfileSkeleton } from "@/components/ui/page-skeletons";
 
 export default function CreatorProfileLoading() {
-  return <ProfileSkeleton />;
+  return <CreatorProfileSkeleton />;
 }

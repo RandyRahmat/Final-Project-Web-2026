@@ -6,23 +6,15 @@ import AppSidebar from "@/components/app-sidebar";
 import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import ExhibitionMode from "@/components/ui/exhibition-mode";
 import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
+import ReactionPicker, { getReactionDisplay } from "@/components/ui/reaction-picker";
 import { useToast } from "@/components/ui/toast-provider";
 import { openUploadModal } from "@/components/ui/upload-artwork-modal";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 
-const REACTIONS = [
-  { type: "love", icon: "❤️", label: "Love" },
-  { type: "wow", icon: "😮", label: "Wow" },
-  { type: "fire", icon: "🔥", label: "Fire" },
-  { type: "inspire", icon: "✧", label: "Inspire" },
-  { type: "applause", icon: "👏", label: "Applause" },
-];
-
 export default function HomeClient({ currentUser, artworks, categories, challenges, podiumWinners, notifications = [] }) {
   const openAuthPrompt = useAuthPrompt();
   const toast = useToast();
-  const [activeNav, setActiveNav] = useState("Home");
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("popular");
   const [followingOnly, setFollowingOnly] = useState(false);
@@ -63,7 +55,6 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
   const filteredArtworks = useMemo(() => {
     const q = search.trim().toLowerCase();
     const filtered = artworks.filter((art) => {
-      if (activeNav === "Favorites" && isMember && !art.is_favorited) return false;
       if (followingOnly && isMember && !art.is_following_artist) return false;
       const matchesCategory = activeCategory === "All" || art.category_name === activeCategory;
       const matchesSearch =
@@ -80,18 +71,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
       }
       return (b.total_reactions || 0) - (a.total_reactions || 0) || new Date(b.created_at) - new Date(a.created_at);
     });
-  }, [artworks, activeCategory, search, activeNav, isMember, sortBy, followingOnly]);
-
-  const filteredChallenges = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return challenges;
-    return challenges.filter(
-      (ch) =>
-        ch.title.toLowerCase().includes(q) ||
-        (ch.description || "").toLowerCase().includes(q) ||
-        (ch.curator_name || "").toLowerCase().includes(q)
-    );
-  }, [challenges, search]);
+  }, [artworks, activeCategory, search, isMember, sortBy, followingOnly]);
 
   const handleReaction = async (artworkId, reactionType = "love") => {
     if (isGuest) {
@@ -105,7 +85,11 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
     const target = artworks.find((a) => a.id === artworkId);
     const removing = target?.user_reaction === reactionType;
     const reaction = getReactionDisplay(reactionType);
-    await reactArtworkAction(artworkId, reactionType);
+    const res = await reactArtworkAction(artworkId, reactionType);
+    if (res?.error) {
+      toast.error("Gagal mengirim reaksi", res.error);
+      return;
+    }
     toast.success(removing ? "Reaksi dibatalkan" : `Reaksi ${reaction.icon} ${reaction.label} dikirim`, target?.title);
   };
 
@@ -120,12 +104,12 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
     if (!isMember) return;
     const target = artworks.find((a) => a.id === artworkId);
     const wasFav = Boolean(target?.is_favorited);
-    await toggleFavoriteAction(artworkId);
+    const res = await toggleFavoriteAction(artworkId);
+    if (res?.error) {
+      toast.error("Gagal memperbarui Favorites", res.error);
+      return;
+    }
     toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", target?.title);
-  };
-
-  const getReactionDisplay = (type) => {
-    return REACTIONS.find((r) => r.type === type) || REACTIONS[0];
   };
 
   const rank1 = podiumWinners.find((w) => Number(w.winner_rank) === 1);
@@ -143,7 +127,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
         onToggleCollapse={toggleSidebarCollapsed}
         mobileMenu={mobileMenu}
         onCloseMobile={() => setMobileMenu(false)}
-        challengesCount={filteredChallenges.length}
+        challengesCount={challenges.length}
       />
 
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
@@ -159,7 +143,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
             </button>
 
             <div className="hidden text-[10px] tracking-[0.2em] text-zinc-600 sm:block">
-              DISCOVER / <span className="text-champagne-200">{activeNav.toUpperCase()}</span>
+              DISCOVER / <span className="text-champagne-200">HOME</span>
             </div>
 
             <div className="flex items-center gap-2 sm:hidden">
@@ -192,7 +176,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                 {notifications.length > 0 && (
                   highlightCount > 0 ? (
                     <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-champagne-200 to-champagne-500 px-1 text-[9px] font-bold text-black shadow-[0_0_12px_rgba(212,175,106,0.75)]">
-                      {notifications.length}
+                      {highlightCount}
                     </span>
                   ) : (
                     <span className="live-dot absolute right-1.5 top-1.5 text-champagne-300" />
@@ -201,7 +185,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </button>
 
               {showNotifications && (
-                <div className="modal-panel absolute right-0 top-12 z-50 w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl p-4 sm:w-[350px]">
+                <div className="modal-panel fixed inset-x-4 top-[72px] z-50 overflow-hidden rounded-2xl p-4 sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[350px]">
                   <div className="flex items-center justify-between border-b border-white/[0.07] pb-3">
                     <div>
                       <p className="text-xs font-semibold text-white">Notifikasi</p>
@@ -275,7 +259,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
 
             <div className="h-5 w-px bg-white/10" />
 
-            <Link href={currentUser ? "/profile" : "/"} className="flex items-center gap-3 transition hover:opacity-85">
+            <Link href={currentUser ? "/profile" : "/?step=login"} className="flex items-center gap-3 transition hover:opacity-85">
               <div className="hidden text-right sm:block">
                 <p className="text-[11px] font-medium">
                   {currentUser ? currentUser.displayName : "Guest Visitor"}
@@ -289,7 +273,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                   {currentUser?.avatarUrl ? (
                     <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
                   ) : (
-                    currentUser ? currentUser.displayName.charAt(0) : "G"
+                    currentUser?.displayName?.charAt(0) || "G"
                   )}
                 </div>
               </div>
@@ -417,9 +401,18 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="eyebrow">CURATOR&apos;S CHALLENGE PODIUM</p>
-                  <h3 className="font-display mt-1.5 truncate text-xl tracking-wide text-white">
-                    {podiumMeta ? podiumMeta.challenge_title : "Hall of Fame Podium"}
-                  </h3>
+                  {podiumMeta?.challenge_id ? (
+                    <Link
+                      href={`/challenges/${podiumMeta.challenge_id}`}
+                      className="font-display mt-1.5 block truncate text-xl tracking-wide text-white transition hover:text-champagne-200"
+                    >
+                      {podiumMeta.challenge_title}
+                    </Link>
+                  ) : (
+                    <h3 className="font-display mt-1.5 truncate text-xl tracking-wide text-white">
+                      Hall of Fame Podium
+                    </h3>
+                  )}
                   <p className="mt-0.5 truncate text-[10px] text-zinc-500">
                     {podiumMeta ? `Dipilih oleh Curator: ${podiumMeta.curator_name}` : "Menunggu pengumuman resmi Curator"}
                   </p>
@@ -431,16 +424,28 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
 
               <div className="mt-4 grid grid-cols-3 items-end gap-3 pt-2">
                 <div className="flex flex-col items-center">
-                  <div className="mb-2 h-16 w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-800">
-                    {rank3 ? (
-                      <img src={rank3.image_url} alt={rank3.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-zinc-600">TBA</div>
-                    )}
-                  </div>
-                  <p className="w-full truncate text-center text-[10px] font-medium text-zinc-300">
-                    {rank3 ? rank3.title : "Slot #3"}
-                  </p>
+                  {rank3?.artwork_id ? (
+                    <Link href={`/artworks/${rank3.artwork_id}`} className="mb-2 block h-24 w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-800 transition hover:border-amber-600/60">
+                      <img src={rank3.image_url} alt={rank3.title} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+                    </Link>
+                  ) : (
+                    <div className="mb-2 h-24 w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-800">
+                      {rank3 ? (
+                        <img src={rank3.image_url} alt={rank3.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[10px] text-zinc-600">TBA</div>
+                      )}
+                    </div>
+                  )}
+                  {rank3?.artwork_id ? (
+                    <Link href={`/artworks/${rank3.artwork_id}`} className="w-full truncate text-center text-[10px] font-medium text-zinc-300 transition hover:text-champagne-200">
+                      {rank3.title}
+                    </Link>
+                  ) : (
+                    <p className="w-full truncate text-center text-[10px] font-medium text-zinc-300">
+                      {rank3 ? rank3.title : "Slot #3"}
+                    </p>
+                  )}
                   {rank3?.artist_username ? (
                     <Link href={`/creators/${rank3.artist_username}`} className="w-full truncate text-center text-[9px] text-zinc-500 transition hover:text-zinc-200">
                       {rank3.artist_name}
@@ -457,16 +462,28 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                 </div>
 
                 <div className="flex flex-col items-center">
-                  <div className="shine mb-2 h-24 w-full overflow-hidden rounded-xl border border-amber-400/70 bg-zinc-800 shadow-[0_0_35px_rgba(245,158,11,0.35)]">
-                    {rank1 ? (
-                      <img src={rank1.image_url} alt={rank1.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-zinc-500">TBA</div>
-                    )}
-                  </div>
-                  <p className="w-full truncate text-center text-[11px] font-semibold text-amber-100">
-                    {rank1 ? rank1.title : "Champion #1"}
-                  </p>
+                  {rank1?.artwork_id ? (
+                    <Link href={`/artworks/${rank1.artwork_id}`} className="shine mb-2 block h-24 w-full overflow-hidden rounded-xl border border-amber-400/70 bg-zinc-800 shadow-[0_0_35px_rgba(245,158,11,0.35)] transition hover:border-amber-300">
+                      <img src={rank1.image_url} alt={rank1.title} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+                    </Link>
+                  ) : (
+                    <div className="shine mb-2 h-24 w-full overflow-hidden rounded-xl border border-amber-400/70 bg-zinc-800 shadow-[0_0_35px_rgba(245,158,11,0.35)]">
+                      {rank1 ? (
+                        <img src={rank1.image_url} alt={rank1.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[10px] text-zinc-500">TBA</div>
+                      )}
+                    </div>
+                  )}
+                  {rank1?.artwork_id ? (
+                    <Link href={`/artworks/${rank1.artwork_id}`} className="w-full truncate text-center text-[11px] font-semibold text-amber-100 transition hover:text-amber-300">
+                      {rank1.title}
+                    </Link>
+                  ) : (
+                    <p className="w-full truncate text-center text-[11px] font-semibold text-amber-100">
+                      {rank1 ? rank1.title : "Champion #1"}
+                    </p>
+                  )}
                   {rank1?.artist_username ? (
                     <Link href={`/creators/${rank1.artist_username}`} className="w-full truncate text-center text-[9px] text-zinc-400 transition hover:text-amber-200">
                       {rank1.artist_name}
@@ -483,16 +500,28 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                 </div>
 
                 <div className="flex flex-col items-center">
-                  <div className="mb-2 h-20 w-full overflow-hidden rounded-xl border border-slate-300/35 bg-zinc-800 shadow-[0_0_20px_rgba(203,213,225,0.15)]">
-                    {rank2 ? (
-                      <img src={rank2.image_url} alt={rank2.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-zinc-600">TBA</div>
-                    )}
-                  </div>
-                  <p className="w-full truncate text-center text-[10px] font-medium text-slate-100">
-                    {rank2 ? rank2.title : "Slot #2"}
-                  </p>
+                  {rank2?.artwork_id ? (
+                    <Link href={`/artworks/${rank2.artwork_id}`} className="mb-2 block h-24 w-full overflow-hidden rounded-xl border border-slate-300/35 bg-zinc-800 shadow-[0_0_20px_rgba(203,213,225,0.15)] transition hover:border-slate-200/70">
+                      <img src={rank2.image_url} alt={rank2.title} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+                    </Link>
+                  ) : (
+                    <div className="mb-2 h-24 w-full overflow-hidden rounded-xl border border-slate-300/35 bg-zinc-800 shadow-[0_0_20px_rgba(203,213,225,0.15)]">
+                      {rank2 ? (
+                        <img src={rank2.image_url} alt={rank2.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[10px] text-zinc-600">TBA</div>
+                      )}
+                    </div>
+                  )}
+                  {rank2?.artwork_id ? (
+                    <Link href={`/artworks/${rank2.artwork_id}`} className="w-full truncate text-center text-[10px] font-medium text-slate-100 transition hover:text-champagne-200">
+                      {rank2.title}
+                    </Link>
+                  ) : (
+                    <p className="w-full truncate text-center text-[10px] font-medium text-slate-100">
+                      {rank2 ? rank2.title : "Slot #2"}
+                    </p>
+                  )}
                   {rank2?.artist_username ? (
                     <Link href={`/creators/${rank2.artist_username}`} className="w-full truncate text-center text-[9px] text-zinc-500 transition hover:text-slate-200">
                       {rank2.artist_name}
@@ -511,7 +540,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
             </div>
           </section>
 
-          {filteredChallenges.length > 0 && (
+          {challenges.length > 0 && (
             <section id="challenges" className="mt-14">
               <div className="mb-6 flex items-end justify-between">
                 <div>
@@ -523,8 +552,8 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </div>
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                {filteredChallenges.map((ch) => (
-                  <div key={ch.id} data-reveal>
+                {challenges.map((ch) => (
+                  <div key={ch.id}>
                     <Link
                       href={`/challenges/${ch.id}`}
                       className="card-lux spotlight glass group relative block overflow-hidden rounded-2xl border border-white/15 p-6 transition hover:border-champagne-300/45"
@@ -554,8 +583,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               <div>
                 <p className="eyebrow mb-2">THE CREATIVE UNIVERSE</p>
                 <h2 className="font-display text-3xl text-white sm:text-4xl">
-                  {activeNav === "Favorites" ? "Saved Favorites" : "Discover artworks"}
-                  <span className="text-champagne-400">.</span>
+                  Discover artworks<span className="text-champagne-400">.</span>
                 </h2>
               </div>
 
@@ -609,7 +637,6 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                   type="button"
                   onClick={() => {
                     setActiveCategory("All");
-                    setActiveNav("Home");
                     setSortBy("popular");
                     setFollowingOnly(false);
                     setSearch("");
@@ -662,8 +689,6 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
 
             <div className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {filteredArtworks.slice(0, 12).map((art) => {
-                const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
-
                 return (
                   <article key={art.id} className="group relative min-w-0">
                     <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl bg-zinc-900">
@@ -723,34 +748,11 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                       </Link>
 
                       {isMember ? (
-                        <div className="group/react relative flex items-center">
-                          <div className="glass pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full px-2.5 py-1.5 opacity-0 transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
-                            {REACTIONS.map((r) => (
-                              <button
-                                key={r.type}
-                                type="button"
-                                onClick={() => handleReaction(art.id, r.type)}
-                                title={r.label}
-                                className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:scale-125 hover:bg-white/10"
-                              >
-                                {r.icon}
-                              </button>
-                            ))}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleReaction(art.id, userReaction ? userReaction.type : "love")}
-                            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] transition ${
-                              userReaction
-                                ? "border-rose-500/50 bg-rose-500/15 text-rose-300 font-medium"
-                                : "border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/30 hover:text-white"
-                            }`}
-                          >
-                            <span>{userReaction ? userReaction.icon : "♥"}</span>
-                            <span>{art.total_reactions}</span>
-                          </button>
-                        </div>
+                        <ReactionPicker
+                          userReaction={art.user_reaction}
+                          totalReactions={art.total_reactions}
+                          onReact={(type) => handleReaction(art.id, type)}
+                        />
                       ) : isGuest ? (
                         <button
                           type="button"

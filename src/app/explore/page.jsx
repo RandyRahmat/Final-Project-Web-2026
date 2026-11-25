@@ -1,4 +1,4 @@
-import { query } from "@/lib/db";
+import { query, getOngoingChallengesCount } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import ExploreClient from "@/components/explore-client";
 
@@ -8,8 +8,8 @@ export default async function ExplorePage() {
   const currentUser = await getCurrentUser();
   const userId = currentUser?.id || 0;
 
-  // Ambil karya, kategori, dan kreator aktif secara paralel
-  const [artworksResult, categoriesResult, creatorsResult] = await Promise.all([
+  // Ambil karya, kategori, kreator aktif, dan jumlah challenge ongoing secara paralel
+  const [artworksResult, categoriesResult, creatorsResult, ongoingChallengesCount] = await Promise.all([
     query(
       `SELECT 
         a.id,
@@ -49,15 +49,17 @@ export default async function ExplorePage() {
         u.id,
         u.display_name,
         u.username,
+        u.avatar_url,
         COUNT(a.id)::int AS artwork_count
       FROM users u
       LEFT JOIN artworks a ON a.user_id = u.id
       WHERE u.role = 'Member'
-      GROUP BY u.id, u.display_name, u.username
+      GROUP BY u.id, u.display_name, u.username, u.avatar_url
       HAVING COUNT(a.id) > 0
       ORDER BY artwork_count DESC, u.display_name ASC
       LIMIT 8`
     ),
+    getOngoingChallengesCount(),
   ]);
 
   return (
@@ -66,6 +68,7 @@ export default async function ExplorePage() {
       artworks={artworksResult.rows}
       categories={categoriesResult.rows}
       creators={creatorsResult.rows}
+      ongoingChallengesCount={ongoingChallengesCount}
     />
   );
 }

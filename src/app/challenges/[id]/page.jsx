@@ -1,14 +1,15 @@
 import { notFound } from "next/navigation";
 import { query, ensureChallengeColumns, ensureUserProfileColumns } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { parsePositiveInt } from "@/lib/validation";
 import ChallengeDetailClient from "@/components/challenge-detail-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function ChallengeDetailPage({ params }) {
   const { id } = await params;
-  const challengeId = Number(id);
-  if (!challengeId || Number.isNaN(challengeId)) {
+  const challengeId = parsePositiveInt(id);
+  if (!challengeId) {
     notFound();
   }
 

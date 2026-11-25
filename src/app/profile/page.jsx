@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { query, ensureUserProfileColumns, ensureFollowsTable } from "@/lib/db";
+import { query, ensureUserProfileColumns, ensureFollowsTable, getOngoingChallengesCount } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import ProfileClient from "@/components/profile-client";
 
@@ -103,6 +103,8 @@ export default async function ProfilePage() {
     [currentUser.id]
   );
 
+  const ongoingChallengesCount = await getOngoingChallengesCount();
+
   return (
     <ProfileClient
       currentUser={currentUser}
@@ -113,6 +115,7 @@ export default async function ProfilePage() {
       favoritesCount={favCountResult.rows[0]?.total || 0}
       followersCount={followersCountResult.rows[0]?.total || 0}
       followingList={followingListResult.rows}
+      ongoingChallengesCount={ongoingChallengesCount}
     />
   );
 }

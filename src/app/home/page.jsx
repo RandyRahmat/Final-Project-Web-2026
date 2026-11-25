@@ -1,4 +1,11 @@
-import { query, ensureFollowsTable, ensureDirectMessagesTable } from "@/lib/db";
+import {
+  query,
+  ensureChallengeColumns,
+  ensureCommentsTable,
+  ensureReportsTable,
+  ensureFollowsTable,
+  ensureDirectMessagesTable,
+} from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import HomeClient from "@/components/home-client";
 
@@ -38,7 +45,13 @@ export default async function HomePage() {
   const userId = currentUser?.id || 0;
   const isAdmin = currentUser?.role === "Admin";
 
-  await Promise.all([ensureFollowsTable(), ensureDirectMessagesTable()]);
+  await Promise.all([
+    ensureChallengeColumns(),
+    ensureCommentsTable(),
+    ensureReportsTable(),
+    ensureFollowsTable(),
+    ensureDirectMessagesTable(),
+  ]);
 
   const [
     artworksResult,
@@ -86,7 +99,7 @@ export default async function HomePage() {
         u.display_name AS curator_name
       FROM challenges ch
       JOIN users u ON ch.curator_id = u.id
-      WHERE ch.end_date >= NOW()
+      WHERE (ch.start_date IS NULL OR ch.start_date <= NOW()) AND ch.end_date >= NOW()
       ORDER BY ch.end_date ASC`
     ),
     query(
@@ -101,6 +114,7 @@ export default async function HomePage() {
       )
       SELECT 
         cs.winner_rank,
+        a.id AS artwork_id,
         a.title,
         a.image_url,
         u.display_name AS artist_name,

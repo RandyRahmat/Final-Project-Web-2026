@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
+import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 
 function getChallengeStatus(ch) {
@@ -76,31 +77,27 @@ export default function ChallengesClient({ currentUser, challenges }) {
             </div>
           </div>
 
-          <div className="relative mx-4 hidden max-w-[360px] flex-1 md:block">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600">⌕</span>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search challenges or curator..."
-              className="input-lux rounded-full py-2.5 pl-11 pr-5 text-[11px]"
-            />
-          </div>
+          <QuickSearchTrigger />
 
-          <Link href={currentUser ? "/profile" : "/"} className="flex items-center gap-3 transition hover:opacity-85">
-            <div className="hidden text-right sm:block">
-              <p className="text-[11px] font-medium">{currentUser ? currentUser.displayName : "Guest Visitor"}</p>
-              <p className="mt-0.5 text-[9px] text-zinc-600">{currentUser ? `${role.toUpperCase()} ACCOUNT` : "PUBLIC VIEW"}</p>
-            </div>
-            <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
-              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-medium uppercase">
-                {currentUser?.avatarUrl ? (
-                  <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
-                ) : (
-                  currentUser ? currentUser.displayName.charAt(0) : "G"
-                )}
+          <div className="flex items-center gap-3">
+            <QuickSearchIconButton />
+
+            <Link href={currentUser ? "/profile" : "/"} className="flex items-center gap-3 transition hover:opacity-85">
+              <div className="hidden text-right sm:block">
+                <p className="text-[11px] font-medium">{currentUser ? currentUser.displayName : "Guest Visitor"}</p>
+                <p className="mt-0.5 text-[9px] text-zinc-600">{currentUser ? `${role.toUpperCase()} ACCOUNT` : "PUBLIC VIEW"}</p>
               </div>
-            </div>
-          </Link>
+              <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-medium uppercase">
+                  {currentUser?.avatarUrl ? (
+                    <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
+                  ) : (
+                    currentUser ? currentUser.displayName.charAt(0) : "G"
+                  )}
+                </div>
+              </div>
+            </Link>
+          </div>
         </header>
 
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -151,14 +148,24 @@ export default function ChallengesClient({ currentUser, challenges }) {
               ))}
             </div>
 
-            <div className="relative w-full md:hidden">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600">⌕</span>
+            <div className="relative w-full sm:w-72">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">⌕</span>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search challenges..."
-                className="input-lux rounded-full py-2 pl-10 pr-4 text-[11px]"
+                placeholder="Cari challenge atau curator..."
+                className="input-lux rounded-full py-2.5 pl-10 pr-9 text-[11px]"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Hapus pencarian"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 transition hover:text-white"
+                >
+                  ×
+                </button>
+              )}
             </div>
           </div>
 

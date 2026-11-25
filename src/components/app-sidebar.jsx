@@ -70,30 +70,6 @@ export default function AppSidebar({
           </button>
         </div>
 
-        {/* QUICK SEARCH TRIGGER (CTRL + K) */}
-        <button
-          type="button"
-          title="Cari Cepat (Ctrl + K)"
-          onClick={() => {
-            if (onCloseMobile) onCloseMobile();
-            window.dispatchEvent(new Event("aesthe:open-command"));
-          }}
-          className={`mb-6 flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-left text-[11px] text-zinc-400 transition hover:border-champagne-300/35 hover:bg-champagne-400/[0.08] hover:text-champagne-100 ${
-            collapsed ? "lg:justify-center lg:px-0" : "justify-between"
-          }`}
-        >
-          <span className="flex items-center gap-2.5">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-champagne-300/80">
-              <circle cx="11" cy="11" r="7.5" />
-              <path d="M20 20l-3.6-3.6" />
-            </svg>
-            <span className={collapsed ? "lg:hidden" : ""}>Cari Cepat...</span>
-          </span>
-          <kbd className={`rounded-md border border-white/10 bg-black/40 px-1.5 py-0.5 text-[9px] tracking-wider text-zinc-500 ${collapsed ? "lg:hidden" : ""}`}>
-            Ctrl K
-          </kbd>
-        </button>
-
         {/* WORKSPACE NAVIGATION */}
         <div>
           <p className={`mb-4 text-[9px] font-medium tracking-[0.25em] text-zinc-600 ${collapsed ? "lg:hidden" : ""}`}>

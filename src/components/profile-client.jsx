@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
 import { useToast } from "@/components/ui/toast-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import {
@@ -126,7 +127,10 @@ export default function ProfileClient({
             </div>
           </div>
 
+          <QuickSearchTrigger />
+
           <div className="flex items-center gap-3">
+            <QuickSearchIconButton />
             {isMember && (
               <Link href={`/creators/${profile.username}`} className="btn-ghost rounded-full px-4 py-1.5 text-[10px] tracking-[0.15em]">
                 LIHAT PROFIL PUBLIK ↗

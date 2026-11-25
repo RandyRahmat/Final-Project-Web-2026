@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useActionState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import ExhibitionMode from "@/components/ui/exhibition-mode";
+import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
 import { useToast } from "@/components/ui/toast-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { reactArtworkAction, toggleFavoriteAction, createArtworkAction } from "@/actions/artwork-actions";
@@ -191,37 +192,10 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
             </div>
           </div>
 
-          <div className="relative mx-4 hidden max-w-[380px] flex-1 md:block">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600">⌕</span>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search artworks, artists, challenges..."
-              className="input-lux rounded-full py-2.5 pl-11 pr-20 text-[11px]"
-            />
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event("aesthe:open-command"))}
-              title="Buka Quick Search (Ctrl + K)"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[9px] tracking-wider text-zinc-400 transition hover:border-champagne-300/40 hover:bg-champagne-400/15 hover:text-champagne-100"
-            >
-              Ctrl K
-            </button>
-          </div>
+          <QuickSearchTrigger />
 
           <div className="flex items-center gap-4 sm:gap-5">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event("aesthe:open-command"))}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-zinc-400 transition hover:border-champagne-300/40 hover:text-champagne-100 md:hidden"
-              aria-label="Quick Search"
-              title="Cari Cepat (Ctrl + K)"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                <circle cx="11" cy="11" r="7.5" />
-                <path d="M20 20l-3.6-3.6" />
-              </svg>
-            </button>
+            <QuickSearchIconButton />
 
             <div ref={notifContainerRef} className="relative">
               <button
@@ -680,21 +654,43 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </div>
             </div>
 
-            <div className="mt-7 flex gap-2 overflow-x-auto pb-3">
-              {["All", ...categories.map((c) => c.name)].map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setActiveCategory(category)}
-                  className={`shrink-0 rounded-full border px-5 py-2.5 text-[9px] tracking-[0.12em] transition-all duration-300 ${
-                    activeCategory === category
-                      ? "chip-active"
-                      : "border-white/[0.08] text-zinc-500 hover:border-champagne-300/40 hover:text-champagne-50"
-                  }`}
-                >
-                  {category.toUpperCase()}
-                </button>
-              ))}
+            <div className="mt-7 flex flex-col gap-3.5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="relative w-full lg:max-w-[320px] lg:shrink-0">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">⌕</span>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Filter karya, kreator, atau #tag..."
+                  className="input-lux rounded-full py-2.5 pl-10 pr-9 text-[11px]"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    aria-label="Hapus pencarian"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 transition hover:text-white"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {["All", ...categories.map((c) => c.name)].map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setActiveCategory(category)}
+                    className={`shrink-0 rounded-full border px-5 py-2.5 text-[9px] tracking-[0.12em] transition-all duration-300 ${
+                      activeCategory === category
+                        ? "chip-active"
+                        : "border-white/[0.08] text-zinc-500 hover:border-champagne-300/40 hover:text-champagne-50"
+                    }`}
+                  >
+                    {category.toUpperCase()}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">

@@ -7,6 +7,7 @@ import { ConfirmProvider } from "@/components/ui/confirm-provider";
 import InteractionLayer from "@/components/ui/interaction-layer";
 import SmoothScroll from "@/components/ui/smooth-scroll";
 import { ToastProvider } from "@/components/ui/toast-provider";
+import UploadArtworkModal from "@/components/ui/upload-artwork-modal";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -53,6 +54,7 @@ export default function RootLayout({ children }) {
           <AuthPromptProvider>
             <ConfirmProvider>{children}</ConfirmProvider>
           </AuthPromptProvider>
+          <UploadArtworkModal />
         </ToastProvider>
       </body>
     </html>

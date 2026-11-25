@@ -3,6 +3,7 @@
 import Link from "next/link";
 import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
 import NavIcon from "@/components/ui/nav-icon";
+import { openUploadModal } from "@/components/ui/upload-artwork-modal";
 import { logoutUserAction } from "@/actions/auth-actions";
 
 export default function AppSidebar({
@@ -125,25 +126,22 @@ export default function AppSidebar({
 
           <div className="space-y-1">
             {isMember && (
-              onOpenUpload ? (
-                <button
-                  type="button"
-                  title="Upload Artwork"
-                  onClick={() => {
+              <button
+                type="button"
+                title="Upload Artwork"
+                onClick={() => {
+                  if (onOpenUpload) {
                     onOpenUpload();
-                    if (onCloseMobile) onCloseMobile();
-                  }}
-                  className={navItemClass(false)}
-                >
-                  <NavIcon name="upload" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
-                  <span className={collapsed ? "lg:hidden" : ""}>Upload Artwork</span>
-                </button>
-              ) : (
-                <Link href="/home" title="Upload Artwork" onClick={onCloseMobile} className={navItemClass(false)}>
-                  <NavIcon name="upload" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
-                  <span className={collapsed ? "lg:hidden" : ""}>Upload Artwork</span>
-                </Link>
-              )
+                  } else {
+                    openUploadModal();
+                  }
+                  if (onCloseMobile) onCloseMobile();
+                }}
+                className={navItemClass(false)}
+              >
+                <NavIcon name="upload" className="h-[18px] w-[18px] shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                <span className={collapsed ? "lg:hidden" : ""}>Upload Artwork</span>
+              </button>
             )}
 
             {currentUser && (

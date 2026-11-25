@@ -3,6 +3,7 @@
 import { useMemo, useState, useActionState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
+import ExhibitionMode from "@/components/ui/exhibition-mode";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { reactArtworkAction, toggleFavoriteAction, createArtworkAction } from "@/actions/artwork-actions";
 
@@ -26,6 +27,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
   const [mobileMenu, setMobileMenu] = useState(false);
   const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
   const [authNotice, setAuthNotice] = useState("");
+  const [showExhibition, setShowExhibition] = useState(false);
 
   const role = currentUser?.role || "Guest";
   const isGuest = !currentUser;
@@ -489,6 +491,16 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                {filteredArtworks.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowExhibition(true)}
+                    className="rounded-full border border-champagne-300/40 bg-champagne-400/10 px-4 py-2 text-[9px] font-medium tracking-[0.16em] text-champagne-100 transition hover:border-champagne-200 hover:bg-champagne-200 hover:text-black"
+                  >
+                    ✧ MODE PAMERAN
+                  </button>
+                )}
+
                 {isMember && (
                   <button
                     type="button"
@@ -797,6 +809,12 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
             </form>
           </div>
         </div>
+      )}
+      {showExhibition && filteredArtworks.length > 0 && (
+        <ExhibitionMode
+          artworks={filteredArtworks}
+          onClose={() => setShowExhibition(false)}
+        />
       )}
     </main>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   reactArtworkAction,
@@ -39,7 +39,87 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
   const [authNotice, setAuthNotice] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const commentFormRef = useRef(null);
+
+  const openLightbox = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setIsDragging(false);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = useCallback(() => {
+    setLightboxOpen(false);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setIsDragging(false);
+  }, []);
+
+  const handleZoomIn = useCallback(() => {
+    setZoom((z) => Math.min(3, +(z + 0.5).toFixed(1)));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom((z) => {
+      const next = Math.max(1, +(z - 0.5).toFixed(1));
+      if (next === 1) setPan({ x: 0, y: 0 });
+      return next;
+    });
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  const handleDoubleClickZoom = () => {
+    if (zoom > 1) {
+      handleResetZoom();
+    } else {
+      setZoom(2);
+    }
+  };
+
+  const handlePointerDown = (e) => {
+    if (zoom <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging || zoom <= 1) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    setPan({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
+  };
+
+  const handlePointerUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") closeLightbox();
+      else if (e.key === "+" || e.key === "=") handleZoomIn();
+      else if (e.key === "-") handleZoomOut();
+      else if (e.key === "0") handleResetZoom();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [lightboxOpen, closeLightbox, handleZoomIn, handleZoomOut, handleResetZoom]);
 
   const role = currentUser?.role || "Guest";
   const isGuest = !currentUser;
@@ -146,14 +226,34 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
 
         {/* LAYOUT UTAMA: GAMBAR PENUH (KIRI) + DETAIL & INTERAKSI (KANAN) */}
         <section className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* GAMBAR KARYA PENUH */}
+          {/* GAMBAR KARYA PENUH + LIGHTBOX */}
           <div className="lg:col-span-7">
-            <div className="glass spotlight overflow-hidden rounded-3xl border border-white/15 bg-black/50 p-2 sm:p-4">
-              <img
-                src={artwork.image_url}
-                alt={artwork.title}
-                className="max-h-[78vh] w-full rounded-2xl object-contain"
-              />
+            <div className="mb-3 flex justify-end">
+              <button
+                type="button"
+                onClick={openLightbox}
+                className="btn-ghost rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.16em]"
+              >
+                ⤢ Perbesar (Lightbox)
+              </button>
+            </div>
+
+            <div className="glass spotlight group relative overflow-hidden rounded-3xl border border-white/15 bg-black/50 p-2 sm:p-4">
+              <button
+                type="button"
+                onClick={openLightbox}
+                title="Klik untuk memperbesar di Museum Lightbox"
+                className="block w-full cursor-zoom-in"
+              >
+                <img
+                  src={artwork.image_url}
+                  alt={artwork.title}
+                  className="max-h-[78vh] w-full rounded-2xl object-contain transition duration-500 group-hover:brightness-95"
+                />
+              </button>
+              <span className="pointer-events-none absolute bottom-5 right-5 rounded-full border border-white/20 bg-black/70 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.2em] text-champagne-100 opacity-0 backdrop-blur-md transition duration-300 group-hover:opacity-100">
+                ⤢ Klik untuk Zoom
+              </span>
             </div>
           </div>
 
@@ -407,6 +507,107 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
           )}
         </section>
       </div>
+
+      {/* FULLSCREEN MUSEUM LIGHTBOX */}
+      {lightboxOpen && (
+        <div
+          onClick={closeLightbox}
+          className="modal-overlay fixed inset-0 z-[120] flex flex-col bg-black/95 text-zinc-100 backdrop-blur-2xl select-none"
+        >
+          {/* TOOLBAR LIGHTBOX */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-black/60 px-5 py-3.5 backdrop-blur-xl sm:px-8"
+          >
+            <div className="min-w-0">
+              <p className="font-display truncate text-xl text-white">{artwork.title}</p>
+              <p className="truncate text-[10px] text-champagne-300/80">
+                {artwork.artist_name} &bull; {artwork.category_name}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center rounded-full border border-white/15 bg-white/[0.04] p-0.5">
+                <button
+                  type="button"
+                  onClick={handleZoomOut}
+                  disabled={zoom <= 1}
+                  title="Perkecil (-)"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-sm text-zinc-200 transition hover:bg-white/10 disabled:opacity-35"
+                >
+                  −
+                </button>
+                <span className="min-w-[46px] text-center font-mono text-[11px] text-champagne-200">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={handleZoomIn}
+                  disabled={zoom >= 3}
+                  title="Perbesar (+)"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-sm text-zinc-200 transition hover:bg-white/10 disabled:opacity-35"
+                >
+                  +
+                </button>
+              </div>
+
+              {zoom > 1 && (
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="btn-ghost rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.14em]"
+                >
+                  Reset 1:1
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={closeLightbox}
+                title="Tutup Lightbox (Esc)"
+                className="rounded-full border border-white/20 bg-white/[0.08] px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.16em] text-white transition hover:border-champagne-300 hover:bg-champagne-200 hover:text-black"
+              >
+                × Tutup
+              </button>
+            </div>
+          </div>
+
+          {/* AREA GAMBAR INTERAKTIF */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onDoubleClick={handleDoubleClickZoom}
+            className={`relative flex flex-1 items-center justify-center overflow-hidden p-4 sm:p-8 ${
+              zoom > 1 ? (isDragging ? "cursor-grabbing" : "cursor-grab") : "cursor-zoom-in"
+            }`}
+          >
+            <div
+              style={{
+                transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
+                transition: isDragging ? "none" : "transform 260ms cubic-bezier(0.22,1,0.36,1)",
+              }}
+            >
+              <img
+                src={artwork.image_url}
+                alt={artwork.title}
+                draggable={false}
+                className="max-h-[76vh] max-w-[90vw] object-contain"
+              />
+            </div>
+          </div>
+
+          {/* FOOTER PETUNJUK */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="border-t border-white/[0.06] bg-black/50 px-6 py-2.5 text-center text-[10px] tracking-[0.16em] text-zinc-500"
+          >
+            Klik ganda untuk zoom cepat &bull; Seret gambar saat diperbesar &bull; Shortcut: + / − / 0 / Esc
+          </div>
+        </div>
+      )}
 
       {/* MODAL REPORT ARTWORK */}
       {showReportModal && isMember && !isOwnArtwork && (

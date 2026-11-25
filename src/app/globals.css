@@ -71,9 +71,11 @@
   .aurora-blob-delay { animation-delay: -8s; animation-duration: 28s; }
   .aurora-blob-slow { animation-delay: -14s; animation-duration: 34s; }
   .mask-fade-y { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent); }
-  .page-enter { animation: page-enter .6s ease-out both; }
+  .page-enter { animation: page-enter .25s ease-out both; }
   .logo-glow { animation: subtle-pulse 4s ease-in-out infinite; }
   .loader-bar { animation: loader-bar 1.6s cubic-bezier(.65,0,.35,1) infinite; }
+  .skeleton-shimmer { position: relative; overflow: hidden; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06); }
+  .skeleton-shimmer::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent 0%, rgba(226,201,146,.08) 45%, rgba(255,255,255,.09) 55%, transparent 100%); animation: skeleton-sweep 1.6s cubic-bezier(.4,0,.2,1) infinite; }
 }
 
 @supports (animation-timeline: view()) {
@@ -99,6 +101,7 @@
 @keyframes ping-soft { 75%, 100% { transform: scale(2.4); opacity: 0; } }
 @keyframes subtle-pulse { 0%, 100% { filter: drop-shadow(0 0 18px rgba(226,201,146,.25)); } 50% { filter: drop-shadow(0 0 34px rgba(226,201,146,.5)); } }
 @keyframes loader-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+@keyframes skeleton-sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
 @media (max-width: 1023px) {
   main:has([data-mobile-nav]) { padding-bottom: 6.5rem; }

@@ -78,14 +78,14 @@ export async function loginUserAction(prevState, formData) {
     );
 
     if (result.rows.length === 0) {
-        return { error: "Email tidak ditemukan." };
+        return { error: "Email atau kata sandi salah." };
     }
 
     const user = result.rows[0];
     const isValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isValid) {
-        return { error: "Kata sandi salah." };
+        return { error: "Email atau kata sandi salah." };
     }
 
     const token = await createSessionToken({

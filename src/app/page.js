@@ -36,6 +36,7 @@ export default function WelcomePage() {
   const [authMode, setAuthMode] = useState("login");
   const [selectedRole, setSelectedRole] = useState("Member");
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
   const timerRef = useRef(null);
 
   const [loginState, loginFormAction, isLoginPending] = useActionState(loginUserAction, null);
@@ -264,7 +265,7 @@ export default function WelcomePage() {
                 </button>
               </div>
             ) : authMode === "forgot" && isResetVerified ? (
-              <form action={resetFormAction} className="space-y-4">
+              <form key="forgot-reset-form" action={resetFormAction} className="space-y-4">
                 <input type="hidden" name="resetToken" value={verifyResetState.resetToken} />
 
                 <div>
@@ -286,15 +287,30 @@ export default function WelcomePage() {
                 </button>
               </form>
             ) : authMode === "forgot" ? (
-              <form action={verifyResetAction} className="space-y-4">
+              <form key="forgot-verify-form" action={verifyResetAction} className="space-y-4">
                 <div>
                   <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email Terdaftar</label>
-                  <input type="email" name="email" required placeholder="email@email.com" className="input-lux" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="name@example.com"
+                    className="input-lux"
+                  />
                 </div>
 
                 <div>
                   <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username Terdaftar</label>
-                  <input type="text" name="username" required placeholder="randy_art" className="input-lux" />
+                  <input
+                    type="text"
+                    name="username"
+                    required
+                    autoFocus={Boolean(email.trim())}
+                    placeholder="Username_Terdaftar"
+                    className="input-lux"
+                  />
                 </div>
 
                 <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
@@ -306,39 +322,62 @@ export default function WelcomePage() {
                 </button>
               </form>
             ) : (
-              <form action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
+              <form key={authMode === "login" ? "login-form" : "register-form"} action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
                 {authMode === "register" && (
                   <>
                     <div>
                       <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Display Name</label>
-                      <input type="text" name="displayName" required placeholder="Contoh: Randy Rahmat" className="input-lux" />
+                      <input type="text" name="displayName" required placeholder="Display Name" className="input-lux" />
                     </div>
 
                     <div>
                       <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username</label>
-                      <input type="text" name="username" required placeholder="randy_art" className="input-lux" />
+                      <input type="text" name="username" required placeholder="Username" className="input-lux" />
                     </div>
 
                     <div>
                       <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Peran Akun</label>
                       <input type="hidden" name="role" value={selectedRole} />
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <button type="button" onClick={() => setSelectedRole("Member")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Member" ? "border-champagne-300/60 bg-champagne-400/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
-                          <div className="font-medium">Member / Kreator</div>
-                          <div className="text-[10px] text-zinc-500">Unggah &amp; ikut tantangan</div>
-                        </button>
-                        <button type="button" onClick={() => setSelectedRole("Curator")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Curator" ? "border-champagne-300/60 bg-champagne-400/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
-                          <div className="font-medium">Curator</div>
-                          <div className="text-[10px] text-zinc-500">Butuh verifikasi Admin</div>
-                        </button>
-                      </div>
+
+                      <p className="text-xs text-zinc-300">
+                        Mendaftar sebagai{" "}
+                        <span className="font-medium text-champagne-200">
+                          {selectedRole === "Curator" ? "Curator" : "Member / Kreator"}
+                        </span>
+                        <span className="text-[11px] text-zinc-500">
+                          {selectedRole === "Curator"
+                            ? " · kelola challenge & kurasi"
+                            : " · unggah karya & ikuti challenge"}
+                        </span>
+                      </p>
+
+                      <label className="mt-2.5 flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.08] bg-black/30 px-3.5 py-2.5 transition hover:border-champagne-300/35">
+                        <input
+                          type="checkbox"
+                          checked={selectedRole === "Curator"}
+                          onChange={(e) => setSelectedRole(e.target.checked ? "Curator" : "Member")}
+                          className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#d4af6a]"
+                        />
+                        <span className="text-[11px] leading-snug text-zinc-300">
+                          Ajukan akun sebagai <span className="font-medium text-champagne-200">Curator</span>{" "}
+                          <span className="text-zinc-500">(memerlukan verifikasi Admin)</span>
+                        </span>
+                      </label>
                     </div>
                   </>
                 )}
 
                 <div>
                   <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email</label>
-                  <input type="email" name="email" required placeholder="email@email.com" className="input-lux" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="name@example.com"
+                    className="input-lux"
+                  />
                 </div>
 
                 <div>
@@ -363,19 +402,19 @@ export default function WelcomePage() {
                       onClick={() => setShowPassword((prev) => !prev)}
                       aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
                       title={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-champagne-200"
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 transition hover:text-champagne-200 ${showPassword ? "text-champagne-200" : "text-zinc-500"}`}
                     >
                       {showPassword ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      ) : (
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                           <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C7 20 2.73 16.89 1 12c.73-2.06 1.98-3.88 3.6-5.26" />
                           <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c5 0 9.27 3.11 11 8a11.05 11.05 0 0 1-2.16 3.19" />
                           <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
                           <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
-                          <circle cx="12" cy="12" r="3" />
                         </svg>
                       )}
                     </button>

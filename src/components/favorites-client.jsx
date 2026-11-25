@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { useToast } from "@/components/ui/toast-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 import {
@@ -23,6 +24,7 @@ const REACTIONS = [
 
 export default function FavoritesClient({ currentUser, artworks, collections = [], categories }) {
   const confirm = useConfirm();
+  const toast = useToast();
   const [activeCollectionId, setActiveCollectionId] = useState("all");
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("saved");
@@ -41,6 +43,9 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
     const res = await createCollectionAction(prevState, formData);
     if (res?.success) {
       setShowCreateModal(false);
+      toast.success("Moodboard berhasil dibuat");
+    } else if (res?.error) {
+      toast.error("Gagal membuat moodboard", res.error);
     }
     return res;
   }, null);
@@ -49,6 +54,9 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
     const res = await updateCollectionAction(prevState, formData);
     if (res?.success) {
       setEditingCollection(null);
+      toast.success("Moodboard diperbarui");
+    } else if (res?.error) {
+      toast.error("Gagal memperbarui moodboard", res.error);
     }
     return res;
   }, null);
@@ -91,11 +99,16 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
   }, [artworks, activeCollectionId, activeCategory, search, sortBy]);
 
   const handleReaction = async (artworkId, reactionType = "love") => {
+    const target = artworks.find((a) => a.id === artworkId);
+    const r = getReactionDisplay(reactionType);
     await reactArtworkAction(artworkId, reactionType);
+    toast.success(target?.user_reaction === reactionType ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`, target?.title);
   };
 
   const handleRemoveFavorite = async (artworkId) => {
+    const target = artworks.find((a) => a.id === artworkId);
     await toggleFavoriteAction(artworkId);
+    toast.success("Dihapus dari Favorites", target?.title);
   };
 
   const handleDeleteCollection = async (col) => {
@@ -112,13 +125,18 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
     if (Number(activeCollectionId) === Number(col.id)) {
       setActiveCollectionId("all");
     }
+    toast.success("Moodboard dihapus", col.name);
   };
 
   const handleToggleArtworkInCollection = async (collectionId, artworkId) => {
     const key = `${collectionId}-${artworkId}`;
     setTogglingKey(key);
+    const col = collections.find((c) => Number(c.id) === Number(collectionId));
+    const art = artworks.find((a) => a.id === artworkId);
+    const alreadyIn = (art?.collection_ids || []).map(Number).includes(Number(collectionId));
     await toggleArtworkInCollectionAction(collectionId, artworkId);
     setTogglingKey("");
+    toast.success(alreadyIn ? "Dikeluarkan dari moodboard" : "Ditambahkan ke moodboard", col?.name);
   };
 
   const getReactionDisplay = (type) => {

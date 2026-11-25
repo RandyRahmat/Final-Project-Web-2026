@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import ExhibitionMode from "@/components/ui/exhibition-mode";
+import { useToast } from "@/components/ui/toast-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 
@@ -16,6 +17,7 @@ const REACTIONS = [
 ];
 
 export default function ExploreClient({ currentUser, artworks, categories, creators }) {
+  const toast = useToast();
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeTag, setActiveTag] = useState("");
   const [activeCreator, setActiveCreator] = useState("");
@@ -69,21 +71,30 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
   const handleReaction = async (artworkId, reactionType = "love") => {
     if (isGuest) {
       setAuthNotice("Silakan masuk sebagai Member untuk memberi reaksi pada karya.");
+      toast.info("Masuk diperlukan", "Login sebagai Member untuk memberi reaksi.");
       return;
     }
     if (!isMember) return;
     setAuthNotice("");
+    const target = artworks.find((a) => a.id === artworkId);
+    const removing = target?.user_reaction === reactionType;
+    const r = getReactionDisplay(reactionType);
     await reactArtworkAction(artworkId, reactionType);
+    toast.success(removing ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`, target?.title);
   };
 
   const handleFavorite = async (artworkId) => {
     if (isGuest) {
       setAuthNotice("Silakan masuk sebagai Member untuk menyimpan karya ke Favorites.");
+      toast.info("Masuk diperlukan", "Login sebagai Member untuk menyimpan karya.");
       return;
     }
     if (!isMember) return;
     setAuthNotice("");
+    const target = artworks.find((a) => a.id === artworkId);
+    const wasFav = Boolean(target?.is_favorited);
     await toggleFavoriteAction(artworkId);
+    toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", target?.title);
   };
 
   const getReactionDisplay = (type) => {

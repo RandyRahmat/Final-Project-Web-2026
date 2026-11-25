@@ -74,6 +74,8 @@
   .loader-bar { animation: loader-bar 1.6s cubic-bezier(.65,0,.35,1) infinite; }
   .skeleton-shimmer { position: relative; overflow: hidden; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06); }
   .skeleton-shimmer::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent 0%, rgba(226,201,146,.08) 45%, rgba(255,255,255,.09) 55%, transparent 100%); animation: skeleton-sweep 1.6s cubic-bezier(.4,0,.2,1) infinite; }
+  .toast-in { animation: toast-in .28s cubic-bezier(.22,1,.36,1) both; }
+  .toast-progress { animation: toast-progress linear forwards; }
 }
 
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -94,6 +96,8 @@
 @keyframes subtle-pulse { 0%, 100% { filter: drop-shadow(0 0 18px rgba(226,201,146,.25)); } 50% { filter: drop-shadow(0 0 34px rgba(226,201,146,.5)); } }
 @keyframes loader-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
 @keyframes skeleton-sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 @media (max-width: 1023px) {
   main:has([data-mobile-nav]) { padding-bottom: 6.5rem; }

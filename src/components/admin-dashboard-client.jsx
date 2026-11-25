@@ -5,6 +5,7 @@ import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { useToast } from "@/components/ui/toast-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import {
   verifyCuratorAction,
@@ -42,6 +43,7 @@ export default function AdminDashboardClient({
   categories,
 }) {
   const confirm = useConfirm();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
@@ -102,8 +104,10 @@ export default function AdminDashboardClient({
     setBusyKey("");
     if (res?.error) {
       setNotice({ type: "error", text: res.error });
+      toast.error("Tindakan gagal", res.error);
     } else if (successMessage) {
       setNotice({ type: "success", text: successMessage });
+      toast.success(successMessage);
     }
     return res;
   };

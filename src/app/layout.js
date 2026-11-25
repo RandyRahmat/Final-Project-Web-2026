@@ -1,9 +1,11 @@
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import AmbientBackground from "@/components/ui/ambient-background";
+import BackToTop from "@/components/ui/back-to-top";
 import CommandPalette from "@/components/ui/command-palette";
 import { ConfirmProvider } from "@/components/ui/confirm-provider";
 import InteractionLayer from "@/components/ui/interaction-layer";
 import SmoothScroll from "@/components/ui/smooth-scroll";
+import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,7 +47,10 @@ export default function RootLayout({ children }) {
         <InteractionLayer />
         <SmoothScroll />
         <CommandPalette />
-        <ConfirmProvider>{children}</ConfirmProvider>
+        <BackToTop />
+        <ToastProvider>
+          <ConfirmProvider>{children}</ConfirmProvider>
+        </ToastProvider>
       </body>
     </html>
   );

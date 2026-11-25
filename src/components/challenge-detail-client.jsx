@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { useToast } from "@/components/ui/toast-provider";
 import {
   submitArtworkToChallengeAction,
   withdrawSubmissionAction,
@@ -54,6 +55,7 @@ export default function ChallengeDetailClient({
   userSubmission,
 }) {
   const confirm = useConfirm();
+  const toast = useToast();
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [selectedArtworkId, setSelectedArtworkId] = useState(memberArtworks[0]?.id || "");
   const [withdrawing, setWithdrawing] = useState(false);
@@ -64,6 +66,9 @@ export default function ChallengeDetailClient({
     const res = await submitArtworkToChallengeAction(prevState, formData);
     if (res?.success) {
       setShowSubmitModal(false);
+      toast.success("Karya berhasil disubmit", challenge.title);
+    } else if (res?.error) {
+      toast.error("Gagal mengirim submisi", res.error);
     }
     return res;
   }, null);
@@ -98,6 +103,9 @@ export default function ChallengeDetailClient({
     setWithdrawing(false);
     if (res?.error) {
       setActionError(res.error);
+      toast.error("Gagal menarik submisi", res.error);
+    } else {
+      toast.info("Submisi berhasil ditarik", challenge.title);
     }
   };
 
@@ -108,6 +116,9 @@ export default function ChallengeDetailClient({
     setSelectingSubId(null);
     if (res?.error) {
       setActionError(res.error);
+      toast.error("Gagal menetapkan juara", res.error);
+    } else {
+      toast.success(rank ? `Juara #${rank} ditetapkan` : "Status juara dibatalkan", challenge.title);
     }
   };
 

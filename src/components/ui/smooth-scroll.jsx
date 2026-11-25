@@ -42,7 +42,13 @@ export default function SmoothScroll() {
     });
     ro.observe(document.body);
 
+    const handleScrollTop = () => {
+      lenis.scrollTo(0, { duration: 1.0 });
+    };
+    window.addEventListener("aesthe:scroll-top", handleScrollTop);
+
     return () => {
+      window.removeEventListener("aesthe:scroll-top", handleScrollTop);
       ro.disconnect();
       lenis.destroy();
       lenisRef.current = null;

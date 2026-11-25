@@ -3,6 +3,7 @@
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { useToast } from "@/components/ui/toast-provider";
 import {
   reactArtworkAction,
   toggleFavoriteAction,
@@ -38,6 +39,7 @@ function formatDate(dateValue) {
 
 export default function ArtworkDetailClient({ currentUser, artwork, comments }) {
   const confirm = useConfirm();
+  const toast = useToast();
   const [authNotice, setAuthNotice] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState(null);
@@ -136,6 +138,9 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     const res = await addCommentAction(prevState, formData);
     if (res?.success) {
       commentFormRef.current?.reset();
+      toast.success("Komentar berhasil dikirim");
+    } else if (res?.error) {
+      toast.error("Gagal mengirim komentar", res.error);
     }
     return res;
   }, null);
@@ -144,28 +149,47 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     const res = await reportArtworkAction(prevState, formData);
     if (res?.success) {
       setShowReportModal(false);
+      toast.success("Laporan terkirim", "Tim moderasi Admin akan meninjau karya ini.");
+    } else if (res?.error) {
+      toast.error("Gagal mengirim laporan", res.error);
     }
     return res;
   }, null);
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Tautan karya disalin", artwork.title);
+    } catch {
+      toast.error("Gagal menyalin tautan");
+    }
+  };
+
   const handleReaction = async (reactionType = "love") => {
     if (isGuest) {
       setAuthNotice("Silakan masuk sebagai Member untuk memberi reaksi pada karya ini.");
+      toast.info("Masuk diperlukan", "Login sebagai Member untuk memberi reaksi.");
       return;
     }
     if (!isMember) return;
     setAuthNotice("");
+    const removing = artwork.user_reaction === reactionType;
+    const r = REACTIONS.find((x) => x.type === reactionType) || REACTIONS[0];
     await reactArtworkAction(artwork.id, reactionType);
+    toast.success(removing ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`, artwork.title);
   };
 
   const handleFavorite = async () => {
     if (isGuest) {
       setAuthNotice("Silakan masuk sebagai Member untuk menyimpan karya ke Favorites.");
+      toast.info("Masuk diperlukan", "Login sebagai Member untuk menyimpan karya.");
       return;
     }
     if (!isMember) return;
     setAuthNotice("");
+    const wasFav = Boolean(artwork.is_favorited);
     await toggleFavoriteAction(artwork.id);
+    toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", artwork.title);
   };
 
   const handleOpenReport = () => {
@@ -189,6 +213,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     setDeletingCommentId(commentId);
     await deleteCommentAction(commentId, artwork.id);
     setDeletingCommentId(null);
+    toast.success("Komentar dihapus");
   };
 
   return (
@@ -206,8 +231,11 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link href="/explore" className="btn-ghost rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.15em]">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <button type="button" onClick={handleCopyLink} title="Salin tautan karya" className="btn-ghost rounded-full px-3.5 py-1.5 text-[10px] uppercase tracking-[0.15em]">
+            Salin Tautan
+          </button>
+          <Link href="/explore" className="btn-ghost hidden rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.15em] sm:inline-flex">
             Explore
           </Link>
           <Link href="/home" className="btn-ghost rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.15em]">

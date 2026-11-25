@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { useToast } from "@/components/ui/toast-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import {
   updateProfileAction,
@@ -24,6 +25,7 @@ export default function ProfileClient({
   followingList = [],
 }) {
   const confirm = useConfirm();
+  const toast = useToast();
   const role = profile.role || currentUser.role;
   const isMember = role === "Member";
 
@@ -65,12 +67,15 @@ export default function ProfileClient({
     setDeletingId(artworkId);
     await deleteArtworkAction(artworkId);
     setDeletingId(null);
+    toast.success("Karya berhasil dihapus", title);
   };
 
   const handleUnfollow = async (creatorId) => {
+    const target = followingList.find((c) => c.id === creatorId);
     setUnfollowingId(creatorId);
     await toggleFollowAction(creatorId);
     setUnfollowingId(null);
+    toast.info("Berhenti mengikuti kreator", target ? `@${target.username}` : "");
   };
 
   const tabs = isMember

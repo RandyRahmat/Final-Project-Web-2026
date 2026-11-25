@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useToast } from "@/components/ui/toast-provider";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 import { sendMessageAction } from "@/actions/message-actions";
 import { toggleFollowAction } from "@/actions/profile-actions";
@@ -15,6 +16,7 @@ const REACTIONS = [
 ];
 
 export default function CreatorProfileClient({ currentUser, creator, artworks, followStats }) {
+  const toast = useToast();
   const [authNotice, setAuthNotice] = useState("");
   const [togglingFollow, setTogglingFollow] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -68,18 +70,26 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
   const handleToggleFollow = async () => {
     if (isGuest) {
       setAuthNotice(`Silakan masuk sebagai Member untuk mengikuti ${creator.display_name}.`);
+      toast.info("Masuk diperlukan", `Login untuk mengikuti @${creator.username}.`);
       return;
     }
     if (!isMember || isOwnProfile || togglingFollow) return;
     setTogglingFollow(true);
     setAuthNotice("");
+    const wasFollowing = Boolean(followStats?.isFollowing);
     await toggleFollowAction(creator.id);
     setTogglingFollow(false);
+    if (wasFollowing) {
+      toast.info(`Berhenti mengikuti @${creator.username}`, creator.display_name);
+    } else {
+      toast.success(`Mengikuti @${creator.username}`, creator.display_name);
+    }
   };
 
   const handleOpenChat = () => {
     if (isGuest) {
       setAuthNotice(`Silakan masuk terlebih dahulu untuk mengirim pesan pribadi ke ${creator.display_name}.`);
+      toast.info("Masuk diperlukan", "Login untuk mengirim pesan pribadi.");
       return;
     }
     setAuthNotice("");
@@ -97,32 +107,42 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
     setSending(false);
     if (res?.error) {
       setChatError(res.error);
+      toast.error("Pesan gagal terkirim", res.error);
       return;
     }
     if (res?.message) {
       setChatMessages((prev) => [...prev, res.message]);
       setDraft("");
+      toast.success("Pesan terkirim", `Ke ${creator.display_name}`);
     }
   };
 
   const handleReaction = async (artworkId, reactionType = "love") => {
     if (isGuest) {
       setAuthNotice("Silakan masuk sebagai Member untuk memberi reaksi pada karya.");
+      toast.info("Masuk diperlukan", "Login sebagai Member untuk memberi reaksi.");
       return;
     }
     if (!isMember) return;
     setAuthNotice("");
+    const target = artworks.find((a) => a.id === artworkId);
+    const r = REACTIONS.find((x) => x.type === reactionType) || REACTIONS[0];
     await reactArtworkAction(artworkId, reactionType);
+    toast.success(target?.user_reaction === reactionType ? "Reaksi dibatalkan" : `Reaksi ${r.icon} ${r.label} dikirim`, target?.title);
   };
 
   const handleFavorite = async (artworkId) => {
     if (isGuest) {
       setAuthNotice("Silakan masuk sebagai Member untuk menyimpan karya ke Favorites.");
+      toast.info("Masuk diperlukan", "Login sebagai Member untuk menyimpan karya.");
       return;
     }
     if (!isMember) return;
     setAuthNotice("");
+    const target = artworks.find((a) => a.id === artworkId);
+    const wasFav = Boolean(target?.is_favorited);
     await toggleFavoriteAction(artworkId);
+    toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", target?.title);
   };
 
   const getReactionDisplay = (type) => {

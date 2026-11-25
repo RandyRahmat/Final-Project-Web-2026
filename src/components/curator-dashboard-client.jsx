@@ -5,6 +5,7 @@ import Link from "next/link";
 import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
 import NavIcon from "@/components/ui/nav-icon";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { useToast } from "@/components/ui/toast-provider";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { logoutUserAction } from "@/actions/auth-actions";
 import {
@@ -43,6 +44,7 @@ function toDateTimeLocal(dateValue) {
 
 export default function CuratorDashboardClient({ curator, challenges, submissions }) {
   const confirm = useConfirm();
+  const toast = useToast();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -68,6 +70,9 @@ export default function CuratorDashboardClient({ curator, challenges, submission
     const res = await createChallengeAction(prevState, formData);
     if (res?.success) {
       closeCreateModal();
+      toast.success("Challenge baru berhasil dibuat");
+    } else if (res?.error) {
+      toast.error("Gagal membuat challenge", res.error);
     }
     return res;
   }, null);
@@ -76,6 +81,9 @@ export default function CuratorDashboardClient({ curator, challenges, submission
     const res = await updateChallengeAction(prevState, formData);
     if (res?.success) {
       closeEditModal();
+      toast.success("Challenge berhasil diperbarui");
+    } else if (res?.error) {
+      toast.error("Gagal memperbarui challenge", res.error);
     }
     return res;
   }, null);
@@ -120,8 +128,12 @@ export default function CuratorDashboardClient({ curator, challenges, submission
     setDeletingId(null);
     if (res?.error) {
       setActionError(res.error);
-    } else if (managingChallengeId === ch.id) {
-      setManagingChallengeId(null);
+      toast.error("Gagal menghapus challenge", res.error);
+    } else {
+      if (managingChallengeId === ch.id) {
+        setManagingChallengeId(null);
+      }
+      toast.success("Challenge dihapus", ch.title);
     }
   };
 
@@ -132,6 +144,9 @@ export default function CuratorDashboardClient({ curator, challenges, submission
     setSelectingSubId(null);
     if (res?.error) {
       setActionError(res.error);
+      toast.error("Gagal menetapkan pemenang", res.error);
+    } else {
+      toast.success(rank ? `Juara #${rank} berhasil ditetapkan` : "Status juara dibatalkan");
     }
   };
 

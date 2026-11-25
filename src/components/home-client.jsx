@@ -688,7 +688,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
             </div>
 
             <div className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredArtworks.map((art) => {
+              {filteredArtworks.slice(0, 12).map((art) => {
                 const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
 
                 return (
@@ -799,6 +799,22 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                 );
               })}
             </div>
+
+            {filteredArtworks.length > 0 && (
+              <div className="mt-10 flex flex-col items-center justify-center gap-3.5 border-t border-white/[0.06] pt-8 text-center">
+                <p className="text-[11px] text-zinc-500">
+                  {filteredArtworks.length > 12
+                    ? `Menampilkan 12 dari ${filteredArtworks.length} karya pilihan di halaman utama.`
+                    : `Menampilkan ${filteredArtworks.length} karya. Ingin menyaring berdasarkan tag atau kreator?`}
+                </p>
+                <Link
+                  href="/explore"
+                  className={`${filteredArtworks.length > 12 ? "btn-gold" : "btn-ghost"} rounded-full px-7 py-3 text-[10px] uppercase tracking-[0.22em]`}
+                >
+                  Jelajahi Karya Lainnya &rarr;
+                </Link>
+              </div>
+            )}
 
             {filteredArtworks.length === 0 && (
               <div className="py-20 text-center">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
 import { logoutUserAction } from "@/actions/auth-actions";
 
 export default function AppSidebar({
@@ -276,6 +277,8 @@ export default function AppSidebar({
           </div>
         </div>
       </aside>
+
+      <MobileBottomNav currentUser={currentUser} activeItem={activeItem} />
     </>
   );
 }

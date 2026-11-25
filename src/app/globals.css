@@ -100,6 +100,10 @@
 @keyframes subtle-pulse { 0%, 100% { filter: drop-shadow(0 0 18px rgba(226,201,146,.25)); } 50% { filter: drop-shadow(0 0 34px rgba(226,201,146,.5)); } }
 @keyframes loader-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
 
+@media (max-width: 1023px) {
+  main:has([data-mobile-nav]) { padding-bottom: 6.5rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }

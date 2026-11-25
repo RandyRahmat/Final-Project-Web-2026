@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
+import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
 import { useSidebarCollapsed } from "@/lib/use-sidebar-collapsed";
 import { logoutUserAction } from "@/actions/auth-actions";
 import {
@@ -683,6 +684,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
           </div>
         </div>
       )}
+      <MobileBottomNav currentUser={curator} activeItem="curator" />
     </main>
   );
 }

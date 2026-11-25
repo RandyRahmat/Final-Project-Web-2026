@@ -35,6 +35,7 @@ DROP TABLE IF EXISTS direct_messages CASCADE;
 DROP TABLE IF EXISTS follows CASCADE;
 DROP TABLE IF EXISTS challenge_submissions CASCADE;
 DROP TABLE IF EXISTS challenges CASCADE;
+DROP TABLE IF EXISTS comment_reports CASCADE;
 DROP TABLE IF EXISTS reports CASCADE;
 DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS collection_items CASCADE;
@@ -140,6 +141,17 @@ CREATE TABLE reports (
   UNIQUE (artwork_id, reporter_id)
 );
 
+-- 2.9b Comment Reports (Laporan moderasi komentar oleh Member)
+CREATE TABLE comment_reports (
+  id SERIAL PRIMARY KEY,
+  comment_id INT NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+  reporter_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Dismissed', 'Resolved')),
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE (comment_id, reporter_id)
+);
+
 -- 2.10 Challenges (Event kompetisi yang dibuat Curator Approved)
 CREATE TABLE challenges (
   id SERIAL PRIMARY KEY,
@@ -197,6 +209,7 @@ CREATE INDEX idx_collections_user_id ON collections(user_id);
 CREATE INDEX idx_collection_items_collection_id ON collection_items(collection_id);
 CREATE INDEX idx_comments_artwork_id ON comments(artwork_id);
 CREATE INDEX idx_reports_status ON reports(status);
+CREATE INDEX idx_comment_reports_status ON comment_reports(status);
 CREATE INDEX idx_challenges_dates ON challenges(start_date, end_date);
 CREATE INDEX idx_submissions_challenge_id ON challenge_submissions(challenge_id);
 CREATE UNIQUE INDEX idx_submissions_unique_winner_rank ON challenge_submissions(challenge_id, winner_rank) WHERE winner_rank IS NOT NULL;
@@ -641,11 +654,16 @@ INSERT INTO comments (artwork_id, user_id, content, created_at) VALUES
   (22, 6, 'Garis lengkung arsitektur putihnya bersih banget, permainan bayangannya presisi.', NOW() - INTERVAL '4 days'),
   (26, 8, 'Hierarki tipografi dan ruang kosongnya rapi, kerasa banget sistem desain modernnya.', NOW() - INTERVAL '6 days');
 
--- 4.9 Reports (3 Laporan Pending untuk Antrean Moderasi di /admin)
+-- 4.9 Reports (3 Laporan Karya Pending untuk Antrean Moderasi di /admin)
 INSERT INTO reports (artwork_id, reporter_id, reason, status, created_at) VALUES
   (11, 8, 'Plagiat / Pelanggaran Hak Cipta: Diduga menggunakan aset gelombang optik tanpa atribusi pembuat asli.', 'Pending', NOW() - INTERVAL '18 hours'),
   (14, 6, 'Alasan Lainnya: Karya berupa fotografi bunga, sebaiknya dipindahkan ke kategori Photography.', 'Pending', NOW() - INTERVAL '9 hours'),
   (27, 9, 'Spam / Penipuan: Tampilan dashboard terlihat serupa dengan template publik tanpa keterangan modifikasi.', 'Pending', NOW() - INTERVAL '3 hours');
+
+-- 4.9b Comment Reports (2 Laporan Komentar Pending untuk Antrean Moderasi di /admin)
+INSERT INTO comment_reports (comment_id, reporter_id, reason, status, created_at) VALUES
+  (3, 5, 'Spam / Promosi: Komentar dinilai repetitif dan kurang relevan dengan detail teknis karya.', 'Pending', NOW() - INTERVAL '5 hours'),
+  (11, 7, 'Alasan Lainnya: Mohon ditinjau apakah komentar ini sesuai pedoman komunitas.', 'Pending', NOW() - INTERVAL '2 hours');
 
 -- 4.10 Challenges (6 Challenge dengan 4 Status: Ended+Winners, Ended+Unjudged, 3 Ongoing, 1 Upcoming)
 INSERT INTO challenges (id, curator_id, title, description, rules, prize, start_date, end_date, banner_url, created_at) VALUES
@@ -783,6 +801,7 @@ SELECT setval(pg_get_serial_sequence('collections', 'id'), COALESCE((SELECT MAX(
 SELECT setval(pg_get_serial_sequence('collection_items', 'id'), COALESCE((SELECT MAX(id) FROM collection_items), 1), true);
 SELECT setval(pg_get_serial_sequence('comments', 'id'), COALESCE((SELECT MAX(id) FROM comments), 1), true);
 SELECT setval(pg_get_serial_sequence('reports', 'id'), COALESCE((SELECT MAX(id) FROM reports), 1), true);
+SELECT setval(pg_get_serial_sequence('comment_reports', 'id'), COALESCE((SELECT MAX(id) FROM comment_reports), 1), true);
 SELECT setval(pg_get_serial_sequence('challenges', 'id'), COALESCE((SELECT MAX(id) FROM challenges), 1), true);
 SELECT setval(pg_get_serial_sequence('challenge_submissions', 'id'), COALESCE((SELECT MAX(id) FROM challenge_submissions), 1), true);
 SELECT setval(pg_get_serial_sequence('follows', 'id'), COALESCE((SELECT MAX(id) FROM follows), 1), true);

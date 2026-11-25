@@ -16,6 +16,7 @@ let profileColumnsEnsured = false;
 let directMessagesTableEnsured = false;
 let challengeColumnsEnsured = false;
 let reportsTableEnsured = false;
+let commentReportsTableEnsured = false;
 let commentsTableEnsured = false;
 let followsTableEnsured = false;
 let collectionsTablesEnsured = false;
@@ -127,6 +128,30 @@ export async function ensureCommentsTable() {
       )`
     );
     commentsTableEnsured = true;
+  } catch {
+    // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
+  }
+}
+
+export async function ensureCommentReportsTable() {
+  if (commentReportsTableEnsured) return;
+  try {
+    await ensureCommentsTable();
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS comment_reports (
+          id SERIAL PRIMARY KEY,
+          comment_id INT NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+          reporter_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          reason TEXT NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Dismissed', 'Resolved')),
+          created_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE (comment_id, reporter_id)
+      )`
+    );
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS idx_comment_reports_status ON comment_reports(status)`
+    );
+    commentReportsTableEnsured = true;
   } catch {
     // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
   }

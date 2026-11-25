@@ -45,7 +45,7 @@ Tangkapan layar diambil langsung dari aplikasi yang berjalan pada resolusi deskt
 
 | Lapisan | Teknologi | Keterangan |
 | :--- | :--- | :--- |
-| **Framework** | **Next.js `16.4.6`** | App Router, Turbopack, Server Actions, API Routes, dan Proxy Middleware (`src/proxy.js`) |
+| **Framework** | **Next.js `16.4.6`** | App Router, Turbopack, Server Actions, API Routes, dan Server Proxy Middleware (`src/proxy.js`, pengganti resmi `middleware.js` di Next.js 16) |
 | **UI Library** | **React `19.3.0`** | Server Components, Client Components, `useActionState`, `useOptimistic` |
 | **Styling & Tipografi** | **Tailwind CSS `4.3.3`** | `@tailwindcss/turbopack`, palet *obsidian & champagne gold*, Google Fonts (`Instrument Serif`, `Geist`, `Geist Mono`) |
 | **Smooth Scrolling** | **Lenis `1.3.28`** | Scroll halus dengan kontrol *scroll-lock* ref-counted untuk modal & lightbox |
@@ -65,7 +65,7 @@ Tangkapan layar diambil langsung dari aplikasi yang berjalan pada resolusi deskt
 
 ### 2. Member (Kreator)
 - **Publikasi & Kelola Karya:** Mengunggah karya gambar lokal (tersimpan di `public/uploads/` dengan validasi *magic bytes* PNG/JPEG/WebP/GIF) lengkap dengan judul, deskripsi, kategori, dan tag; serta mengedit atau menghapus karya sendiri.
-- **Apresiasi & Interaksi Sosial:** Memberikan 5 pilihan reaksi ekspresif (`❤️ Love`, `😮 Wow`, `🔥 Fire`, `✨ Inspire`, `👏 Applause`), berkomentar di halaman karya, melaporkan karya bermasalah, dan mengikuti (*Follow*) kreator lain.
+- **Apresiasi & Interaksi Sosial:** Memberikan 5 pilihan reaksi ekspresif (`❤️ Love`, `😮 Wow`, `🔥 Fire`, `✨ Inspire`, `👏 Applause`), berkomentar di halaman karya, melaporkan karya maupun komentar yang melanggar (*Report Artwork & Report Comment*), dan mengikuti (*Follow*) kreator lain.
 - **Favorites & Moodboards (Collections):** Menyimpan karya favorit dan mengelompokkannya ke dalam folder *Moodboard* kustom di `/favorites`.
 - **Kompetisi Seni (Challenges):** Mengirimkan maksimal 1 karya per kompetisi yang sedang berlangsung (*Ongoing*) serta menarik kembali submisi sebelum batas waktu berakhir.
 - **Direct Messages (`/messages`):** Percakapan privat antar pengguna dengan sinkronisasi *polling* berkala, indikator pesan belum dibaca, dan tampilan responsif mobile/desktop.
@@ -80,7 +80,7 @@ Tangkapan layar diambil langsung dari aplikasi yang berjalan pada resolusi deskt
 ### 4. Admin (Administrator)
 - **Admin Control Panel (`/admin`):** Dashboard ringkasan statistik menyeluruh (total pengguna, karya, kompetisi aktif, pendaftar kurator pending, dan antrean laporan).
 - **Verifikasi Curator:** Menyetujui (*Approve*) atau menolak (*Reject*) pengajuan akun Curator baru secara real-time.
-- **Moderasi Konten:** Meninjau laporan karya dari komunitas, lalu memilih untuk mengabaikan laporan (*Dismiss*) atau menghapus karya yang melanggar (*Resolve & Delete*).
+- **Moderasi Konten:** Meninjau antrian laporan **karya** dan **komentar** dari komunitas (dilengkapi sub-filter, alasan, dan jumlah pelapor), lalu memilih untuk mengabaikan laporan (*Dismiss Report*) atau menghapus konten yang melanggar (*Take Down Karya / Komentar*).
 - **Manajemen Kategori & Pengguna:** Menambah, mengubah nama, atau menghapus kategori karya (dengan proteksi jika masih digunakan karya), serta mengelola daftar pengguna dan membersihkan file unggahan terkait saat akun dihapus.
 
 ---
@@ -139,21 +139,21 @@ src/app/
 
 ---
 
-## Skema & Setup Database (`database_aesthe.sql`)
+## Skema & Setup Database (`database/database_aesthe.sql`)
 
-Skema PostgreSQL pada [database_aesthe.sql](./database_aesthe.sql) terdiri dari **13 tabel relasional** beserta **15 index performa & integritas**:
+Skema PostgreSQL pada [database/database_aesthe.sql](./database/database_aesthe.sql) terdiri dari **14 tabel relasional** beserta **16 index performa & integritas**:
 
 - **Inti & Konten:** `users`, `categories`, `artworks`
-- **Interaksi & Koleksi:** `artwork_reactions`, `favorites`, `collections`, `collection_items`, `comments`, `reports`
+- **Interaksi & Koleksi:** `artwork_reactions`, `favorites`, `collections`, `collection_items`, `comments`, `reports`, `comment_reports`
 - **Kompetisi & Penjurian:** `challenges`, `challenge_submissions` (dengan *partial unique index* `idx_submissions_unique_winner_rank` untuk menjamin keunikan peringkat #1–#3 per challenge)
 - **Sosial & Komunikasi:** `follows`, `direct_messages`
 
-File ini juga menyertakan **seed data komunitas lengkap** (14 akun lintas role, 8 kategori, 28 karya, 74 reaksi, 32 favorit, 7 moodboards, 24 komentar, 3 laporan pending, 6 challenge lintas status, 14 submisi, 24 relasi follow, dan 12 pesan).
+File ini juga menyertakan **seed data komunitas lengkap** (14 akun lintas role, 8 kategori, 28 karya, 74 reaksi, 32 favorit, 7 moodboards, 24 komentar, 3 laporan karya & 2 laporan komentar pending, 6 challenge lintas status, 14 submisi, 24 relasi follow, dan 12 pesan).
 
 ### Opsi A — Menggunakan pgAdmin 4
 1. Buat database baru di PostgreSQL (misalnya bernama `aesthe`).
 2. Klik kanan database `aesthe` pada panel kiri pgAdmin 4, lalu pilih **Query Tool**.
-3. Buka file `database_aesthe.sql` (atau salin seluruh isinya ke editor Query Tool).
+3. Buka file `database/database_aesthe.sql` (atau salin seluruh isinya ke editor Query Tool).
 4. Klik **Execute / Refresh (`F5`)** hingga transaksi `COMMIT` selesai tanpa error.
 
 ### Opsi B — Menggunakan Terminal (`psql`)
@@ -162,10 +162,10 @@ File ini juga menyertakan **seed data komunitas lengkap** (14 akun lintas role, 
 createdb -U postgres aesthe
 
 # 2. Import skema tabel, index, dan seed data
-psql -U postgres -d aesthe -f database_aesthe.sql
+psql -U postgres -d aesthe -f database/database_aesthe.sql
 ```
 
-> **Catatan:** Menjalankan ulang `database_aesthe.sql` akan melakukan *reset* bersih (`DROP TABLE ... CASCADE`) lalu membangun ulang seluruh tabel dan data awal dari nol. Jika sebelumnya sedang login di browser, logout dan login kembali agar sesi cookie tetap sinkron.
+> **Catatan:** Menjalankan ulang `database/database_aesthe.sql` akan melakukan *reset* bersih (`DROP TABLE ... CASCADE`) lalu membangun ulang seluruh tabel dan data awal dari nol. Jika sebelumnya sedang login di browser, logout dan login kembali agar sesi cookie tetap sinkron.
 
 ---
 
@@ -191,7 +191,7 @@ JWT_SECRET="ganti-dengan-string-rahasia-panjang-dan-acak-minimal-32-karakter"
 ```
 
 ### 3. Setup Database
-Jalankan [database_aesthe.sql](./database_aesthe.sql) menggunakan **pgAdmin 4** atau **`psql`** seperti panduan di atas.
+Jalankan [database/database_aesthe.sql](./database/database_aesthe.sql) menggunakan **pgAdmin 4** atau **`psql`** seperti panduan di atas.
 
 ### 4. Jalankan Server Pengembangan
 ```bash
@@ -210,7 +210,7 @@ npm run start   # Menjalankan server production hasil build
 
 ## Akun Demo (Seed Data)
 
-Seluruh akun bawaan pada `database_aesthe.sql` menggunakan kata sandi yang sama: **`password123`**
+Seluruh akun bawaan pada `database/database_aesthe.sql` menggunakan kata sandi yang sama: **`password123`**
 
 | Role | Status | Email | Username | Kegunaan Pengujian |
 | :--- | :--- | :--- | :--- | :--- |

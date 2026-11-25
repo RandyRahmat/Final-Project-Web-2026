@@ -3,6 +3,7 @@ import {
   ensureChallengeColumns,
   ensureCommentsTable,
   ensureReportsTable,
+  ensureCommentReportsTable,
   ensureFollowsTable,
   ensureDirectMessagesTable,
 } from "@/lib/db";
@@ -49,6 +50,7 @@ export default async function HomePage() {
     ensureChallengeColumns(),
     ensureCommentsTable(),
     ensureReportsTable(),
+    ensureCommentReportsTable(),
     ensureFollowsTable(),
     ensureDirectMessagesTable(),
   ]);
@@ -189,7 +191,7 @@ export default async function HomePage() {
       ? query(
           `SELECT
             (SELECT COUNT(*)::int FROM users WHERE role = 'Curator' AND curator_status = 'Pending') AS pending_curators,
-            (SELECT COUNT(*)::int FROM reports WHERE status = 'Pending') AS pending_reports`
+            ((SELECT COUNT(*)::int FROM reports WHERE status = 'Pending') + (SELECT COUNT(*)::int FROM comment_reports WHERE status = 'Pending')) AS pending_reports`
         )
       : Promise.resolve({ rows: [] }),
   ]);

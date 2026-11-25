@@ -4,6 +4,7 @@ import { useActionState, useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link";
 import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import NavIcon from "@/components/ui/nav-icon";
 import ReactionPicker, { REACTIONS } from "@/components/ui/reaction-picker";
 import { useToast } from "@/components/ui/toast-provider";
 import { useBodyScrollLock } from "@/lib/body-scroll-lock";
@@ -13,6 +14,7 @@ import {
   addCommentAction,
   deleteCommentAction,
   reportArtworkAction,
+  reportCommentAction,
 } from "@/actions/artwork-actions";
 
 const REPORT_REASONS = [
@@ -20,6 +22,14 @@ const REPORT_REASONS = [
   "SARA / Ujaran Kebencian",
   "Konten Tidak Pantas / NSFW",
   "Spam / Penipuan",
+  "Alasan Lainnya",
+];
+
+const COMMENT_REPORT_REASONS = [
+  "Ujaran Kebencian / SARA",
+  "Pelecehan / Bullying",
+  "Spam / Promosi",
+  "Konten Tidak Pantas",
   "Alasan Lainnya",
 ];
 
@@ -37,6 +47,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
   const confirm = useConfirm();
   const toast = useToast();
   const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingComment, setReportingComment] = useState(null);
   const [deletingCommentId, setDeletingCommentId] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -102,16 +113,19 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
     setIsDragging(false);
   };
 
-  useBodyScrollLock(lightboxOpen || showReportModal);
+  useBodyScrollLock(lightboxOpen || showReportModal || Boolean(reportingComment));
 
   useEffect(() => {
-    if (!showReportModal) return;
+    if (!showReportModal && !reportingComment) return;
     const onKeyDown = (e) => {
-      if (e.key === "Escape") setShowReportModal(false);
+      if (e.key === "Escape") {
+        setShowReportModal(false);
+        setReportingComment(null);
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [showReportModal]);
+  }, [showReportModal, reportingComment]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -152,6 +166,17 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
       toast.success("Laporan terkirim", "Tim moderasi Admin akan meninjau karya ini.");
     } else if (res?.error) {
       toast.error("Gagal mengirim laporan", res.error);
+    }
+    return res;
+  }, null);
+
+  const [commentReportState, commentReportFormAction, isReportingComment] = useActionState(async (prevState, formData) => {
+    const res = await reportCommentAction(prevState, formData);
+    if (res?.success) {
+      setReportingComment(null);
+      toast.success("Laporan komentar terkirim", "Komentar masuk ke antrian moderasi Admin.");
+    } else if (res?.error) {
+      toast.error("Gagal melaporkan komentar", res.error);
     }
     return res;
   }, null);
@@ -398,7 +423,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
                         : "border-white/15 bg-white/[0.04] text-zinc-200 hover:border-champagne-300/50 hover:text-champagne-100"
                     }`}
                   >
-                    <span>⚑</span>
+                    <NavIcon name="favorites" filled={Boolean(isMember && artwork.is_favorited)} className="h-3.5 w-3.5" />
                     <span>{isMember && artwork.is_favorited ? "Tersimpan" : "Favorites"}</span>
                   </button>
                 )}
@@ -515,7 +540,7 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
                         </div>
                       </Link>
 
-                      {isMyComment && (
+                      {isMyComment ? (
                         <button
                           type="button"
                           disabled={deletingCommentId === cm.id}
@@ -524,7 +549,21 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
                         >
                           {deletingCommentId === cm.id ? "..." : "Hapus"}
                         </button>
-                      )}
+                      ) : isMember ? (
+                        cm.has_reported ? (
+                          <span className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-[10px] text-amber-300/80">
+                            ⚑ Dilaporkan
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setReportingComment(cm)}
+                            className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] text-zinc-400 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300"
+                          >
+                            ⚑ Laporkan
+                          </button>
+                        )
+                      ) : null}
                     </div>
                     <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-300">{cm.content}</p>
                   </div>
@@ -699,6 +738,78 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
                 className="w-full rounded-xl bg-red-600 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-red-500 disabled:opacity-50"
               >
                 {isReporting ? "Mengirim Laporan..." : "Kirim Laporan ke Admin"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL REPORT COMMENT */}
+      {reportingComment && isMember && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-comment-title"
+          onClick={() => setReportingComment(null)}
+          className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <div data-lenis-prevent onClick={(e) => e.stopPropagation()} className="modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl p-7">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] tracking-[0.3em] text-red-400">REPORT COMMENT</p>
+                <h2 id="report-comment-title" className="font-display mt-1 text-3xl text-white">Laporkan Komentar</h2>
+              </div>
+              <button type="button" onClick={() => setReportingComment(null)} className="text-xl text-zinc-500 hover:text-white">×</button>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-white/10 bg-black/40 p-3">
+              <p className="text-[10px] text-zinc-500">Komentar oleh @{reportingComment.author_username}</p>
+              <p className="mt-1 line-clamp-3 break-words text-xs italic text-zinc-300">
+                &ldquo;{reportingComment.content}&rdquo;
+              </p>
+            </div>
+
+            {commentReportState?.error && (
+              <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-xs text-red-300">
+                {commentReportState.error}
+              </div>
+            )}
+
+            <form key={reportingComment.id} action={commentReportFormAction} className="mt-5 space-y-4">
+              <input type="hidden" name="commentId" value={reportingComment.id} />
+
+              <div>
+                <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">Alasan Pelaporan</label>
+                <select
+                  name="reasonCategory"
+                  required
+                  defaultValue={COMMENT_REPORT_REASONS[0]}
+                  className="input-lux bg-zinc-950"
+                >
+                  {COMMENT_REPORT_REASONS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">Detail Tambahan (Opsional)</label>
+                <textarea
+                  name="reasonDetail"
+                  rows={3}
+                  placeholder="Jelaskan bagian yang melanggar agar mudah ditinjau Admin..."
+                  className="input-lux"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isReportingComment}
+                className="w-full rounded-xl bg-red-600 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-red-500 disabled:opacity-50"
+              >
+                {isReportingComment ? "Mengirim Laporan..." : "Kirim Laporan Komentar"}
               </button>
             </form>
           </div>

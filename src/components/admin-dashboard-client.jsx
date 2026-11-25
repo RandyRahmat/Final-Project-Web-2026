@@ -15,6 +15,8 @@ import {
   deleteCategoryAction,
   dismissReportAction,
   takeDownArtworkAction,
+  dismissCommentReportAction,
+  takeDownCommentAction,
 } from "@/actions/admin-actions";
 
 const TAB_TITLES = {
@@ -39,12 +41,14 @@ export default function AdminDashboardClient({
   stats,
   pendingCurators,
   moderationQueue,
+  commentModerationQueue = [],
   users,
   categories,
 }) {
   const confirm = useConfirm();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+  const [moderationFilter, setModerationFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -79,6 +83,20 @@ export default function AdminDashboardClient({
         (item.reports || []).some((r) => (r.reason || "").toLowerCase().includes(q))
     );
   }, [moderationQueue, q]);
+
+  const filteredCommentModeration = useMemo(() => {
+    if (!q) return commentModerationQueue;
+    return commentModerationQueue.filter(
+      (item) =>
+        item.comment_content.toLowerCase().includes(q) ||
+        item.artwork_title.toLowerCase().includes(q) ||
+        item.author_name.toLowerCase().includes(q) ||
+        item.author_username.toLowerCase().includes(q) ||
+        (item.reports || []).some((r) => (r.reason || "").toLowerCase().includes(q))
+    );
+  }, [commentModerationQueue, q]);
+
+  const totalPendingModerationItems = moderationQueue.length + commentModerationQueue.length;
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -182,6 +200,36 @@ export default function AdminDashboardClient({
     );
   };
 
+  const handleDismissCommentReport = async (item) => {
+    const ok = await confirm({
+      title: "Tolak Laporan Komentar",
+      message: `Tolak (Dismiss) semua laporan untuk komentar dari @${item.author_username}?`,
+      confirmText: "Ya, Dismiss",
+      variant: "gold",
+    });
+    if (!ok) return;
+    runAction(
+      `dismiss-comment-${item.comment_id}`,
+      () => dismissCommentReportAction(item.comment_id),
+      `Laporan komentar dari @${item.author_username} berhasil di-dismiss.`
+    );
+  };
+
+  const handleTakeDownComment = async (item) => {
+    const ok = await confirm({
+      title: "Take Down Komentar",
+      message: `Hapus komentar dari @${item.author_username} pada karya "${item.artwork_title}" secara permanen?`,
+      confirmText: "Ya, Take Down",
+      variant: "danger",
+    });
+    if (!ok) return;
+    runAction(
+      `takedown-comment-${item.comment_id}`,
+      () => takeDownCommentAction(item.comment_id),
+      `Komentar dari @${item.author_username} berhasil di-take down.`
+    );
+  };
+
   const handleSaveCategoryEdit = async (categoryId) => {
     const res = await runAction(
       `edit-cat-${categoryId}`,
@@ -218,7 +266,7 @@ export default function AdminDashboardClient({
           setNotice({ type: "", text: "" });
         }}
         pendingCuratorsCount={pendingCurators.length}
-        pendingReportsCount={moderationQueue.length}
+        pendingReportsCount={totalPendingModerationItems}
         adminUser={adminUser}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
@@ -282,7 +330,9 @@ export default function AdminDashboardClient({
                 >
                   <p className="text-[10px] uppercase tracking-[0.2em] text-red-300/80">Laporan Pending</p>
                   <p className="font-display mt-2 text-4xl text-red-300">{stats.pending_reports}</p>
-                  <p className="mt-2 text-[11px] text-zinc-400">{moderationQueue.length} karya menunggu moderasi &rarr;</p>
+                  <p className="mt-2 text-[11px] text-zinc-400">
+                    {moderationQueue.length} karya &bull; {commentModerationQueue.length} komentar menunggu &rarr;
+                  </p>
                 </button>
 
                 <div className="glass spotlight card-lux rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.06] p-5">
@@ -414,79 +464,183 @@ export default function AdminDashboardClient({
           {/* TAB 3: MODERASI KONTEN */}
           {activeTab === "moderation" && (
             <section>
-              <div className="mb-6">
-                <p className="eyebrow">MODERATION QUEUE</p>
-                <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">Antrian Moderasi Laporan Karya ({filteredModeration.length})</h2>
+              <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p className="eyebrow">MODERATION QUEUE</p>
+                  <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">
+                    Antrian Moderasi Konten ({filteredModeration.length + filteredCommentModeration.length})
+                  </h2>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: "all", label: `Semua (${filteredModeration.length + filteredCommentModeration.length})` },
+                    { id: "artworks", label: `Karya (${filteredModeration.length})` },
+                    { id: "comments", label: `Komentar (${filteredCommentModeration.length})` },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setModerationFilter(f.id)}
+                      className={`rounded-full border px-4 py-1.5 text-[10px] uppercase tracking-[0.15em] transition ${
+                        moderationFilter === f.id
+                          ? "chip-active"
+                          : "border-white/10 text-zinc-400 hover:border-champagne-300/40 hover:text-champagne-50"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {filteredModeration.length === 0 ? (
+              {(moderationFilter === "all" && filteredModeration.length === 0 && filteredCommentModeration.length === 0) ||
+              (moderationFilter === "artworks" && filteredModeration.length === 0) ||
+              (moderationFilter === "comments" && filteredCommentModeration.length === 0) ? (
                 <div className="glass rounded-2xl border border-white/10 px-6 py-16 text-center">
-                  <p className="text-sm text-zinc-400">Tidak ada laporan karya yang perlu ditinjau saat ini.</p>
+                  <p className="text-sm text-zinc-400">
+                    {moderationFilter === "comments"
+                      ? "Tidak ada laporan komentar yang perlu ditinjau saat ini."
+                      : moderationFilter === "artworks"
+                        ? "Tidak ada laporan karya yang perlu ditinjau saat ini."
+                        : "Tidak ada laporan konten yang perlu ditinjau saat ini."}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-5">
-                  {filteredModeration.map((item) => (
-                    <div key={item.artwork_id} className="glass spotlight grid grid-cols-1 gap-5 rounded-2xl border border-white/15 p-5 lg:grid-cols-12">
-                      <Link href={`/artworks/${item.artwork_id}`} className="block overflow-hidden rounded-xl border border-white/10 bg-zinc-900 transition hover:border-champagne-300/50 lg:col-span-3">
-                        <img src={item.artwork_image_url} alt={item.artwork_title} className="h-48 w-full object-cover transition duration-500 hover:scale-105" />
-                      </Link>
+                  {moderationFilter !== "comments" &&
+                    filteredModeration.map((item) => (
+                      <div key={`art-${item.artwork_id}`} className="glass spotlight grid grid-cols-1 gap-5 rounded-2xl border border-white/15 p-5 lg:grid-cols-12">
+                        <Link href={`/artworks/${item.artwork_id}`} className="block overflow-hidden rounded-xl border border-white/10 bg-zinc-900 transition hover:border-champagne-300/50 lg:col-span-3">
+                          <img src={item.artwork_image_url} alt={item.artwork_title} className="h-48 w-full object-cover transition duration-500 hover:scale-105" />
+                        </Link>
 
-                      <div className="flex flex-col justify-between lg:col-span-9">
-                        <div>
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <span className="rounded-full border border-champagne-300/30 bg-champagne-400/10 px-2.5 py-0.5 text-[9px] uppercase tracking-wider text-champagne-200">
-                                {item.category_name}
-                              </span>
-                              <Link href={`/artworks/${item.artwork_id}`} className="font-display mt-2 block text-2xl text-white transition hover:text-champagne-200">
-                                {item.artwork_title} ↗
-                              </Link>
-                              <p className="text-xs text-zinc-400">
-                                Kreator:{" "}
-                                <Link href={`/creators/${item.artist_username}`} className="text-champagne-200 underline hover:text-white">
-                                  {item.artist_name} (@{item.artist_username})
+                        <div className="flex flex-col justify-between lg:col-span-9">
+                          <div>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="rounded-full border border-champagne-300/30 bg-champagne-400/10 px-2.5 py-0.5 text-[9px] uppercase tracking-wider text-champagne-200">
+                                    Karya &bull; {item.category_name}
+                                  </span>
+                                </div>
+                                <Link href={`/artworks/${item.artwork_id}`} className="font-display mt-2 block text-2xl text-white transition hover:text-champagne-200">
+                                  {item.artwork_title} ↗
                                 </Link>
-                              </p>
+                                <p className="text-xs text-zinc-400">
+                                  Kreator:{" "}
+                                  <Link href={`/creators/${item.artist_username}`} className="text-champagne-200 underline hover:text-white">
+                                    {item.artist_name} (@{item.artist_username})
+                                  </Link>
+                                </p>
+                              </div>
+                              <span className="rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold text-red-300">
+                                ⚑ {item.report_count} Laporan
+                              </span>
                             </div>
-                            <span className="rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold text-red-300">
-                              ⚑ {item.report_count} Laporan
-                            </span>
+
+                            <div className="mt-4 space-y-2 rounded-xl border border-white/10 bg-black/40 p-3.5">
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Alasan Pelapor</p>
+                              {(item.reports || []).map((rep) => (
+                                <div key={rep.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.05] pb-2 text-xs last:border-0 last:pb-0">
+                                  <span className="text-zinc-200">&ldquo;{rep.reason}&rdquo;</span>
+                                  <span className="text-[10px] text-zinc-500">
+                                    oleh @{rep.reporter_username} · {formatDate(rep.created_at)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
 
-                          <div className="mt-4 space-y-2 rounded-xl border border-white/10 bg-black/40 p-3.5">
-                            <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Alasan Pelapor</p>
-                            {(item.reports || []).map((rep) => (
-                              <div key={rep.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.05] pb-2 text-xs last:border-0 last:pb-0">
-                                <span className="text-zinc-200">&ldquo;{rep.reason}&rdquo;</span>
-                                <span className="text-[10px] text-zinc-500">
-                                  oleh @{rep.reporter_username} · {formatDate(rep.created_at)}
-                                </span>
-                              </div>
-                            ))}
+                          <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5">
+                            <button
+                              type="button"
+                              disabled={busyKey === `dismiss-${item.artwork_id}`}
+                              onClick={() => handleDismissReport(item)}
+                              className="btn-ghost rounded-lg px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] disabled:opacity-50"
+                            >
+                              Dismiss Report
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyKey === `takedown-${item.artwork_id}`}
+                              onClick={() => handleTakeDown(item)}
+                              className="rounded-lg bg-red-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-red-500 disabled:opacity-50"
+                            >
+                              Take Down Karya
+                            </button>
                           </div>
+                        </div>
+                      </div>
+                    ))}
+
+                  {moderationFilter !== "artworks" &&
+                    filteredCommentModeration.map((item) => (
+                      <div key={`comment-${item.comment_id}`} className="glass spotlight rounded-2xl border border-amber-400/20 p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2.5 py-0.5 text-[9px] uppercase tracking-wider text-amber-200">
+                                Komentar
+                              </span>
+                              <span className="text-[11px] text-zinc-500">
+                                pada karya{" "}
+                                <Link href={`/artworks/${item.artwork_id}`} className="text-champagne-200 underline hover:text-white">
+                                  {item.artwork_title} ↗
+                                </Link>
+                              </span>
+                            </div>
+
+                            <blockquote className="mt-3 rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs leading-relaxed text-zinc-100">
+                              &ldquo;{item.comment_content}&rdquo;
+                            </blockquote>
+
+                            <p className="mt-2 text-xs text-zinc-400">
+                              Penulis Komentar:{" "}
+                              <Link href={`/creators/${item.author_username}`} className="text-champagne-200 underline hover:text-white">
+                                {item.author_name} (@{item.author_username})
+                              </Link>
+                              <span className="text-zinc-500"> &bull; {formatDate(item.comment_created_at)}</span>
+                            </p>
+                          </div>
+
+                          <span className="shrink-0 rounded-full border border-red-500/40 bg-red-500/15 px-3 py-1 text-[10px] font-semibold text-red-300">
+                            ⚑ {item.report_count} Laporan
+                          </span>
+                        </div>
+
+                        <div className="mt-4 space-y-2 rounded-xl border border-white/10 bg-black/40 p-3.5">
+                          <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Alasan Pelapor</p>
+                          {(item.reports || []).map((rep) => (
+                            <div key={rep.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.05] pb-2 text-xs last:border-0 last:pb-0">
+                              <span className="text-zinc-200">&ldquo;{rep.reason}&rdquo;</span>
+                              <span className="text-[10px] text-zinc-500">
+                                oleh @{rep.reporter_username} · {formatDate(rep.created_at)}
+                              </span>
+                            </div>
+                          ))}
                         </div>
 
                         <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5">
                           <button
                             type="button"
-                            disabled={busyKey === `dismiss-${item.artwork_id}`}
-                            onClick={() => handleDismissReport(item)}
+                            disabled={busyKey === `dismiss-comment-${item.comment_id}`}
+                            onClick={() => handleDismissCommentReport(item)}
                             className="btn-ghost rounded-lg px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] disabled:opacity-50"
                           >
                             Dismiss Report
                           </button>
                           <button
                             type="button"
-                            disabled={busyKey === `takedown-${item.artwork_id}`}
-                            onClick={() => handleTakeDown(item)}
+                            disabled={busyKey === `takedown-comment-${item.comment_id}`}
+                            onClick={() => handleTakeDownComment(item)}
                             className="rounded-lg bg-red-600 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-red-500 disabled:opacity-50"
                           >
-                            Take Down Karya
+                            Take Down Komentar
                           </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </section>

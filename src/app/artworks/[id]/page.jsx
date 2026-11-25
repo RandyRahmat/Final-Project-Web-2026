@@ -4,6 +4,7 @@ import {
   ensureUserProfileColumns,
   ensureCommentsTable,
   ensureReportsTable,
+  ensureCommentReportsTable,
 } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { parsePositiveInt } from "@/lib/validation";
@@ -21,6 +22,7 @@ export default async function ArtworkDetailPage({ params }) {
   await ensureUserProfileColumns();
   await ensureCommentsTable();
   await ensureReportsTable();
+  await ensureCommentReportsTable();
 
   const currentUser = await getCurrentUser();
   const userId = currentUser?.id || 0;
@@ -57,7 +59,7 @@ export default async function ArtworkDetailPage({ params }) {
     notFound();
   }
 
-  // 2. Ambil daftar komentar karya ini
+  // 2. Ambil daftar komentar karya ini beserta status pelaporan komentar oleh user saat ini
   const commentsResult = await query(
     `SELECT
       cm.id,
@@ -66,12 +68,13 @@ export default async function ArtworkDetailPage({ params }) {
       cm.created_at,
       u.display_name AS author_name,
       u.username AS author_username,
-      u.avatar_url AS author_avatar
+      u.avatar_url AS author_avatar,
+      EXISTS(SELECT 1 FROM comment_reports cr WHERE cr.comment_id = cm.id AND cr.reporter_id = $2) AS has_reported
     FROM comments cm
     JOIN users u ON cm.user_id = u.id
     WHERE cm.artwork_id = $1
     ORDER BY cm.created_at DESC, cm.id DESC`,
-    [artworkId]
+    [artworkId, userId]
   );
 
   return (

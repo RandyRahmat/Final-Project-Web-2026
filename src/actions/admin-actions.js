@@ -3,7 +3,7 @@
 import path from "path";
 import { unlink } from "fs/promises";
 import { revalidatePath } from "next/cache";
-import { query, ensureReportsTable } from "@/lib/db";
+import { query, ensureReportsTable, ensureCommentReportsTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { parsePositiveInt } from "@/lib/validation";
 
@@ -223,5 +223,54 @@ export async function takeDownArtworkAction(artworkId) {
 
   revalidateAllPublic();
   revalidatePath(`/artworks/${targetArtworkId}`);
+  return { success: true };
+}
+
+// 5. Moderasi Komentar (Dismiss Report / Take Down Komentar)
+export async function dismissCommentReportAction(commentId) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Akses ditolak. Khusus Admin." };
+
+  const targetCommentId = parsePositiveInt(commentId);
+  if (!targetCommentId) return { error: "ID komentar tidak valid." };
+
+  await ensureCommentReportsTable();
+
+  await query(
+    `UPDATE comment_reports
+     SET status = 'Dismissed'
+     WHERE comment_id = $1 AND status = 'Pending'`,
+    [targetCommentId]
+  );
+
+  revalidatePath("/admin");
+  revalidatePath("/home");
+  return { success: true };
+}
+
+export async function takeDownCommentAction(commentId) {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Akses ditolak. Khusus Admin." };
+
+  const targetCommentId = parsePositiveInt(commentId);
+  if (!targetCommentId) return { error: "ID komentar tidak valid." };
+
+  await ensureCommentReportsTable();
+
+  const deleted = await query(
+    "DELETE FROM comments WHERE id = $1 RETURNING id, artwork_id",
+    [targetCommentId]
+  );
+
+  if (deleted.rows.length === 0) {
+    return { error: "Komentar tidak ditemukan atau sudah dihapus." };
+  }
+
+  const artworkId = deleted.rows[0].artwork_id;
+  revalidatePath("/admin");
+  revalidatePath("/home");
+  if (artworkId) {
+    revalidatePath(`/artworks/${artworkId}`);
+  }
   return { success: true };
 }

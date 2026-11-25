@@ -4,7 +4,7 @@ import crypto from "crypto";
 import path from "path";
 import { mkdir, unlink, writeFile } from "fs/promises";
 import { revalidatePath } from "next/cache";
-import { query, ensureCommentsTable, ensureReportsTable } from "@/lib/db";
+import { query, ensureCommentsTable, ensureReportsTable, ensureCommentReportsTable } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import {
   parsePositiveInt,
@@ -333,4 +333,59 @@ export async function reportArtworkAction(prevState, formData) {
   revalidatePath("/admin");
   revalidatePath("/home");
   return { success: true, message: "Laporan telah dikirim ke antrian moderasi Admin. Terima kasih!" };
+}
+
+export async function reportCommentAction(prevState, formData) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "Member") {
+    return { error: "Silakan masuk sebagai Member untuk melaporkan komentar." };
+  }
+
+  const commentId = parsePositiveInt(formData.get("commentId"));
+  const rawCategory = formData.get("reasonCategory");
+  const rawDetail = formData.get("reasonDetail");
+  const reasonCategory = typeof rawCategory === "string" ? rawCategory.trim() : "";
+  const reasonDetail = typeof rawDetail === "string" ? rawDetail.trim() : "";
+
+  if (!commentId || !reasonCategory) {
+    return { error: "Pilih alasan pelaporan komentar terlebih dahulu." };
+  }
+
+  const finalReason = reasonDetail ? `${reasonCategory}: ${reasonDetail}` : reasonCategory;
+
+  await ensureCommentsTable();
+  await ensureCommentReportsTable();
+
+  const commentRes = await query(
+    "SELECT id, artwork_id, user_id FROM comments WHERE id = $1",
+    [commentId]
+  );
+  if (commentRes.rows.length === 0) {
+    return { error: "Komentar tidak ditemukan atau sudah dihapus." };
+  }
+
+  const targetComment = commentRes.rows[0];
+  if (Number(targetComment.user_id) === Number(user.id)) {
+    return { error: "Kamu tidak dapat melaporkan komentarmu sendiri." };
+  }
+
+  const alreadyReported = await query(
+    "SELECT id FROM comment_reports WHERE comment_id = $1 AND reporter_id = $2",
+    [commentId, user.id]
+  );
+
+  if (alreadyReported.rows.length > 0) {
+    return { error: "Kamu sudah pernah melaporkan komentar ini sebelumnya." };
+  }
+
+  await query(
+    `INSERT INTO comment_reports (comment_id, reporter_id, reason, status)
+     VALUES ($1, $2, $3, 'Pending')`,
+    [commentId, user.id, finalReason]
+  );
+
+  revalidatePath(`/artworks/${targetComment.artwork_id}`);
+  revalidatePath("/admin");
+  revalidatePath("/home");
+  return { success: true, message: "Laporan komentar telah dikirim ke antrian moderasi Admin." };
 }

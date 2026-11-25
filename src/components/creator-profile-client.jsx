@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
+import NavIcon from "@/components/ui/nav-icon";
 import { useToast } from "@/components/ui/toast-provider";
 import ReactionPicker, { REACTIONS } from "@/components/ui/reaction-picker";
 import { useBodyScrollLock } from "@/lib/body-scroll-lock";
@@ -416,7 +417,7 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                               : "border-white/20 bg-black/50 text-white hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
                           }`}
                         >
-                          ⚑
+                          <NavIcon name="favorites" filled={Boolean(isMember && art.is_favorited)} className="h-3.5 w-3.5" />
                         </button>
                       )}
                     </div>

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import NavIcon from "@/components/ui/nav-icon";
 import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
 import ReactionPicker, { getReactionDisplay } from "@/components/ui/reaction-picker";
 import { useToast } from "@/components/ui/toast-provider";
@@ -295,7 +296,9 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                       {allCovers[idx] ? (
                         <img src={allCovers[idx]} alt="" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-zinc-700">⚑</div>
+                        <div className="flex h-full w-full items-center justify-center text-zinc-700">
+                          <NavIcon name="favorites" className="h-3.5 w-3.5" />
+                        </div>
                       )}
                     </div>
                   ))}
@@ -536,7 +539,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                             title="Hapus dari Favorites"
                             className="flex h-8 w-8 items-center justify-center rounded-full border border-champagne-300 bg-gradient-to-br from-champagne-100 to-champagne-400 text-xs font-bold text-black shadow-[0_0_18px_rgba(212,175,106,0.45)] backdrop-blur-md transition hover:border-red-400 hover:from-red-500 hover:to-red-600 hover:text-white"
                           >
-                            ⚑
+                            <NavIcon name="favorites" filled className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
@@ -585,12 +588,12 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
           {/* EMPTY STATE BELUM ADA FAVORITES */}
           {artworks.length === 0 && (
             <section className="glass mt-16 flex flex-col items-center justify-center rounded-3xl border border-white/15 px-6 py-20 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-champagne-300/30 bg-champagne-400/10 text-xl text-champagne-200">
-                ⚑
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-champagne-300/30 bg-champagne-400/10 text-champagne-200">
+                <NavIcon name="favorites" className="h-6 w-6" />
               </div>
               <h2 className="font-display mt-5 text-3xl text-white">Belum ada karya favorit tersimpan</h2>
               <p className="mt-2 max-w-md text-xs leading-relaxed text-zinc-400">
-                Tekan ikon bendera (⚑) pada karya yang kamu sukai di halaman Home atau Explore, lalu kelompokkan ke dalam Moodboard pribadimu.
+                Tekan ikon bookmark pada karya yang kamu sukai di halaman Home atau Explore, lalu kelompokkan ke dalam Moodboard pribadimu.
               </p>
               <Link href="/explore" className="btn-gold mt-6 rounded-full px-6 py-2.5 text-[10px] uppercase tracking-[0.2em]">
                 Mulai Jelajahi

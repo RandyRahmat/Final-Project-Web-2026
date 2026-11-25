@@ -5,6 +5,7 @@ import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
 import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import ExhibitionMode from "@/components/ui/exhibition-mode";
+import NavIcon from "@/components/ui/nav-icon";
 import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
 import ReactionPicker, { getReactionDisplay } from "@/components/ui/reaction-picker";
 import { useToast } from "@/components/ui/toast-provider";
@@ -735,7 +736,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                               : "border-white/20 bg-black/75 text-white hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
                           }`}
                         >
-                          ⚑
+                          <NavIcon name="favorites" filled={Boolean(isMember && art.is_favorited)} className="h-3.5 w-3.5" />
                         </button>
                       )}
                     </div>

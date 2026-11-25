@@ -1,4 +1,4 @@
-export default function NavIcon({ name, className = "h-5 w-5" }) {
+export default function NavIcon({ name, className = "h-5 w-5", filled = false }) {
   switch (name) {
     case "home":
       return (
@@ -17,7 +17,7 @@ export default function NavIcon({ name, className = "h-5 w-5" }) {
       );
     case "favorites":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <svg viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
           <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4.2L5 20V5a1 1 0 0 1 1-1z" />
         </svg>
       );

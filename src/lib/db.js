@@ -10,6 +10,7 @@ let challengeColumnsEnsured = false;
 let reportsTableEnsured = false;
 let commentsTableEnsured = false;
 let followsTableEnsured = false;
+let collectionsTablesEnsured = false;
 
 export async function query(text, params) {
     const res = await pool.query(text, params);
@@ -119,5 +120,41 @@ export async function ensureFollowsTable() {
         followsTableEnsured = true;
     } catch {
         // Abaikan jika user DB tidak memiliki izin CREATE atau tabel sudah tersedia
+    }
+}
+
+export async function ensureCollectionsTables() {
+    if (collectionsTablesEnsured) return;
+    try {
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS collections (
+                id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                name VARCHAR(100) NOT NULL,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )`
+        );
+        await pool.query(
+            `ALTER TABLE collections
+             ADD COLUMN IF NOT EXISTS description TEXT,
+             ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`
+        );
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS collection_items (
+                id SERIAL PRIMARY KEY,
+                collection_id INT NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+                artwork_id INT NOT NULL REFERENCES artworks(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (collection_id, artwork_id)
+            )`
+        );
+        await pool.query(
+            `ALTER TABLE collection_items
+             ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`
+        );
+        collectionsTablesEnsured = true;
+    } catch {
+        // Abaikan jika user DB tidak memiliki izin CREATE/ALTER atau tabel sudah tersedia
     }
 }

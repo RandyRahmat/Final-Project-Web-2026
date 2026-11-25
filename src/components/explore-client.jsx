@@ -28,6 +28,20 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
   const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
   const [authNotice, setAuthNotice] = useState("");
   const [showExhibition, setShowExhibition] = useState(false);
+  const [openSections, setOpenSections] = useState({
+    categories: false,
+    tags: false,
+    creators: false,
+  });
+
+  const allFiltersOpen = openSections.categories && openSections.tags && openSections.creators;
+  const toggleSection = (key) => {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+  const toggleAllSections = () => {
+    const next = !allFiltersOpen;
+    setOpenSections({ categories: next, tags: next, creators: next });
+  };
 
   const role = currentUser?.role || "Guest";
   const isGuest = !currentUser;
@@ -189,128 +203,278 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
               </p>
             </div>
 
-            {/* Mobile Search */}
-            <div className="relative w-full md:hidden">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600">⌕</span>
+            <button
+              type="button"
+              onClick={toggleAllSections}
+              className="btn-ghost rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.16em]"
+            >
+              {allFiltersOpen ? "Sembunyikan Semua Filter ▴" : "Buka Semua Filter ▾"}
+            </button>
+          </section>
+
+          {/* SEARCH BAR UTAMA (MOBILE & DESKTOP) */}
+          <div className="mt-7">
+            <div className="relative w-full max-w-2xl">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">⌕</span>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search artworks, creators, tags..."
-                className="input-lux rounded-full py-2.5 pl-11 pr-5 text-[11px]"
+                placeholder="Search artworks, creators, or #tags..."
+                className="input-lux rounded-full py-3 pl-11 pr-10 text-xs"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Hapus pencarian"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-zinc-500 transition hover:text-white"
+                >
+                  ×
+                </button>
+              )}
             </div>
-          </section>
+          </div>
 
-          {/* SECTION 1: KATEGORI SPOTLIGHT */}
-          <section className="mt-10">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="eyebrow">BROWSE BY CATEGORY</p>
-              <span className="text-[10px] text-zinc-500">{categories.length} Categories</span>
-            </div>
+          {/* COLLAPSIBLE FILTER PANELS */}
+          <div className="mt-5 space-y-3">
+            {/* SECTION 1: BROWSE BY CATEGORY */}
+            <section className="glass overflow-hidden rounded-2xl border border-white/12">
+              <div className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("categories")}
+                  aria-expanded={openSections.categories}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <p className="eyebrow">BROWSE BY CATEGORY</p>
+                  <span className="hidden text-[10px] text-zinc-500 sm:inline">{categories.length} kategori</span>
+                </button>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              <button
-                type="button"
-                onClick={() => setActiveCategory("All")}
-                className={`spotlight rounded-2xl border p-4 text-left transition duration-300 ${
-                  activeCategory === "All"
-                    ? "chip-active"
-                    : "glass border-white/15 text-zinc-200 hover:border-champagne-300/45"
-                }`}
-              >
-                <p className="text-xs font-medium">All Works</p>
-                <p className={`mt-1 text-[10px] ${activeCategory === "All" ? "text-zinc-800" : "text-zinc-500"}`}>
-                  {artworks.length} karya
-                </p>
-              </button>
-
-              {categories.map((cat) => {
-                const isSelected = activeCategory === cat.name;
-                return (
+                <div className="flex items-center gap-2.5">
+                  {activeCategory !== "All" && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-champagne-300/40 bg-champagne-400/15 px-2.5 py-0.5 text-[10px] text-champagne-100">
+                      {activeCategory}
+                      <button
+                        type="button"
+                        onClick={() => setActiveCategory("All")}
+                        aria-label="Reset kategori"
+                        className="text-champagne-300 transition hover:text-white"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
                   <button
-                    key={cat.id}
                     type="button"
-                    onClick={() => setActiveCategory(cat.name)}
-                    className={`spotlight rounded-2xl border p-4 text-left transition duration-300 ${
-                      isSelected
-                        ? "chip-active"
-                        : "glass border-white/15 text-zinc-200 hover:border-champagne-300/45"
-                    }`}
+                    onClick={() => toggleSection("categories")}
+                    aria-label={openSections.categories ? "Sembunyikan kategori" : "Tampilkan kategori"}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-zinc-400 transition hover:border-champagne-300/40 hover:text-champagne-200"
                   >
-                    <p className="truncate text-xs font-medium">{cat.name}</p>
-                    <p className={`mt-1 text-[10px] ${isSelected ? "text-zinc-800" : "text-zinc-500"}`}>
-                      {cat.artwork_count} karya
-                    </p>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 transition-transform duration-300 ${openSections.categories ? "rotate-180" : ""}`}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
                   </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* SECTION 2: TRENDING TAGS */}
-          {trendingTags.length > 0 && (
-            <section className="mt-9">
-              <p className="eyebrow mb-3">TRENDING TAGS</p>
-              <div className="flex flex-wrap gap-2">
-                {trendingTags.map(({ tag, count }) => {
-                  const isSelected = activeTag === tag;
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => setActiveTag(isSelected ? "" : tag)}
-                      className={`rounded-full border px-3.5 py-1.5 text-[10px] transition ${
-                        isSelected
-                          ? "chip-active"
-                          : "border-white/10 bg-white/[0.025] text-zinc-400 hover:border-champagne-300/40 hover:text-champagne-100"
-                      }`}
-                    >
-                      #{tag} <span className="ml-1 opacity-60">{count}</span>
-                    </button>
-                  );
-                })}
+                </div>
               </div>
-            </section>
-          )}
 
-          {/* SECTION 3: CREATORS SPOTLIGHT */}
-          {creators.length > 0 && (
-            <section className="mt-10">
-              <p className="eyebrow mb-4">CREATORS SPOTLIGHT</p>
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {creators.map((creator) => {
-                  const isSelected = activeCreator === creator.username;
-                  return (
-                    <button
-                      key={creator.id}
-                      type="button"
-                      onClick={() => setActiveCreator(isSelected ? "" : creator.username)}
-                      className={`spotlight flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition duration-300 ${
-                        isSelected
-                          ? "border-champagne-300/60 bg-champagne-400/15 text-white shadow-[0_0_25px_-8px_rgba(212,175,106,0.45)]"
-                          : "glass border-white/15 text-zinc-300 hover:border-champagne-300/40"
-                      }`}
-                    >
-                      <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white">
-                          {creator.display_name.charAt(0).toUpperCase()}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-white">{creator.display_name}</p>
-                        <p className="text-[10px] text-zinc-500">
-                          @{creator.username} &bull; {creator.artwork_count} karya
+              {openSections.categories && (
+                <div className="border-t border-white/[0.06] px-4 pb-4 pt-3.5 sm:px-5">
+                  {categories.length === 0 ? (
+                    <p className="py-2 text-xs text-zinc-500">Belum ada kategori tersedia.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                      <button
+                        type="button"
+                        onClick={() => setActiveCategory("All")}
+                        className={`spotlight rounded-2xl border p-3.5 text-left transition duration-300 ${
+                          activeCategory === "All"
+                            ? "chip-active"
+                            : "border-white/12 bg-white/[0.02] text-zinc-200 hover:border-champagne-300/45"
+                        }`}
+                      >
+                        <p className="text-xs font-medium">All Works</p>
+                        <p className={`mt-1 text-[10px] ${activeCategory === "All" ? "text-zinc-800" : "text-zinc-500"}`}>
+                          {artworks.length} karya
                         </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      </button>
+
+                      {categories.map((cat) => {
+                        const isSelected = activeCategory === cat.name;
+                        return (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setActiveCategory(cat.name)}
+                            className={`spotlight rounded-2xl border p-3.5 text-left transition duration-300 ${
+                              isSelected
+                                ? "chip-active"
+                                : "border-white/12 bg-white/[0.02] text-zinc-200 hover:border-champagne-300/45"
+                            }`}
+                          >
+                            <p className="truncate text-xs font-medium">{cat.name}</p>
+                            <p className={`mt-1 text-[10px] ${isSelected ? "text-zinc-800" : "text-zinc-500"}`}>
+                              {cat.artwork_count} karya
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
-          )}
+
+            {/* SECTION 2: TRENDING TAGS */}
+            <section className="glass overflow-hidden rounded-2xl border border-white/12">
+              <div className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("tags")}
+                  aria-expanded={openSections.tags}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <p className="eyebrow">TRENDING TAGS</p>
+                  <span className="hidden text-[10px] text-zinc-500 sm:inline">{trendingTags.length} tag</span>
+                </button>
+
+                <div className="flex items-center gap-2.5">
+                  {activeTag && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-champagne-300/40 bg-champagne-400/15 px-2.5 py-0.5 text-[10px] text-champagne-100">
+                      #{activeTag}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTag("")}
+                        aria-label="Reset tag"
+                        className="text-champagne-300 transition hover:text-white"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => toggleSection("tags")}
+                    aria-label={openSections.tags ? "Sembunyikan tag" : "Tampilkan tag"}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-zinc-400 transition hover:border-champagne-300/40 hover:text-champagne-200"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 transition-transform duration-300 ${openSections.tags ? "rotate-180" : ""}`}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {openSections.tags && (
+                <div className="border-t border-white/[0.06] px-4 pb-4 pt-3.5 sm:px-5">
+                  {trendingTags.length === 0 ? (
+                    <p className="py-2 text-xs text-zinc-500">Belum ada tag populer tersedia.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {trendingTags.map(({ tag, count }) => {
+                        const isSelected = activeTag === tag;
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setActiveTag(isSelected ? "" : tag)}
+                            className={`rounded-full border px-3.5 py-1.5 text-[10px] transition ${
+                              isSelected
+                                ? "chip-active"
+                                : "border-white/10 bg-white/[0.025] text-zinc-400 hover:border-champagne-300/40 hover:text-champagne-100"
+                            }`}
+                          >
+                            #{tag} <span className="ml-1 opacity-60">{count}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+
+            {/* SECTION 3: CREATORS SPOTLIGHT */}
+            <section className="glass overflow-hidden rounded-2xl border border-white/12">
+              <div className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("creators")}
+                  aria-expanded={openSections.creators}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <p className="eyebrow">CREATORS SPOTLIGHT</p>
+                  <span className="hidden text-[10px] text-zinc-500 sm:inline">{creators.length} kreator</span>
+                </button>
+
+                <div className="flex items-center gap-2.5">
+                  {activeCreator && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-champagne-300/40 bg-champagne-400/15 px-2.5 py-0.5 text-[10px] text-champagne-100">
+                      @{activeCreator}
+                      <button
+                        type="button"
+                        onClick={() => setActiveCreator("")}
+                        aria-label="Reset kreator"
+                        className="text-champagne-300 transition hover:text-white"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => toggleSection("creators")}
+                    aria-label={openSections.creators ? "Sembunyikan kreator" : "Tampilkan kreator"}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-zinc-400 transition hover:border-champagne-300/40 hover:text-champagne-200"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 transition-transform duration-300 ${openSections.creators ? "rotate-180" : ""}`}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {openSections.creators && (
+                <div className="border-t border-white/[0.06] px-4 pb-4 pt-3.5 sm:px-5">
+                  {creators.length === 0 ? (
+                    <p className="py-2 text-xs text-zinc-500">Belum ada kreator aktif tersedia.</p>
+                  ) : (
+                    <div className="flex gap-3 overflow-x-auto pb-1">
+                      {creators.map((creator) => {
+                        const isSelected = activeCreator === creator.username;
+                        return (
+                          <button
+                            key={creator.id}
+                            type="button"
+                            onClick={() => setActiveCreator(isSelected ? "" : creator.username)}
+                            className={`spotlight flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition duration-300 ${
+                              isSelected
+                                ? "border-champagne-300/60 bg-champagne-400/15 text-white shadow-[0_0_25px_-8px_rgba(212,175,106,0.45)]"
+                                : "border-white/12 bg-white/[0.02] text-zinc-300 hover:border-champagne-300/40"
+                            }`}
+                          >
+                            <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white">
+                                {creator.display_name.charAt(0).toUpperCase()}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-white">{creator.display_name}</p>
+                              <p className="text-[10px] text-zinc-500">
+                                @{creator.username} &bull; {creator.artwork_count} karya
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          </div>
 
           {/* SECTION 4: EXPLORE GALLERY */}
-          <section className="mt-12">
+          <section className="mt-10">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="eyebrow mb-1.5">GALLERY RESULTS</p>
@@ -360,29 +524,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <div className="relative w-full sm:max-w-[360px]">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">⌕</span>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search artworks, creators, or #tags..."
-                  className="input-lux rounded-full py-2.5 pl-10 pr-9 text-[11px]"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
-                    aria-label="Hapus pencarian"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 transition hover:text-white"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {filteredArtworks.map((art) => {
                 const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
 

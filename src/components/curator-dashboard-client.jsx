@@ -141,7 +141,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
       )}
 
       {/* SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0a0a0b]/80 px-6 py-7 backdrop-blur-2xl transition-all duration-300 lg:translate-x-0 ${mobileMenu ? "translate-x-0" : "-translate-x-full"} ${sidebarCollapsed ? "lg:w-[78px] lg:px-3" : "lg:w-[250px]"}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0a0a0b]/92 px-6 py-7 backdrop-blur-md transition-all duration-300 lg:translate-x-0 ${mobileMenu ? "translate-x-0" : "-translate-x-full"} ${sidebarCollapsed ? "lg:w-[78px] lg:px-3" : "lg:w-[250px]"}`}>
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-champagne-400/25 to-transparent" />
 
         <div className={`mb-10 flex items-center ${sidebarCollapsed ? "justify-between lg:flex-col lg:gap-3" : "justify-between"}`}>

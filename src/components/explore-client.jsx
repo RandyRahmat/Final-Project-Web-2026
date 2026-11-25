@@ -357,20 +357,21 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                 const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
 
                 return (
-                  <article key={art.id} data-reveal className="group relative min-w-0">
+                  <article key={art.id} className="cv-auto group relative min-w-0">
                     <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/15 bg-zinc-900">
                       <Link href={`/artworks/${art.id}`} className="block h-full w-full">
                         <img
                           src={art.image_url}
                           alt={art.title}
                           loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110"
+                          decoding="async"
+                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                         />
 
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-80" />
 
                         <div className="absolute left-3 top-3">
-                          <span className="rounded-full border border-white/20 bg-black/50 px-3 py-1.5 text-[8px] tracking-wider text-white backdrop-blur-md">
+                          <span className="rounded-full border border-white/20 bg-black/75 px-3 py-1.5 text-[8px] tracking-wider text-white">
                             {art.category_name.toUpperCase()}
                           </span>
                         </div>
@@ -386,7 +387,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                           </div>
                         </div>
 
-                        <span className="absolute bottom-4 right-4 translate-y-3 rounded-full bg-black/60 px-3 py-1.5 text-[9px] tracking-[0.2em] text-champagne-100 opacity-0 backdrop-blur-md transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                        <span className="absolute bottom-4 right-4 translate-y-3 rounded-full bg-black/80 px-3 py-1.5 text-[9px] tracking-[0.2em] text-champagne-100 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
                           LIHAT ↗
                         </span>
                       </Link>
@@ -396,10 +397,10 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                           type="button"
                           onClick={() => handleFavorite(art.id)}
                           title={isGuest ? "Masuk sebagai Member untuk menyimpan karya" : art.is_favorited ? "Hapus dari Favorites" : "Simpan ke Favorites"}
-                          className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs backdrop-blur-md transition ${
+                          className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs transition ${
                             isMember && art.is_favorited
                               ? "border-champagne-300 bg-gradient-to-br from-champagne-100 to-champagne-400 font-bold text-black shadow-[0_0_20px_rgba(212,175,106,0.5)]"
-                              : "border-white/20 bg-black/50 text-white hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
+                              : "border-white/20 bg-black/75 text-white hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
                           }`}
                         >
                           ⚑

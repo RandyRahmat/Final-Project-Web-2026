@@ -574,20 +574,21 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                 const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
 
                 return (
-                  <article key={art.id} data-reveal className="group relative min-w-0">
+                  <article key={art.id} className="cv-auto group relative min-w-0">
                     <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl bg-zinc-900">
                       <Link href={`/artworks/${art.id}`} className="block h-full w-full">
                         <img
                           src={art.image_url}
                           alt={art.title}
                           loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110"
+                          decoding="async"
+                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                         />
 
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-80" />
 
                         <div className="absolute left-3 top-3">
-                          <span className="rounded-full border border-white/20 bg-black/50 px-3 py-1.5 text-[8px] tracking-wider text-white backdrop-blur-md">
+                          <span className="rounded-full border border-white/20 bg-black/75 px-3 py-1.5 text-[8px] tracking-wider text-white">
                             {art.category_name.toUpperCase()}
                           </span>
                         </div>
@@ -603,7 +604,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                           </div>
                         </div>
 
-                        <span className="absolute bottom-4 right-4 translate-y-3 rounded-full bg-black/60 px-3 py-1.5 text-[9px] tracking-[0.2em] text-champagne-100 opacity-0 backdrop-blur-md transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                        <span className="absolute bottom-4 right-4 translate-y-3 rounded-full bg-black/80 px-3 py-1.5 text-[9px] tracking-[0.2em] text-champagne-100 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
                           LIHAT ↗
                         </span>
                       </Link>

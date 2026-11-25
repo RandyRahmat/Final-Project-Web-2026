@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import AmbientBackground from "@/components/ui/ambient-background";
 import InteractionLayer from "@/components/ui/interaction-layer";
+import SmoothScroll from "@/components/ui/smooth-scroll";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col">
         <AmbientBackground />
         <InteractionLayer />
+        <SmoothScroll />
         {children}
       </body>
     </html>

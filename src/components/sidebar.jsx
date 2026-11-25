@@ -30,7 +30,7 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col justify-between border-r border-white/[0.07] bg-[#0a0a0b]/80 px-5 py-6 backdrop-blur-2xl transition-all duration-300 lg:z-30 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col justify-between border-r border-white/[0.07] bg-[#0a0a0b]/92 px-5 py-6 backdrop-blur-md transition-all duration-300 lg:z-30 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "lg:w-20 lg:px-3" : "lg:w-64"}`}
       >

@@ -72,7 +72,7 @@ export default function MobileBottomNav({ currentUser, activeItem = "home" }) {
                 width: `calc((100% - 32px) * ${ratio} - 18px)`,
                 transition: "width 480ms cubic-bezier(0.22, 1, 0.36, 1)",
               }}
-              className="h-[64px] shrink-0 rounded-l-[16px] border-y border-l border-white/[0.16] bg-[#101013]/95 backdrop-blur-2xl"
+              className="h-[64px] shrink-0 rounded-l-[16px] border-y border-l border-white/[0.16] bg-[#101013]/95 backdrop-blur-md"
             />
 
             {/* Segmen Kurva U-Notch Tengah (fixed 68px agar kurva selalu presisi) */}
@@ -106,10 +106,10 @@ export default function MobileBottomNav({ currentUser, activeItem = "home" }) {
             </svg>
 
             {/* Segmen Kanan */}
-            <div className="h-[64px] flex-1 rounded-r-[16px] border-y border-r border-white/[0.16] bg-[#101013]/95 backdrop-blur-2xl" />
+            <div className="h-[64px] flex-1 rounded-r-[16px] border-y border-r border-white/[0.16] bg-[#101013]/95 backdrop-blur-md" />
           </div>
         ) : (
-          <div className="pointer-events-none absolute inset-0 rounded-[16px] border border-white/[0.16] bg-[#101013]/95 shadow-[0_18px_36px_rgba(0,0,0,0.88)] backdrop-blur-2xl" />
+          <div className="pointer-events-none absolute inset-0 rounded-[16px] border border-white/[0.16] bg-[#101013]/95 shadow-[0_18px_36px_rgba(0,0,0,0.88)] backdrop-blur-md" />
         )}
 
         {/* LINGKARAN BERCAHAYA EMAS CHAMPAGNE (INDIKATOR AKTIF) */}

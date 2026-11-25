@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Lenis from "lenis";
+import "lenis/dist/lenis.css";
 
 export default function SmoothScroll() {
   const lenisRef = useRef(null);
@@ -36,16 +37,30 @@ export default function SmoothScroll() {
 
     lenisRef.current = lenis;
 
+    const ro = new ResizeObserver(() => {
+      lenis.resize();
+    });
+    ro.observe(document.body);
+
     return () => {
+      ro.disconnect();
       lenis.destroy();
       lenisRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    if (lenisRef.current) {
-      lenisRef.current.scrollTo(0, { immediate: true });
-    }
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+
+    lenis.scrollTo(0, { immediate: true, force: true });
+    lenis.resize();
+
+    const rafId = requestAnimationFrame(() => {
+      lenis.resize();
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [pathname]);
 
   return null;

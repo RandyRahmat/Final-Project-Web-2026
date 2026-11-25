@@ -135,7 +135,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
       />
 
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-md sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button
               type="button"
@@ -574,7 +574,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                 const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
 
                 return (
-                  <article key={art.id} className="cv-auto group relative min-w-0">
+                  <article key={art.id} className="group relative min-w-0">
                     <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl bg-zinc-900">
                       <Link href={`/artworks/${art.id}`} className="block h-full w-full">
                         <img
@@ -614,10 +614,10 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                           type="button"
                           onClick={() => handleFavorite(art.id)}
                           title={isGuest ? "Masuk sebagai Member untuk menyimpan karya" : art.is_favorited ? "Hapus dari Favorites" : "Simpan ke Favorites"}
-                          className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs backdrop-blur-md transition ${
+                          className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs transition ${
                             isMember && art.is_favorited
                               ? "border-champagne-300 bg-gradient-to-br from-champagne-100 to-champagne-400 font-bold text-black shadow-[0_0_20px_rgba(212,175,106,0.5)]"
-                              : "border-white/20 bg-black/50 text-white hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
+                              : "border-white/20 bg-black/75 text-white hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
                           }`}
                         >
                           ⚑

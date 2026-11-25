@@ -357,7 +357,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                 const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
 
                 return (
-                  <article key={art.id} className="cv-auto group relative min-w-0">
+                  <article key={art.id} className="group relative min-w-0">
                     <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/15 bg-zinc-900">
                       <Link href={`/artworks/${art.id}`} className="block h-full w-full">
                         <img

@@ -80,14 +80,7 @@ export default function ProfileClient({
       ];
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#090909] text-zinc-100">
-      {/* BACKGROUND ATMOSPHERE */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-64 left-1/3 h-[600px] w-[600px] rounded-full bg-white/[0.035] blur-[140px]" />
-        <div className="absolute right-0 top-[50%] h-[400px] w-[400px] rounded-full bg-zinc-500/[0.035] blur-[140px]" />
-        <div className="absolute inset-0 opacity-[0.025] [background-image:radial-gradient(#fff_0.6px,transparent_0.6px)] [background-size:5px_5px]" />
-      </div>
-
+    <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       <AppSidebar
         currentUser={{
           ...currentUser,
@@ -107,13 +100,13 @@ export default function ProfileClient({
       {/* MAIN CONTENT */}
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
         {/* TOP NAVBAR */}
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/75 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">
               ☰
             </button>
             <div className="hidden text-[10px] tracking-[0.2em] text-zinc-600 sm:block">
-              PERSONAL / <span className="text-zinc-300">PROFILE DASHBOARD</span>
+              PERSONAL / <span className="text-champagne-200">PROFILE DASHBOARD</span>
             </div>
             <div className="flex items-center gap-2 sm:hidden">
               <img src="/images/aesthe-logo.png" alt="" className="h-6 w-6 object-contain" />
@@ -123,7 +116,7 @@ export default function ProfileClient({
 
           <div className="flex items-center gap-3">
             {isMember && (
-              <Link href={`/creators/${profile.username}`} className="rounded-full border border-white/15 bg-white/[0.03] px-4 py-1.5 text-[10px] tracking-[0.15em] text-zinc-300 transition hover:border-white hover:text-white">
+              <Link href={`/creators/${profile.username}`} className="btn-ghost rounded-full px-4 py-1.5 text-[10px] tracking-[0.15em]">
                 LIHAT PROFIL PUBLIK ↗
               </Link>
             )}
@@ -133,27 +126,30 @@ export default function ProfileClient({
         {/* PAGE CONTENT */}
         <div className="mx-auto max-w-[1400px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
           {/* PROFILE HERO CARD */}
-          <section className="rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-6 sm:p-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <section className="glass spotlight relative overflow-hidden rounded-3xl border border-white/15 p-6 sm:p-9">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-champagne-400/[0.08] via-transparent to-transparent" />
+            <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-700 to-zinc-900 text-3xl font-light text-white shadow-[0_0_30px_rgba(255,255,255,0.08)]">
-                  {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt={profile.display_name} className="h-full w-full object-cover" />
-                  ) : (
-                    profile.display_name?.charAt(0).toUpperCase() || "U"
-                  )}
+                <div className="w-fit shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-400 to-champagne-700 p-[2px] shadow-[0_0_35px_rgba(212,175,106,0.28)]">
+                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-3xl font-light text-white">
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt={profile.display_name} className="h-full w-full object-cover" />
+                    ) : (
+                      profile.display_name?.charAt(0).toUpperCase() || "U"
+                    )}
+                  </div>
                 </div>
 
                 <div>
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <h1 className="text-2xl font-light tracking-tight text-white sm:text-3xl">
+                    <h1 className="font-display text-4xl text-white sm:text-5xl">
                       {profile.display_name}
                     </h1>
-                    <span className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-0.5 text-[9px] font-medium uppercase tracking-[0.2em] text-zinc-300">
+                    <span className="rounded-full border border-champagne-300/30 bg-champagne-400/10 px-3 py-0.5 text-[9px] font-medium uppercase tracking-[0.2em] text-champagne-200">
                       {role}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-zinc-500">@{profile.username} &bull; {profile.email}</p>
+                  <p className="mt-1 text-xs text-zinc-400">@{profile.username} &bull; {profile.email}</p>
                   <p className="mt-3 max-w-xl text-xs leading-relaxed text-zinc-300">
                     {profile.bio || "Belum ada bio. Lengkapi deskripsi singkat profilmu di tab Edit Profile."}
                   </p>
@@ -162,7 +158,7 @@ export default function ProfileClient({
                       href={profile.external_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-amber-300 underline decoration-amber-400/40 underline-offset-4 transition hover:text-amber-200"
+                      className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-champagne-300 underline decoration-champagne-400/40 underline-offset-4 transition hover:text-champagne-100"
                     >
                       🔗 {profile.external_link.replace(/^https?:\/\//, "")}
                     </a>
@@ -172,28 +168,28 @@ export default function ProfileClient({
 
               {isMember && (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 md:grid-cols-3">
-                  <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
-                    <p className="text-lg font-light text-white">{myArtworks.length}</p>
+                  <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
+                    <p className="font-display text-2xl text-gold">{myArtworks.length}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Artworks</p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
-                    <p className="text-lg font-light text-white">{followersCount}</p>
+                  <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
+                    <p className="font-display text-2xl text-gold">{followersCount}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Followers</p>
                   </div>
-                  <button type="button" onClick={() => setActiveTab("following")} className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center transition hover:border-white/25">
-                    <p className="text-lg font-light text-white">{followingList.length}</p>
+                  <button type="button" onClick={() => setActiveTab("following")} className="glass rounded-2xl border border-white/10 px-4 py-3 text-center transition hover:border-champagne-300/45">
+                    <p className="font-display text-2xl text-gold">{followingList.length}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Following</p>
                   </button>
-                  <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
-                    <p className="text-lg font-light text-white">{totalReactionsReceived}</p>
+                  <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
+                    <p className="font-display text-2xl text-gold">{totalReactionsReceived}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Reactions</p>
                   </div>
-                  <Link href="/favorites" className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center transition hover:border-white/25">
-                    <p className="text-lg font-light text-amber-300">{favoritesCount}</p>
+                  <Link href="/favorites" className="glass rounded-2xl border border-white/10 px-4 py-3 text-center transition hover:border-champagne-300/45">
+                    <p className="font-display text-2xl text-amber-300">{favoritesCount}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Favorites</p>
                   </Link>
-                  <button type="button" onClick={() => setActiveTab("submissions")} className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center transition hover:border-white/25">
-                    <p className="text-lg font-light text-white">{mySubmissions.length}</p>
+                  <button type="button" onClick={() => setActiveTab("submissions")} className="glass rounded-2xl border border-white/10 px-4 py-3 text-center transition hover:border-champagne-300/45">
+                    <p className="font-display text-2xl text-gold">{mySubmissions.length}</p>
                     <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Submissions</p>
                   </button>
                 </div>
@@ -208,15 +204,15 @@ export default function ProfileClient({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex shrink-0 items-center gap-2 rounded-full border px-5 py-2 text-[10px] tracking-[0.16em] uppercase transition ${
+                className={`flex shrink-0 items-center gap-2 rounded-full border px-5 py-2 text-[10px] uppercase tracking-[0.16em] transition ${
                   activeTab === tab.id
-                    ? "border-white bg-white font-semibold text-black"
-                    : "border-white/[0.08] text-zinc-400 hover:border-white/30 hover:text-white"
+                    ? "chip-active"
+                    : "border-white/10 text-zinc-400 hover:border-champagne-300/40 hover:text-champagne-50"
                 }`}
               >
                 <span>{tab.label}</span>
                 {typeof tab.count === "number" && (
-                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${activeTab === tab.id ? "bg-black/15 text-black" : "bg-white/10 text-zinc-300"}`}>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${activeTab === tab.id ? "bg-black/15 text-black" : "bg-champagne-400/15 text-champagne-200"}`}>
                     {tab.count}
                   </span>
                 )}
@@ -229,65 +225,69 @@ export default function ProfileClient({
             <section className="mt-8">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-light text-white">Karya yang Diunggah</h2>
+                  <h2 className="font-display text-3xl text-white">Karya yang Diunggah</h2>
                   <p className="mt-1 text-xs text-zinc-500">Kelola detail karya atau hapus karya milikmu sendiri.</p>
                 </div>
-                <Link href="/home" className="rounded-full border border-white/20 px-4 py-2 text-[10px] uppercase tracking-[0.15em] text-white transition hover:bg-white hover:text-black">
+                <Link href="/home" className="btn-gold rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.15em]">
                   ＋ Unggah Baru
                 </Link>
               </div>
 
               {myArtworks.length === 0 ? (
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-16 text-center">
+                <div className="glass rounded-2xl border border-white/10 px-6 py-16 text-center">
                   <p className="text-sm text-zinc-400">Kamu belum mengunggah karya apa pun.</p>
-                  <Link href="/home" className="mt-4 inline-block rounded-full bg-white px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-black">
+                  <Link href="/home" className="btn-gold mt-4 inline-flex rounded-full px-5 py-2 text-[10px] uppercase tracking-[0.18em]">
                     Upload di Home
                   </Link>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {myArtworks.map((art) => (
-                    <article key={art.id} className="overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900/50">
-                      <div className="relative aspect-[4/3] overflow-hidden bg-zinc-900">
-                        <img src={art.image_url} alt={art.title} className="h-full w-full object-cover" />
-                        <span className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[8px] tracking-wider text-white backdrop-blur-md">
-                          {art.category_name.toUpperCase()}
-                        </span>
-                        <span className="absolute right-3 top-3 rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[10px] text-zinc-200 backdrop-blur-md">
-                          ♥ {art.total_reactions}
-                        </span>
-                      </div>
-
-                      <div className="p-4">
-                        <h3 className="truncate text-sm font-medium text-white">{art.title}</h3>
-                        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-zinc-400">{art.description}</p>
-                        <div className="mt-2.5 flex flex-wrap gap-1.5">
-                          {(art.tags || []).map((tag) => (
-                            <span key={tag} className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-zinc-400">
-                              #{tag}
-                            </span>
-                          ))}
+                    <div key={art.id} data-reveal>
+                      <article className="card-lux spotlight glass overflow-hidden rounded-2xl border border-white/15">
+                        <div className="relative aspect-[4/3] overflow-hidden bg-zinc-900">
+                          <img src={art.image_url} alt={art.title} className="h-full w-full object-cover transition duration-700 hover:scale-105" />
+                          <span className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[8px] tracking-wider text-white backdrop-blur-md">
+                            {art.category_name.toUpperCase()}
+                          </span>
+                          <span className="absolute right-3 top-3 rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[10px] text-champagne-200 backdrop-blur-md">
+                            ♥ {art.total_reactions}
+                          </span>
                         </div>
 
-                        <div className="mt-4 flex items-center gap-2 border-t border-white/[0.07] pt-3">
-                          <button
-                            type="button"
-                            onClick={() => setEditingArt(art)}
-                            className="flex-1 rounded-lg border border-white/15 bg-white/[0.04] py-2 text-[10px] font-medium uppercase tracking-[0.15em] text-zinc-200 transition hover:bg-white hover:text-black"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            disabled={deletingId === art.id}
-                            onClick={() => handleDeleteArtwork(art.id, art.title)}
-                            className="flex-1 rounded-lg border border-red-500/30 bg-red-500/10 py-2 text-[10px] font-medium uppercase tracking-[0.15em] text-red-300 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
-                          >
-                            {deletingId === art.id ? "Menghapus..." : "Hapus"}
-                          </button>
+                        <div className="p-4">
+                          <Link href={`/artworks/${art.id}`} className="font-display block truncate text-xl text-white transition hover:text-champagne-200">
+                            {art.title}
+                          </Link>
+                          <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-zinc-400">{art.description}</p>
+                          <div className="mt-2.5 flex flex-wrap gap-1.5">
+                            {(art.tags || []).map((tag) => (
+                              <span key={tag} className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] text-zinc-400">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="mt-4 flex items-center gap-2 border-t border-white/[0.07] pt-3">
+                            <button
+                              type="button"
+                              onClick={() => setEditingArt(art)}
+                              className="btn-ghost flex-1 rounded-lg py-2 text-[10px] font-medium uppercase tracking-[0.15em]"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              disabled={deletingId === art.id}
+                              onClick={() => handleDeleteArtwork(art.id, art.title)}
+                              className="flex-1 rounded-lg border border-red-500/30 bg-red-500/10 py-2 text-[10px] font-medium uppercase tracking-[0.15em] text-red-300 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
+                            >
+                              {deletingId === art.id ? "Menghapus..." : "Hapus"}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </article>
+                      </article>
+                    </div>
                   ))}
                 </div>
               )}
@@ -297,27 +297,29 @@ export default function ProfileClient({
           {/* TAB FOLLOWING */}
           {activeTab === "following" && isMember && (
             <section className="mt-8">
-              <h2 className="text-xl font-light text-white">Kreator yang Kamu Ikuti</h2>
+              <h2 className="font-display text-3xl text-white">Kreator yang Kamu Ikuti</h2>
               <p className="mt-1 text-xs text-zinc-500">Kelola daftar kreator favorit yang sedang kamu ikuti.</p>
 
               {followingList.length === 0 ? (
-                <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-16 text-center">
+                <div className="glass mt-6 rounded-2xl border border-white/10 px-6 py-16 text-center">
                   <p className="text-sm text-zinc-400">Kamu belum mengikuti kreator mana pun.</p>
-                  <Link href="/explore" className="mt-4 inline-block rounded-full bg-white px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-black">
+                  <Link href="/explore" className="btn-gold mt-4 inline-flex rounded-full px-5 py-2 text-[10px] uppercase tracking-[0.18em]">
                     Temukan Kreator di Explore
                   </Link>
                 </div>
               ) : (
                 <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {followingList.map((creator) => (
-                    <div key={creator.id} className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-zinc-900/50 p-4">
+                    <div key={creator.id} className="glass spotlight flex items-center justify-between gap-4 rounded-2xl border border-white/15 p-4 transition hover:border-champagne-300/40">
                       <Link href={`/creators/${creator.username}`} className="flex min-w-0 flex-1 items-center gap-3.5 transition hover:opacity-85">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-zinc-800 text-sm font-semibold text-white">
-                          {creator.avatar_url ? (
-                            <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
-                          ) : (
-                            creator.display_name?.charAt(0).toUpperCase() || "C"
-                          )}
+                        <div className="shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-sm font-semibold text-white">
+                            {creator.avatar_url ? (
+                              <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
+                            ) : (
+                              creator.display_name?.charAt(0).toUpperCase() || "C"
+                            )}
+                          </div>
                         </div>
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-white">{creator.display_name}</p>
@@ -348,13 +350,13 @@ export default function ProfileClient({
           {/* TAB 2: MY SUBMISSIONS */}
           {activeTab === "submissions" && isMember && (
             <section className="mt-8">
-              <h2 className="text-xl font-light text-white">Riwayat Submisi Challenge</h2>
+              <h2 className="font-display text-3xl text-white">Riwayat Submisi Challenge</h2>
               <p className="mt-1 text-xs text-zinc-500">Daftar karya yang pernah kamu daftarkan ke event atau challenge komunitas.</p>
 
               {mySubmissions.length === 0 ? (
-                <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-16 text-center">
+                <div className="glass mt-6 rounded-2xl border border-white/10 px-6 py-16 text-center">
                   <p className="text-sm text-zinc-400">Belum ada karya yang di-submit ke challenge.</p>
-                  <Link href="/home#challenges" className="mt-4 inline-block rounded-full border border-white/20 px-5 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-200 hover:bg-white hover:text-black">
+                  <Link href="/challenges" className="btn-gold mt-4 inline-flex rounded-full px-5 py-2 text-[10px] uppercase tracking-[0.18em]">
                     Lihat Active Challenges
                   </Link>
                 </div>
@@ -363,19 +365,19 @@ export default function ProfileClient({
                   {mySubmissions.map((sub) => {
                     const isEnded = new Date(sub.challenge_end_date) < new Date();
                     return (
-                      <div key={sub.id} className="flex flex-col gap-4 rounded-xl border border-white/[0.08] bg-zinc-900/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div key={sub.id} className="glass spotlight flex flex-col gap-4 rounded-2xl border border-white/15 p-4 transition hover:border-champagne-300/40 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
-                          <img src={sub.artwork_image_url} alt={sub.artwork_title} className="h-16 w-16 shrink-0 rounded-lg border border-white/10 object-cover" />
+                          <img src={sub.artwork_image_url} alt={sub.artwork_title} className="h-16 w-16 shrink-0 rounded-xl border border-white/15 object-cover" />
                           <div>
-                            <p className="text-sm font-medium text-white">{sub.artwork_title}</p>
+                            <p className="font-display text-lg text-white">{sub.artwork_title}</p>
                             <p className="mt-0.5 text-xs text-zinc-400">Challenge: {sub.challenge_title}</p>
-                            <p className="mt-1 text-[10px] text-zinc-500">Hadiah: {sub.challenge_prize}</p>
+                            <p className="mt-1 text-[10px] text-champagne-300/90">Hadiah: {sub.challenge_prize}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2.5">
                           {sub.winner_rank ? (
-                            <span className="rounded-full border border-amber-400/40 bg-amber-500/15 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-amber-300">
+                            <span className="shine rounded-full border border-amber-400/50 bg-amber-500/20 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-amber-200">
                               ♛ Juara #{sub.winner_rank}
                             </span>
                           ) : (
@@ -395,8 +397,8 @@ export default function ProfileClient({
           {/* TAB 3: EDIT PROFILE (PUBLIK) */}
           {activeTab === "profile" && (
             <section className="mt-8 max-w-2xl">
-              <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-6 sm:p-8">
-                <h2 className="text-xl font-light text-white">Informasi Profil Publik</h2>
+              <div className="glass rounded-3xl border border-white/15 p-6 sm:p-8">
+                <h2 className="font-display text-3xl text-white">Informasi Profil Publik</h2>
                 <p className="mt-1 text-xs text-zinc-500">Informasi ini akan tampil di halaman profil dan galeri karyamu.</p>
 
                 {profileState?.error && (
@@ -412,12 +414,14 @@ export default function ProfileClient({
 
                 <form action={profileFormAction} className="mt-6 space-y-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-zinc-800 text-2xl font-light text-white">
-                      {avatarPreview ? (
-                        <img src={avatarPreview} alt="Preview" className="h-full w-full object-cover" />
-                      ) : (
-                        profile.display_name?.charAt(0).toUpperCase() || "U"
-                      )}
+                    <div className="w-fit shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[2px]">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-2xl font-light text-white">
+                        {avatarPreview ? (
+                          <img src={avatarPreview} alt="Preview" className="h-full w-full object-cover" />
+                        ) : (
+                          profile.display_name?.charAt(0).toUpperCase() || "U"
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1">
                       <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">
@@ -428,7 +432,7 @@ export default function ProfileClient({
                         name="avatar"
                         accept="image/jpeg,image/png,image/webp,image/gif"
                         onChange={handleAvatarChange}
-                        className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-zinc-300 file:mr-3 file:rounded-md file:border-0 file:bg-white file:px-3 file:py-1 file:text-[10px] file:font-semibold file:text-black"
+                        className="input-lux file:mr-3 file:rounded-md file:border-0 file:bg-champagne-200 file:px-3 file:py-1 file:text-[10px] file:font-semibold file:text-black"
                       />
                     </div>
                   </div>
@@ -440,7 +444,7 @@ export default function ProfileClient({
                       name="displayName"
                       required
                       defaultValue={profile.display_name}
-                      className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white focus:border-white/40 focus:outline-none"
+                      className="input-lux"
                     />
                   </div>
 
@@ -451,7 +455,7 @@ export default function ProfileClient({
                       rows={3}
                       defaultValue={profile.bio || ""}
                       placeholder="Ceritakan sedikit tentang gaya karyamu..."
-                      className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none"
+                      className="input-lux"
                     />
                   </div>
 
@@ -462,14 +466,14 @@ export default function ProfileClient({
                       name="externalLink"
                       defaultValue={profile.external_link || ""}
                       placeholder="https://behance.net/username"
-                      className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none"
+                      className="input-lux"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSavingProfile}
-                    className="rounded-lg bg-white px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50"
+                    className="btn-gold rounded-xl px-6 py-3 text-[10px] uppercase tracking-[0.2em]"
                   >
                     {isSavingProfile ? "Menyimpan..." : "Simpan Perubahan Profil"}
                   </button>
@@ -481,8 +485,8 @@ export default function ProfileClient({
           {/* TAB 4: ACCOUNT SETTINGS (PRIVAT) */}
           {activeTab === "account" && (
             <section className="mt-8 max-w-2xl">
-              <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-6 sm:p-8">
-                <h2 className="text-xl font-light text-white">Pengaturan Akun Privat</h2>
+              <div className="glass rounded-3xl border border-white/15 p-6 sm:p-8">
+                <h2 className="font-display text-3xl text-white">Pengaturan Akun Privat</h2>
                 <p className="mt-1 text-xs text-zinc-500">Perbarui alamat email atau ganti kata sandi akunmu.</p>
 
                 {accountState?.error && (
@@ -504,7 +508,7 @@ export default function ProfileClient({
                       name="email"
                       required
                       defaultValue={profile.email}
-                      className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white focus:border-white/40 focus:outline-none"
+                      className="input-lux"
                     />
                   </div>
 
@@ -518,7 +522,7 @@ export default function ProfileClient({
                           type="password"
                           name="currentPassword"
                           placeholder="Kosongkan jika tidak mengubah kata sandi"
-                          className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none"
+                          className="input-lux"
                         />
                       </div>
 
@@ -530,7 +534,7 @@ export default function ProfileClient({
                             name="newPassword"
                             minLength={6}
                             placeholder="Minimal 6 karakter"
-                            className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none"
+                            className="input-lux"
                           />
                         </div>
                         <div>
@@ -540,7 +544,7 @@ export default function ProfileClient({
                             name="confirmPassword"
                             minLength={6}
                             placeholder="Ulangi kata sandi baru"
-                            className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none"
+                            className="input-lux"
                           />
                         </div>
                       </div>
@@ -550,7 +554,7 @@ export default function ProfileClient({
                   <button
                     type="submit"
                     disabled={isSavingAccount}
-                    className="rounded-lg bg-white px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50"
+                    className="btn-gold rounded-xl px-6 py-3 text-[10px] uppercase tracking-[0.2em]"
                   >
                     {isSavingAccount ? "Menyimpan..." : "Simpan Pengaturan Akun"}
                   </button>
@@ -563,12 +567,12 @@ export default function ProfileClient({
 
       {/* MODAL EDIT KARYA */}
       {editingArt && (
-        <div onClick={() => setEditingArt(null)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#111] p-7 shadow-2xl sm:p-8">
+        <div onClick={() => setEditingArt(null)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-xl">
+          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-lg rounded-3xl p-7 sm:p-8">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[9px] tracking-[0.3em] text-zinc-500">EDIT ARTWORK</p>
-                <h2 className="mt-1 text-xl font-light text-white">Perbarui Detail Karya</h2>
+                <p className="eyebrow">EDIT ARTWORK</p>
+                <h2 className="font-display mt-1.5 text-3xl text-white">Perbarui Detail Karya</h2>
               </div>
               <button type="button" onClick={() => setEditingArt(null)} className="text-xl text-zinc-500 transition hover:text-white">
                 ×
@@ -595,7 +599,7 @@ export default function ProfileClient({
                   name="title"
                   required
                   defaultValue={editingArt.title}
-                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  className="input-lux"
                 />
               </div>
 
@@ -605,7 +609,7 @@ export default function ProfileClient({
                   name="categoryId"
                   required
                   defaultValue={editingArt.category_id}
-                  className="w-full rounded-lg border border-white/10 bg-zinc-950 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  className="input-lux bg-zinc-950"
                 >
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -622,7 +626,7 @@ export default function ProfileClient({
                   name="tags"
                   required
                   defaultValue={(editingArt.tags || []).join(", ")}
-                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  className="input-lux"
                 />
               </div>
 
@@ -633,14 +637,14 @@ export default function ProfileClient({
                   rows={3}
                   required
                   defaultValue={editingArt.description}
-                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  className="input-lux"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSavingArt}
-                className="w-full rounded-lg bg-white py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50"
+                className="btn-gold w-full rounded-xl py-3 text-[10px] uppercase tracking-[0.2em]"
               >
                 {isSavingArt ? "Menyimpan..." : "Simpan Perubahan"}
               </button>

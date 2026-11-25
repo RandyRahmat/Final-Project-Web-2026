@@ -130,36 +130,30 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
   };
 
   return (
-    <main className="min-h-screen bg-[#090909] text-zinc-100">
-      {/* BACKGROUND ATMOSPHERE */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-64 left-1/3 h-[600px] w-[600px] rounded-full bg-white/[0.035] blur-[140px]" />
-        <div className="absolute inset-0 opacity-[0.025] [background-image:radial-gradient(#fff_0.6px,transparent_0.6px)] [background-size:5px_5px]" />
-      </div>
-
+    <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       {/* TOP BAR */}
-      <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-2xl sm:px-10">
+      <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-10">
         <div className="flex items-center gap-4">
           <Link href="/home" className="flex items-center gap-3">
-            <img src="/images/aesthe-logo.png" alt="Aesthe" className="h-8 w-8 object-contain mix-blend-screen" />
-            <span className="text-sm font-medium tracking-[0.3em] text-white">AESTHE</span>
+            <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow h-8 w-8 object-contain mix-blend-screen" />
+            <span className="bg-gradient-to-r from-white to-champagne-200 bg-clip-text text-sm font-medium tracking-[0.3em] text-transparent">AESTHE</span>
           </Link>
           <span className="hidden text-zinc-700 sm:inline">/</span>
-          <span className="hidden text-[10px] uppercase tracking-[0.22em] text-zinc-400 sm:inline">
+          <span className="hidden text-[10px] uppercase tracking-[0.22em] text-champagne-200 sm:inline">
             CREATOR PROFILE
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/explore" className="rounded-full border border-white/10 px-4 py-1.5 text-[10px] uppercase tracking-[0.15em] text-zinc-400 transition hover:border-white/30 hover:text-white">
+          <Link href="/explore" className="btn-ghost rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.15em]">
             Explore
           </Link>
           {isOwnProfile ? (
-            <Link href="/profile" className="rounded-full bg-white px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-black transition hover:bg-zinc-200">
+            <Link href="/profile" className="btn-gold rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.15em]">
               Kelola Profil
             </Link>
           ) : (
-            <Link href="/home" className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-[10px] uppercase tracking-[0.15em] text-zinc-200 transition hover:bg-white hover:text-black">
+            <Link href="/home" className="btn-ghost rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.15em]">
               &larr; Home
             </Link>
           )}
@@ -168,36 +162,39 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
       <div className="relative z-10 mx-auto max-w-[1400px] px-5 py-10 sm:px-10">
         {authNotice && (
-          <div className="mb-6 flex items-center justify-between rounded-xl border border-white/15 bg-white/[0.04] px-5 py-3 text-xs text-zinc-200">
+          <div className="glass mb-6 flex items-center justify-between rounded-xl border border-champagne-300/25 px-5 py-3 text-xs text-zinc-200">
             <span>{authNotice}</span>
-            <Link href="/" className="rounded-full bg-white px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-black">
+            <Link href="/" className="btn-gold rounded-full px-4 py-1 text-[10px] uppercase tracking-wider">
               Login Sekarang
             </Link>
           </div>
         )}
 
         {/* CREATOR HEADER */}
-        <section className="rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-6 sm:p-9">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <section className="glass spotlight relative overflow-hidden rounded-3xl border border-white/15 p-6 sm:p-10">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-champagne-400/[0.08] via-transparent to-transparent" />
+          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-700 to-zinc-900 text-3xl font-light text-white shadow-[0_0_30px_rgba(255,255,255,0.08)]">
-                {creator.avatar_url ? (
-                  <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
-                ) : (
-                  creator.display_name?.charAt(0).toUpperCase() || "C"
-                )}
+              <div className="w-fit shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-400 to-champagne-700 p-[2px] shadow-[0_0_35px_rgba(212,175,106,0.28)]">
+                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-3xl font-light text-white">
+                  {creator.avatar_url ? (
+                    <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
+                  ) : (
+                    creator.display_name?.charAt(0).toUpperCase() || "C"
+                  )}
+                </div>
               </div>
 
               <div>
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-2xl font-light tracking-tight text-white sm:text-3xl">
+                  <h1 className="font-display text-4xl text-white sm:text-5xl">
                     {creator.display_name}
                   </h1>
-                  <span className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-0.5 text-[9px] uppercase tracking-[0.2em] text-zinc-300">
+                  <span className="rounded-full border border-champagne-300/30 bg-champagne-400/10 px-3 py-0.5 text-[9px] uppercase tracking-[0.2em] text-champagne-200">
                     {creator.role}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-zinc-500">@{creator.username}</p>
+                <p className="mt-1 text-xs text-zinc-400">@{creator.username}</p>
                 {creator.bio && (
                   <p className="mt-3 max-w-2xl text-xs leading-relaxed text-zinc-300">{creator.bio}</p>
                 )}
@@ -206,7 +203,7 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                     href={creator.external_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] text-amber-300 underline decoration-amber-400/40 underline-offset-4 transition hover:text-amber-200"
+                    className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] text-champagne-300 underline decoration-champagne-400/40 underline-offset-4 transition hover:text-champagne-100"
                   >
                     🔗 {creator.external_link.replace(/^https?:\/\//, "")}
                   </a>
@@ -220,10 +217,10 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                   type="button"
                   disabled={togglingFollow}
                   onClick={handleToggleFollow}
-                  className={`flex items-center gap-2 rounded-full border px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition disabled:opacity-50 ${
+                  className={`rounded-full px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition disabled:opacity-50 ${
                     isMember && followStats?.is_following
-                      ? "border-white/25 bg-white/[0.08] text-white hover:border-red-400/50 hover:bg-red-500/15 hover:text-red-300"
-                      : "border-white bg-white text-black hover:bg-zinc-200"
+                      ? "btn-ghost hover:border-red-400/50 hover:bg-red-500/15 hover:text-red-300"
+                      : "btn-gold"
                   }`}
                 >
                   <span>{isMember && followStats?.is_following ? "✓ Following" : "＋ Follow"}</span>
@@ -233,22 +230,22 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                 <button
                   type="button"
                   onClick={handleOpenChat}
-                  className="flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.04] px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
+                  className="btn-ghost rounded-full px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em]"
                 >
                   <span>✉</span>
                   <span>Kirim Pesan</span>
                 </button>
               )}
-              <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
-                <p className="text-xl font-light text-white">{followStats?.followers_count || 0}</p>
+              <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
+                <p className="font-display text-2xl text-gold">{followStats?.followers_count || 0}</p>
                 <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Followers</p>
               </div>
-              <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
-                <p className="text-xl font-light text-white">{artworks.length}</p>
+              <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
+                <p className="font-display text-2xl text-gold">{artworks.length}</p>
                 <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Karya</p>
               </div>
-              <div className="rounded-xl border border-white/[0.07] bg-black/30 px-4 py-3 text-center">
-                <p className="text-xl font-light text-white">{totalReactions}</p>
+              <div className="glass rounded-2xl border border-white/10 px-4 py-3 text-center">
+                <p className="font-display text-2xl text-gold">{totalReactions}</p>
                 <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Reaksi</p>
               </div>
             </div>
@@ -259,16 +256,16 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
         <section className="mt-12">
           <div className="mb-7 flex items-end justify-between">
             <div>
-              <p className="text-[9px] tracking-[0.3em] text-zinc-600">PORTFOLIO SHOWCASE</p>
-              <h2 className="mt-1 text-2xl font-light tracking-tight">
-                Karya oleh {creator.display_name}
-                <span className="text-zinc-600">.</span>
+              <p className="eyebrow">PORTFOLIO SHOWCASE</p>
+              <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">
+                Karya oleh <span className="italic text-gold">{creator.display_name}</span>
+                <span className="text-champagne-400">.</span>
               </h2>
             </div>
           </div>
 
           {artworks.length === 0 ? (
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-20 text-center">
+            <div className="glass rounded-2xl border border-white/10 px-6 py-20 text-center">
               <p className="text-sm text-zinc-400">Kreator ini belum mengunggah karya apa pun.</p>
             </div>
           ) : (
@@ -277,14 +274,14 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                 const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
 
                 return (
-                  <article key={art.id} className="group relative min-w-0">
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-white/[0.06] bg-zinc-900">
+                  <article key={art.id} data-reveal className="group relative min-w-0">
+                    <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/15 bg-zinc-900">
                       <Link href={`/artworks/${art.id}`} className="block h-full w-full">
                         <img
                           src={art.image_url}
                           alt={art.title}
                           loading="lazy"
-                          className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-75"
+                          className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-80" />
 
@@ -295,7 +292,7 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                         </div>
 
                         <div className="absolute inset-x-0 bottom-0 p-4">
-                          <p className="text-sm font-medium text-white group-hover:underline">{art.title}</p>
+                          <p className="font-display text-lg text-white transition group-hover:text-champagne-100">{art.title}</p>
                           <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {(art.tags || []).map((tag) => (
                               <span key={tag} className="text-[9px] text-zinc-400">
@@ -304,6 +301,10 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                             ))}
                           </div>
                         </div>
+
+                        <span className="absolute bottom-4 right-4 translate-y-3 rounded-full bg-black/60 px-3 py-1.5 text-[9px] tracking-[0.2em] text-champagne-100 opacity-0 backdrop-blur-md transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                          LIHAT ↗
+                        </span>
                       </Link>
 
                       {(isMember || isGuest) && (
@@ -313,8 +314,8 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                           title={isGuest ? "Masuk sebagai Member untuk menyimpan karya" : art.is_favorited ? "Hapus dari Favorites" : "Simpan ke Favorites"}
                           className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs backdrop-blur-md transition ${
                             isMember && art.is_favorited
-                              ? "border-amber-400 bg-amber-400 font-bold text-black"
-                              : "border-white/20 bg-black/50 text-white hover:bg-white hover:text-black"
+                              ? "border-champagne-300 bg-gradient-to-br from-champagne-100 to-champagne-400 font-bold text-black shadow-[0_0_20px_rgba(212,175,106,0.5)]"
+                              : "border-white/20 bg-black/50 text-white hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
                           }`}
                         >
                           ⚑
@@ -327,7 +328,7 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
                       {isMember ? (
                         <div className="group/react relative flex shrink-0 items-center">
-                          <div className="pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full border border-white/15 bg-[#161618] px-2.5 py-1.5 opacity-0 shadow-2xl transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
+                          <div className="glass pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full px-2.5 py-1.5 opacity-0 transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
                             {REACTIONS.map((r) => (
                               <button
                                 key={r.type}
@@ -379,25 +380,27 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
       {/* QUICK PRIVATE MESSAGE MODAL */}
       {showChat && !isGuest && !isOwnProfile && (
-        <div onClick={() => setShowChat(false)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="flex h-[540px] max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#101012] shadow-2xl">
+        <div onClick={() => setShowChat(false)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
+          <div onClick={(e) => e.stopPropagation()} className="modal-panel flex h-[540px] max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-3xl">
             <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-zinc-800 text-xs font-semibold text-white">
-                  {creator.avatar_url ? (
-                    <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
-                  ) : (
-                    creator.display_name?.charAt(0).toUpperCase() || "C"
-                  )}
+                <div className="shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-semibold text-white">
+                    {creator.avatar_url ? (
+                      <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
+                    ) : (
+                      creator.display_name?.charAt(0).toUpperCase() || "C"
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-white">{creator.display_name}</p>
-                  <p className="text-[10px] text-zinc-500">@{creator.username} · Private Message</p>
+                  <p className="text-[10px] text-champagne-300/80">@{creator.username} · Private Message</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <Link href={`/messages?to=${creator.username}`} className="text-[10px] text-zinc-400 transition hover:text-white">
+                <Link href={`/messages?to=${creator.username}`} className="text-[10px] text-zinc-400 transition hover:text-champagne-200">
                   Inbox ↗
                 </Link>
                 <button type="button" onClick={() => setShowChat(false)} className="text-lg text-zinc-500 transition hover:text-white">
@@ -419,9 +422,9 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                   const isMine = Number(msg.sender_id) === Number(currentUser.id);
                   return (
                     <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[82%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${isMine ? "rounded-br-sm bg-white text-black" : "rounded-bl-sm border border-white/10 bg-zinc-900 text-zinc-100"}`}>
+                      <div className={`max-w-[82%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${isMine ? "rounded-br-sm bg-gradient-to-br from-champagne-100 to-champagne-300 text-black" : "glass rounded-bl-sm text-zinc-100"}`}>
                         <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                        <p className={`mt-1 text-right text-[9px] ${isMine ? "text-zinc-600" : "text-zinc-500"}`}>
+                        <p className={`mt-1 text-right text-[9px] ${isMine ? "text-zinc-700" : "text-zinc-500"}`}>
                           {new Date(msg.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
@@ -441,12 +444,12 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
                   onChange={(e) => setDraft(e.target.value)}
                   maxLength={1000}
                   placeholder={`Tulis pesan ke ${creator.display_name}...`}
-                  className="flex-1 rounded-full border border-white/10 bg-black/50 px-4 py-2 text-xs text-white placeholder-zinc-600 focus:border-white/35 focus:outline-none"
+                  className="input-lux flex-1 rounded-full py-2"
                 />
                 <button
                   type="submit"
                   disabled={sending || !draft.trim()}
-                  className="rounded-full bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-black transition hover:bg-zinc-200 disabled:opacity-40"
+                  className="btn-gold rounded-full px-4 py-2 text-[10px] uppercase tracking-wider"
                 >
                   {sending ? "..." : "Kirim"}
                 </button>

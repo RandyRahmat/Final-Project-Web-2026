@@ -117,13 +117,7 @@ export default function MessagesClient({
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#090909] text-zinc-100">
-      {/* BACKGROUND ATMOSPHERE */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-64 left-1/3 h-[600px] w-[600px] rounded-full bg-white/[0.035] blur-[140px]" />
-        <div className="absolute inset-0 opacity-[0.025] [background-image:radial-gradient(#fff_0.6px,transparent_0.6px)] [background-size:5px_5px]" />
-      </div>
-
+    <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       <AppSidebar
         currentUser={currentUser}
         activeItem="messages"
@@ -135,26 +129,26 @@ export default function MessagesClient({
 
       {/* MAIN CONTENT */}
       <div className={`relative z-10 flex min-h-screen flex-col transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">
               ☰
             </button>
             <div className="text-[10px] tracking-[0.2em] text-zinc-600">
-              INBOX / <span className="text-zinc-300">PRIVATE MESSAGES</span>
+              INBOX / <span className="text-champagne-200">PRIVATE MESSAGES</span>
             </div>
           </div>
-          <Link href="/explore" className="rounded-full border border-white/15 px-4 py-1.5 text-[10px] uppercase tracking-[0.15em] text-zinc-300 transition hover:border-white hover:text-white">
+          <Link href="/explore" className="btn-ghost rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.15em]">
             Cari Kreator &rarr;
           </Link>
         </header>
 
         <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col px-5 py-6 sm:px-8 lg:px-12">
-          <div className="grid min-h-[calc(100vh-140px)] flex-1 grid-cols-1 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e10]/80 md:grid-cols-12">
+          <div className="glass grid min-h-[calc(100vh-140px)] flex-1 grid-cols-1 overflow-hidden rounded-3xl border border-white/15 md:grid-cols-12">
             {/* KOLOM KIRI: DAFTAR PERCAKAPAN */}
             <section className="flex flex-col border-b border-white/[0.08] md:col-span-4 md:border-b-0 md:border-r">
               <div className="border-b border-white/[0.06] px-5 py-4">
-                <h1 className="text-sm font-medium tracking-wide text-white">Pesan Pribadi</h1>
+                <h1 className="font-display text-2xl text-white">Pesan Pribadi</h1>
                 <p className="mt-0.5 text-[10px] text-zinc-500">{conversations.length} percakapan</p>
               </div>
 
@@ -174,22 +168,26 @@ export default function MessagesClient({
                         key={conv.id}
                         type="button"
                         onClick={() => handleSelectPartner(conv.id)}
-                        className={`flex w-full items-center gap-3 border-b border-white/[0.04] px-5 py-3.5 text-left transition ${
-                          isSelected ? "bg-white/[0.08]" : "hover:bg-white/[0.03]"
+                        className={`flex w-full items-center gap-3 border-b border-white/[0.05] px-5 py-3.5 text-left transition ${
+                          isSelected
+                            ? "border-l-2 border-l-champagne-300 bg-champagne-400/[0.12]"
+                            : "hover:bg-white/[0.03]"
                         }`}
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-zinc-800 text-xs font-semibold text-white">
-                          {conv.avatar_url ? (
-                            <img src={conv.avatar_url} alt={conv.display_name} className="h-full w-full object-cover" />
-                          ) : (
-                            conv.display_name?.charAt(0).toUpperCase() || "U"
-                          )}
+                        <div className="shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-semibold text-white">
+                            {conv.avatar_url ? (
+                              <img src={conv.avatar_url} alt={conv.display_name} className="h-full w-full object-cover" />
+                            ) : (
+                              conv.display_name?.charAt(0).toUpperCase() || "U"
+                            )}
+                          </div>
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <p className="truncate text-xs font-medium text-white">{conv.display_name}</p>
                             {conv.unread_count > 0 && (
-                              <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold text-black">
+                              <span className="rounded-full bg-champagne-300 px-2 py-0.5 text-[9px] font-bold text-black">
                                 {conv.unread_count}
                               </span>
                             )}
@@ -212,20 +210,22 @@ export default function MessagesClient({
                   {/* CHAT HEADER */}
                   <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
                     <Link href={`/creators/${activePartner.username}`} className="flex items-center gap-3 transition hover:opacity-80">
-                      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-zinc-800 text-xs font-semibold text-white">
-                        {activePartner.avatar_url ? (
-                          <img src={activePartner.avatar_url} alt={activePartner.display_name} className="h-full w-full object-cover" />
-                        ) : (
-                          activePartner.display_name?.charAt(0).toUpperCase() || "U"
-                        )}
+                      <div className="shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                        <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-semibold text-white">
+                          {activePartner.avatar_url ? (
+                            <img src={activePartner.avatar_url} alt={activePartner.display_name} className="h-full w-full object-cover" />
+                          ) : (
+                            activePartner.display_name?.charAt(0).toUpperCase() || "U"
+                          )}
+                        </div>
                       </div>
                       <div>
                         <p className="text-xs font-medium text-white">{activePartner.display_name}</p>
-                        <p className="text-[10px] text-zinc-500">@{activePartner.username} &bull; {activePartner.role}</p>
+                        <p className="text-[10px] text-champagne-300/80">@{activePartner.username} &bull; {activePartner.role}</p>
                       </div>
                     </Link>
 
-                    <Link href={`/creators/${activePartner.username}`} className="rounded-full border border-white/10 px-3 py-1 text-[10px] text-zinc-400 transition hover:border-white/30 hover:text-white">
+                    <Link href={`/creators/${activePartner.username}`} className="btn-ghost rounded-full px-3 py-1 text-[10px]">
                       Lihat Profil ↗
                     </Link>
                   </div>
@@ -244,9 +244,9 @@ export default function MessagesClient({
                         const isMine = Number(msg.sender_id) === Number(currentUser.id);
                         return (
                           <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                            <div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${isMine ? "rounded-br-sm bg-white text-black" : "rounded-bl-sm border border-white/10 bg-zinc-900 text-zinc-100"}`}>
+                            <div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${isMine ? "rounded-br-sm bg-gradient-to-br from-champagne-100 to-champagne-300 text-black" : "glass rounded-bl-sm text-zinc-100"}`}>
                               <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                              <p className={`mt-1 text-right text-[9px] ${isMine ? "text-zinc-600" : "text-zinc-500"}`}>
+                              <p className={`mt-1 text-right text-[9px] ${isMine ? "text-zinc-700" : "text-zinc-500"}`}>
                                 {formatTime(msg.created_at)}
                               </p>
                             </div>
@@ -269,12 +269,12 @@ export default function MessagesClient({
                         onChange={(e) => setDraft(e.target.value)}
                         maxLength={1000}
                         placeholder={`Tulis pesan untuk ${activePartner.display_name}...`}
-                        className="flex-1 rounded-full border border-white/10 bg-black/50 px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-white/35 focus:outline-none"
+                        className="input-lux flex-1 rounded-full py-2.5"
                       />
                       <button
                         type="submit"
                         disabled={sending || !draft.trim()}
-                        className="rounded-full bg-white px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-black transition hover:bg-zinc-200 disabled:opacity-40"
+                        className="btn-gold rounded-full px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]"
                       >
                         {sending ? "..." : "Kirim"}
                       </button>
@@ -283,11 +283,11 @@ export default function MessagesClient({
                 </>
               ) : (
                 <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-lg text-zinc-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-champagne-300/30 bg-champagne-400/10 text-lg text-champagne-200">
                     ✉
                   </div>
-                  <p className="mt-4 text-sm font-light text-zinc-300">Pilih percakapan untuk mulai mengobrol</p>
-                  <p className="mt-1 max-w-sm text-[11px] text-zinc-600">
+                  <p className="font-display mt-4 text-2xl text-zinc-200">Pilih percakapan untuk mulai mengobrol</p>
+                  <p className="mt-1 max-w-sm text-[11px] text-zinc-500">
                     Kamu juga dapat mengirim pesan langsung melalui tombol &ldquo;Kirim Pesan&rdquo; pada halaman profil kreator.
                   </p>
                 </div>

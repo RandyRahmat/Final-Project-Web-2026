@@ -97,14 +97,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#090909] text-zinc-100">
-      {/* BACKGROUND ATMOSPHERE */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-64 left-1/3 h-[600px] w-[600px] rounded-full bg-white/[0.035] blur-[140px]" />
-        <div className="absolute right-0 top-[50%] h-[400px] w-[400px] rounded-full bg-zinc-500/[0.035] blur-[140px]" />
-        <div className="absolute inset-0 opacity-[0.025] [background-image:radial-gradient(#fff_0.6px,transparent_0.6px)] [background-size:5px_5px]" />
-      </div>
-
+    <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       <AppSidebar
         currentUser={currentUser}
         activeItem="explore"
@@ -117,13 +110,13 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
       {/* MAIN CONTENT */}
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
         {/* TOP NAVBAR */}
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/75 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">
               ☰
             </button>
             <div className="hidden text-[10px] tracking-[0.2em] text-zinc-600 sm:block">
-              DISCOVER / <span className="text-zinc-300">EXPLORE</span>
+              DISCOVER / <span className="text-champagne-200">EXPLORE</span>
             </div>
             <div className="flex items-center gap-2 sm:hidden">
               <img src="/images/aesthe-logo.png" alt="" className="h-6 w-6 object-contain" />
@@ -137,7 +130,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search artworks, creators, or #tags..."
-              className="w-full rounded-full border border-white/[0.08] bg-white/[0.025] py-2.5 pl-11 pr-5 text-[11px] text-white outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.05]"
+              className="input-lux rounded-full py-2.5 pl-11 pr-5 text-[11px]"
             />
           </div>
 
@@ -146,12 +139,14 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
               <p className="text-[11px] font-medium">{currentUser ? currentUser.displayName : "Guest Visitor"}</p>
               <p className="mt-0.5 text-[9px] text-zinc-600">{currentUser ? `${role.toUpperCase()} ACCOUNT` : "PUBLIC VIEW"}</p>
             </div>
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-500 to-zinc-900 text-xs font-medium uppercase">
-              {currentUser?.avatarUrl ? (
-                <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
-              ) : (
-                currentUser ? currentUser.displayName.charAt(0) : "G"
-              )}
+            <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-medium uppercase">
+                {currentUser?.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
+                ) : (
+                  currentUser ? currentUser.displayName.charAt(0) : "G"
+                )}
+              </div>
             </div>
           </Link>
         </header>
@@ -159,27 +154,27 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
         {/* PAGE CONTENT */}
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
           {authNotice && (
-            <div className="mb-6 flex items-center justify-between rounded-xl border border-white/15 bg-white/[0.04] px-5 py-3 text-xs text-zinc-200">
+            <div className="glass mb-6 flex items-center justify-between rounded-xl border border-champagne-300/25 px-5 py-3 text-xs text-zinc-200">
               <span>{authNotice}</span>
-              <Link href="/" className="rounded-full bg-white px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-black">
+              <Link href="/" className="btn-gold rounded-full px-4 py-1 text-[10px] uppercase tracking-wider">
                 Login Sekarang
               </Link>
             </div>
           )}
 
           {/* EXPLORE HERO HEADER */}
-          <section className="flex flex-wrap items-end justify-between gap-4">
+          <section data-reveal className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="mb-3 flex items-center gap-2.5">
-                <p className="text-[9px] tracking-[0.35em] text-zinc-500">CURATED DISCOVERY</p>
-                <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+                <p className="eyebrow">CURATED DISCOVERY</p>
+                <span className="rounded-full border border-champagne-300/25 bg-champagne-400/10 px-2.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.2em] text-champagne-200">
                   {role}
                 </span>
               </div>
-              <h1 className="text-3xl font-light tracking-tight sm:text-4xl lg:text-5xl">
-                Explore Universe<span className="text-zinc-500">.</span>
+              <h1 className="font-display text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+                Explore <span className="italic text-gold">Universe</span><span className="text-champagne-400">.</span>
               </h1>
-              <p className="mt-3 max-w-xl text-[11px] text-zinc-500 sm:text-xs">
+              <p className="mt-3 max-w-xl text-[11px] text-zinc-400 sm:text-xs">
                 Jelajahi karya visual terbaik berdasarkan kategori, tag populer, dan kreator pilihan komunitas Aesthe.
               </p>
             </div>
@@ -191,7 +186,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search artworks, creators, tags..."
-                className="w-full rounded-full border border-white/[0.08] bg-white/[0.025] py-2.5 pl-11 pr-5 text-[11px] text-white outline-none transition placeholder:text-zinc-600 focus:border-white/30"
+                className="input-lux rounded-full py-2.5 pl-11 pr-5 text-[11px]"
               />
             </div>
           </section>
@@ -199,22 +194,22 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
           {/* SECTION 1: KATEGORI SPOTLIGHT */}
           <section className="mt-10">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-[9px] tracking-[0.3em] text-zinc-500">BROWSE BY CATEGORY</p>
-              <span className="text-[10px] text-zinc-600">{categories.length} Categories</span>
+              <p className="eyebrow">BROWSE BY CATEGORY</p>
+              <span className="text-[10px] text-zinc-500">{categories.length} Categories</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               <button
                 type="button"
                 onClick={() => setActiveCategory("All")}
-                className={`rounded-xl border p-4 text-left transition ${
+                className={`spotlight rounded-2xl border p-4 text-left transition duration-300 ${
                   activeCategory === "All"
-                    ? "border-white bg-white text-black"
-                    : "border-white/[0.08] bg-white/[0.025] text-zinc-300 hover:border-white/25"
+                    ? "chip-active"
+                    : "glass border-white/15 text-zinc-200 hover:border-champagne-300/45"
                 }`}
               >
                 <p className="text-xs font-medium">All Works</p>
-                <p className={`mt-1 text-[10px] ${activeCategory === "All" ? "text-zinc-700" : "text-zinc-500"}`}>
+                <p className={`mt-1 text-[10px] ${activeCategory === "All" ? "text-zinc-800" : "text-zinc-500"}`}>
                   {artworks.length} karya
                 </p>
               </button>
@@ -226,14 +221,14 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                     key={cat.id}
                     type="button"
                     onClick={() => setActiveCategory(cat.name)}
-                    className={`rounded-xl border p-4 text-left transition ${
+                    className={`spotlight rounded-2xl border p-4 text-left transition duration-300 ${
                       isSelected
-                        ? "border-white bg-white text-black"
-                        : "border-white/[0.08] bg-white/[0.025] text-zinc-300 hover:border-white/25"
+                        ? "chip-active"
+                        : "glass border-white/15 text-zinc-200 hover:border-champagne-300/45"
                     }`}
                   >
                     <p className="truncate text-xs font-medium">{cat.name}</p>
-                    <p className={`mt-1 text-[10px] ${isSelected ? "text-zinc-700" : "text-zinc-500"}`}>
+                    <p className={`mt-1 text-[10px] ${isSelected ? "text-zinc-800" : "text-zinc-500"}`}>
                       {cat.artwork_count} karya
                     </p>
                   </button>
@@ -245,7 +240,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
           {/* SECTION 2: TRENDING TAGS */}
           {trendingTags.length > 0 && (
             <section className="mt-9">
-              <p className="mb-3 text-[9px] tracking-[0.3em] text-zinc-500">TRENDING TAGS</p>
+              <p className="eyebrow mb-3">TRENDING TAGS</p>
               <div className="flex flex-wrap gap-2">
                 {trendingTags.map(({ tag, count }) => {
                   const isSelected = activeTag === tag;
@@ -256,8 +251,8 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                       onClick={() => setActiveTag(isSelected ? "" : tag)}
                       className={`rounded-full border px-3.5 py-1.5 text-[10px] transition ${
                         isSelected
-                          ? "border-white bg-white text-black font-medium"
-                          : "border-white/[0.08] bg-white/[0.02] text-zinc-400 hover:border-white/30 hover:text-white"
+                          ? "chip-active"
+                          : "border-white/10 bg-white/[0.025] text-zinc-400 hover:border-champagne-300/40 hover:text-champagne-100"
                       }`}
                     >
                       #{tag} <span className="ml-1 opacity-60">{count}</span>
@@ -271,7 +266,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
           {/* SECTION 3: CREATORS SPOTLIGHT */}
           {creators.length > 0 && (
             <section className="mt-10">
-              <p className="mb-4 text-[9px] tracking-[0.3em] text-zinc-500">CREATORS SPOTLIGHT</p>
+              <p className="eyebrow mb-4">CREATORS SPOTLIGHT</p>
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {creators.map((creator) => {
                   const isSelected = activeCreator === creator.username;
@@ -280,14 +275,16 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                       key={creator.id}
                       type="button"
                       onClick={() => setActiveCreator(isSelected ? "" : creator.username)}
-                      className={`flex shrink-0 items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                      className={`spotlight flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition duration-300 ${
                         isSelected
-                          ? "border-white bg-white/10 text-white"
-                          : "border-white/[0.08] bg-white/[0.02] text-zinc-300 hover:border-white/25"
+                          ? "border-champagne-300/60 bg-champagne-400/15 text-white shadow-[0_0_25px_-8px_rgba(212,175,106,0.45)]"
+                          : "glass border-white/15 text-zinc-300 hover:border-champagne-300/40"
                       }`}
                     >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-zinc-800 text-xs font-semibold text-white">
-                        {creator.display_name.charAt(0).toUpperCase()}
+                      <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white">
+                          {creator.display_name.charAt(0).toUpperCase()}
+                        </div>
                       </div>
                       <div>
                         <p className="text-xs font-medium text-white">{creator.display_name}</p>
@@ -306,12 +303,12 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
           <section className="mt-12">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="mb-1 text-[9px] tracking-[0.3em] text-zinc-600">GALLERY RESULTS</p>
-                <h2 className="text-xl font-light tracking-tight">
+                <p className="eyebrow mb-1.5">GALLERY RESULTS</p>
+                <h2 className="font-display text-3xl text-white">
                   {activeCategory === "All" ? "All Artworks" : activeCategory}
                   {activeTag ? ` · #${activeTag}` : ""}
                   {activeCreator ? ` · @${activeCreator}` : ""}
-                  <span className="ml-2 text-sm text-zinc-500">({filteredArtworks.length})</span>
+                  <span className="ml-2 font-sans text-sm text-champagne-300/80">({filteredArtworks.length})</span>
                 </h2>
               </div>
 
@@ -321,7 +318,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                     type="button"
                     onClick={() => setSortBy("popular")}
                     className={`rounded-full px-3.5 py-1.5 text-[9px] tracking-[0.14em] transition ${
-                      sortBy === "popular" ? "bg-white text-black font-semibold" : "text-zinc-400 hover:text-white"
+                      sortBy === "popular" ? "chip-active" : "text-zinc-400 hover:text-champagne-50"
                     }`}
                   >
                     POPULER
@@ -330,14 +327,14 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                     type="button"
                     onClick={() => setSortBy("latest")}
                     className={`rounded-full px-3.5 py-1.5 text-[9px] tracking-[0.14em] transition ${
-                      sortBy === "latest" ? "bg-white text-black font-semibold" : "text-zinc-400 hover:text-white"
+                      sortBy === "latest" ? "chip-active" : "text-zinc-400 hover:text-champagne-50"
                     }`}
                   >
                     TERBARU
                   </button>
                 </div>
 
-                <button type="button" onClick={resetFilters} className="text-[9px] tracking-[0.15em] text-zinc-500 transition hover:text-white">
+                <button type="button" onClick={resetFilters} className="text-[9px] tracking-[0.15em] text-zinc-500 transition hover:text-champagne-200">
                   RESET FILTER ↺
                 </button>
               </div>
@@ -348,14 +345,14 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                 const userReaction = art.user_reaction ? getReactionDisplay(art.user_reaction) : null;
 
                 return (
-                  <article key={art.id} className="group relative min-w-0">
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-white/[0.06] bg-zinc-900">
+                  <article key={art.id} data-reveal className="group relative min-w-0">
+                    <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/15 bg-zinc-900">
                       <Link href={`/artworks/${art.id}`} className="block h-full w-full">
                         <img
                           src={art.image_url}
                           alt={art.title}
                           loading="lazy"
-                          className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-75"
+                          className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110"
                         />
 
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-80" />
@@ -367,7 +364,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                         </div>
 
                         <div className="absolute inset-x-0 bottom-0 p-4">
-                          <p className="text-sm font-medium text-white group-hover:underline">{art.title}</p>
+                          <p className="font-display text-lg text-white transition group-hover:text-champagne-100">{art.title}</p>
                           <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {(art.tags || []).map((tag) => (
                               <span key={tag} className="text-[9px] text-zinc-400">
@@ -376,6 +373,10 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                             ))}
                           </div>
                         </div>
+
+                        <span className="absolute bottom-4 right-4 translate-y-3 rounded-full bg-black/60 px-3 py-1.5 text-[9px] tracking-[0.2em] text-champagne-100 opacity-0 backdrop-blur-md transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                          LIHAT ↗
+                        </span>
                       </Link>
 
                       {(isMember || isGuest) && (
@@ -385,8 +386,8 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                           title={isGuest ? "Masuk sebagai Member untuk menyimpan karya" : art.is_favorited ? "Hapus dari Favorites" : "Simpan ke Favorites"}
                           className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-xs backdrop-blur-md transition ${
                             isMember && art.is_favorited
-                              ? "border-amber-400 bg-amber-400 text-black font-bold"
-                              : "border-white/20 bg-black/50 text-white hover:bg-white hover:text-black"
+                              ? "border-champagne-300 bg-gradient-to-br from-champagne-100 to-champagne-400 font-bold text-black shadow-[0_0_20px_rgba(212,175,106,0.5)]"
+                              : "border-white/20 bg-black/50 text-white hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
                           }`}
                         >
                           ⚑
@@ -396,13 +397,13 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
 
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <Link href={`/creators/${art.artist_username}`} className="min-w-0 transition hover:opacity-80">
-                        <h3 className="truncate text-xs font-medium text-zinc-200 hover:underline">{art.artist_name}</h3>
+                        <h3 className="truncate text-xs font-medium text-zinc-200 hover:text-champagne-200">{art.artist_name}</h3>
                         <p className="text-[10px] text-zinc-500">@{art.artist_username}</p>
                       </Link>
 
                       {isMember ? (
                         <div className="group/react relative flex items-center">
-                          <div className="pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full border border-white/15 bg-[#161618] px-2.5 py-1.5 opacity-0 shadow-2xl transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
+                          <div className="glass pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full px-2.5 py-1.5 opacity-0 transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
                             {REACTIONS.map((r) => (
                               <button
                                 key={r.type}
@@ -452,10 +453,10 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
             </div>
 
             {filteredArtworks.length === 0 && (
-              <div className="py-20 text-center">
+              <div className="glass mt-6 rounded-2xl border border-white/10 py-20 text-center">
                 <p className="text-2xl text-zinc-600">⌕</p>
                 <p className="mt-3 text-sm text-zinc-400">Tidak ada karya yang cocok dengan filter.</p>
-                <button type="button" onClick={resetFilters} className="mt-3 text-xs text-zinc-300 underline hover:text-white">
+                <button type="button" onClick={resetFilters} className="mt-3 text-xs text-champagne-200 underline hover:text-white">
                   Reset semua filter
                 </button>
               </div>
@@ -464,7 +465,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
 
           <footer className="mt-20 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] py-8 text-[9px] tracking-[0.2em] text-zinc-700">
             <span>AESTHE © 2026</span>
-            <span>EXPLORE UNIVERSE.</span>
+            <span className="font-display text-sm italic normal-case tracking-normal text-zinc-500">Explore the creative universe.</span>
             <span>MADE FOR CREATORS.</span>
           </footer>
         </div>

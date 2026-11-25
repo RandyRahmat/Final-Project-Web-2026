@@ -120,14 +120,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
   const allCovers = artworks.slice(0, 3).map((a) => a.image_url);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#090909] text-zinc-100">
-      {/* BACKGROUND ATMOSPHERE */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-64 left-1/3 h-[600px] w-[600px] rounded-full bg-white/[0.035] blur-[140px]" />
-        <div className="absolute right-0 top-[50%] h-[400px] w-[400px] rounded-full bg-zinc-500/[0.035] blur-[140px]" />
-        <div className="absolute inset-0 opacity-[0.025] [background-image:radial-gradient(#fff_0.6px,transparent_0.6px)] [background-size:5px_5px]" />
-      </div>
-
+    <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       <AppSidebar
         currentUser={currentUser}
         activeItem="favorites"
@@ -141,13 +134,13 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
       {/* MAIN CONTENT */}
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
         {/* TOP NAVBAR */}
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/75 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">
               ☰
             </button>
             <div className="hidden text-[10px] tracking-[0.2em] text-zinc-600 sm:block">
-              PERSONAL / <span className="text-zinc-300">FAVORITES &amp; MOODBOARDS</span>
+              PERSONAL / <span className="text-champagne-200">FAVORITES &amp; MOODBOARDS</span>
             </div>
             <div className="flex items-center gap-2 sm:hidden">
               <img src="/images/aesthe-logo.png" alt="" className="h-6 w-6 object-contain" />
@@ -161,7 +154,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search saved favorites..."
-              className="w-full rounded-full border border-white/[0.08] bg-white/[0.025] py-2.5 pl-11 pr-5 text-[11px] text-white outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.05]"
+              className="input-lux rounded-full py-2.5 pl-11 pr-5 text-[11px]"
             />
           </div>
 
@@ -170,12 +163,14 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
               <p className="text-[11px] font-medium">{currentUser.displayName}</p>
               <p className="mt-0.5 text-[9px] text-zinc-600">MEMBER ACCOUNT</p>
             </div>
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-500 to-zinc-900 text-xs font-medium uppercase">
-              {currentUser.avatarUrl ? (
-                <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
-              ) : (
-                currentUser.displayName.charAt(0)
-              )}
+            <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-medium uppercase">
+                {currentUser.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
+                ) : (
+                  currentUser.displayName.charAt(0)
+                )}
+              </div>
             </div>
           </Link>
         </header>
@@ -183,18 +178,18 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
         {/* PAGE CONTENT */}
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
           {/* HEADER FAVORITES */}
-          <section className="flex flex-wrap items-end justify-between gap-4">
+          <section data-reveal className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="mb-3 flex items-center gap-2.5">
-                <p className="text-[9px] tracking-[0.35em] text-zinc-500">PERSONAL COLLECTIONS</p>
-                <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.2em] text-amber-300">
+                <p className="eyebrow">PERSONAL COLLECTIONS</p>
+                <span className="rounded-full border border-champagne-300/30 bg-champagne-400/10 px-2.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.2em] text-champagne-200">
                   {artworks.length} SAVED &bull; {collections.length} MOODBOARDS
                 </span>
               </div>
-              <h1 className="text-3xl font-light tracking-tight sm:text-4xl lg:text-5xl">
-                Favorites &amp; Moodboards<span className="text-zinc-500">.</span>
+              <h1 className="font-display text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+                Favorites &amp; <span className="italic text-gold">Moodboards</span><span className="text-champagne-400">.</span>
               </h1>
-              <p className="mt-3 text-[11px] text-zinc-500 sm:text-xs">
+              <p className="mt-3 text-[11px] text-zinc-400 sm:text-xs">
                 Kelompokkan karya favoritmu ke dalam folder moodboard bertema untuk referensi kreatifmu.
               </p>
             </div>
@@ -203,11 +198,11 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
               <button
                 type="button"
                 onClick={() => setShowCreateModal(true)}
-                className="rounded-full bg-white px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-black transition hover:bg-zinc-200"
+                className="btn-gold rounded-full px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]"
               >
                 ＋ Buat Moodboard
               </button>
-              <Link href="/explore" className="rounded-full border border-white/20 px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.18em] transition duration-300 hover:border-white hover:bg-white hover:text-black">
+              <Link href="/explore" className="btn-ghost rounded-full px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]">
                 Jelajahi Karya &rarr;
               </Link>
             </div>
@@ -216,12 +211,12 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
           {/* SECTION MOODBOARDS / COLLECTIONS (PINTEREST / BEHANCE STYLE) */}
           <section className="mt-10">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-[9px] tracking-[0.3em] text-zinc-500">MY MOODBOARDS</p>
+              <p className="eyebrow">MY MOODBOARDS</p>
               {selectedCollection && (
                 <button
                   type="button"
                   onClick={() => setActiveCollectionId("all")}
-                  className="text-[10px] text-zinc-400 transition hover:text-white"
+                  className="text-[10px] text-zinc-400 transition hover:text-champagne-200"
                 >
                   &larr; Kembali ke Semua Favorites
                 </button>
@@ -233,17 +228,17 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
               <button
                 type="button"
                 onClick={() => setActiveCollectionId("all")}
-                className={`group overflow-hidden rounded-2xl border text-left transition ${
+                className={`card-lux spotlight glass group overflow-hidden rounded-2xl border text-left transition ${
                   activeCollectionId === "all"
-                    ? "border-white bg-white/[0.08]"
-                    : "border-white/[0.08] bg-zinc-900/45 hover:border-white/25"
+                    ? "border-champagne-300/60 bg-champagne-400/[0.12] shadow-[0_0_30px_-10px_rgba(212,175,106,0.45)]"
+                    : "border-white/15 hover:border-champagne-300/45"
                 }`}
               >
                 <div className="grid h-28 grid-cols-3 gap-0.5 bg-zinc-950">
                   {[0, 1, 2].map((idx) => (
                     <div key={idx} className="overflow-hidden bg-zinc-900">
                       {allCovers[idx] ? (
-                        <img src={allCovers[idx]} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                        <img src={allCovers[idx]} alt="" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-xs text-zinc-700">⚑</div>
                       )}
@@ -252,8 +247,8 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-xs font-medium text-white">Semua Favorites</p>
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300">
+                    <p className="font-display truncate text-lg text-white">Semua Favorites</p>
+                    <span className="rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200">
                       {artworks.length}
                     </span>
                   </div>
@@ -268,10 +263,10 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                 return (
                   <div
                     key={col.id}
-                    className={`group flex flex-col overflow-hidden rounded-2xl border transition ${
+                    className={`card-lux spotlight glass group flex flex-col overflow-hidden rounded-2xl border transition ${
                       isSelected
-                        ? "border-amber-400/70 bg-amber-500/[0.08]"
-                        : "border-white/[0.08] bg-zinc-900/45 hover:border-white/25"
+                        ? "border-amber-400/70 bg-amber-500/[0.12] shadow-[0_0_30px_-10px_rgba(245,158,11,0.45)]"
+                        : "border-white/15 hover:border-champagne-300/45"
                     }`}
                   >
                     <button
@@ -283,7 +278,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                         {[0, 1, 2].map((idx) => (
                           <div key={idx} className="overflow-hidden bg-zinc-900">
                             {covers[idx] ? (
-                              <img src={covers[idx]} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                              <img src={covers[idx]} alt="" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-[11px] text-zinc-700">◈</div>
                             )}
@@ -292,8 +287,8 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                       </div>
                       <div className="px-4 pt-3.5">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-xs font-medium text-white">{col.name}</p>
-                          <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300">
+                          <p className="font-display truncate text-lg text-white">{col.name}</p>
+                          <span className="shrink-0 rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200">
                             {col.item_count}
                           </span>
                         </div>
@@ -307,7 +302,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                       <button
                         type="button"
                         onClick={() => setEditingCollection(col)}
-                        className="text-[10px] text-zinc-500 transition hover:text-white"
+                        className="text-[10px] text-zinc-500 transition hover:text-champagne-200"
                       >
                         Edit
                       </button>
@@ -329,12 +324,12 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
               <button
                 type="button"
                 onClick={() => setShowCreateModal(true)}
-                className="flex min-h-[175px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.015] p-5 text-center transition hover:border-white/35 hover:bg-white/[0.03]"
+                className="flex min-h-[175px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/[0.015] p-5 text-center transition hover:border-champagne-300/50 hover:bg-champagne-400/[0.05]"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-lg text-zinc-300">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-champagne-300/30 bg-champagne-400/10 text-lg text-champagne-200">
                   ＋
                 </span>
-                <p className="mt-3 text-xs font-medium text-zinc-200">Moodboard Baru</p>
+                <p className="font-display mt-3 text-lg text-zinc-100">Moodboard Baru</p>
                 <p className="mt-1 text-[10px] text-zinc-500">Buat folder koleksi bertema</p>
               </button>
             </div>
@@ -345,10 +340,10 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
             <section className="mt-12">
               <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p className="text-[9px] tracking-[0.3em] text-zinc-600">ACTIVE BOARD</p>
-                  <h2 className="mt-1 text-xl font-light text-white">
+                  <p className="eyebrow">ACTIVE BOARD</p>
+                  <h2 className="font-display mt-1.5 text-3xl text-white">
                     {selectedCollection ? selectedCollection.name : "Semua Karya Favorit"}
-                    <span className="ml-2 text-sm text-zinc-500">({filteredArtworks.length})</span>
+                    <span className="ml-2 font-sans text-sm text-champagne-300/80">({filteredArtworks.length})</span>
                   </h2>
                   {selectedCollection?.description && (
                     <p className="mt-1 text-xs text-zinc-400">{selectedCollection.description}</p>
@@ -365,8 +360,8 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                       onClick={() => setActiveCategory(category)}
                       className={`shrink-0 rounded-full border px-4 py-2 text-[9px] tracking-[0.12em] transition-all duration-300 ${
                         activeCategory === category
-                          ? "border-white bg-white text-black"
-                          : "border-white/[0.08] text-zinc-500 hover:border-white/40 hover:text-white"
+                          ? "chip-active"
+                          : "border-white/10 text-zinc-500 hover:border-champagne-300/40 hover:text-champagne-50"
                       }`}
                     >
                       {category.toUpperCase()}
@@ -379,7 +374,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                     type="button"
                     onClick={() => setSortBy("saved")}
                     className={`rounded-full px-3.5 py-1.5 text-[9px] tracking-[0.14em] transition ${
-                      sortBy === "saved" ? "bg-white text-black font-semibold" : "text-zinc-400 hover:text-white"
+                      sortBy === "saved" ? "chip-active" : "text-zinc-400 hover:text-champagne-50"
                     }`}
                   >
                     BARU DISIMPAN
@@ -388,7 +383,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                     type="button"
                     onClick={() => setSortBy("popular")}
                     className={`rounded-full px-3.5 py-1.5 text-[9px] tracking-[0.14em] transition ${
-                      sortBy === "popular" ? "bg-white text-black font-semibold" : "text-zinc-400 hover:text-white"
+                      sortBy === "popular" ? "chip-active" : "text-zinc-400 hover:text-champagne-50"
                     }`}
                   >
                     POPULER
@@ -397,7 +392,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                     type="button"
                     onClick={() => setSortBy("latest")}
                     className={`rounded-full px-3.5 py-1.5 text-[9px] tracking-[0.14em] transition ${
-                      sortBy === "latest" ? "bg-white text-black font-semibold" : "text-zinc-400 hover:text-white"
+                      sortBy === "latest" ? "chip-active" : "text-zinc-400 hover:text-champagne-50"
                     }`}
                   >
                     TERBARU
@@ -412,14 +407,14 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                   const boardCount = (art.collection_ids || []).length;
 
                   return (
-                    <article key={art.id} className="group relative min-w-0">
-                      <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-white/[0.06] bg-zinc-900">
+                    <article key={art.id} data-reveal className="group relative min-w-0">
+                      <div className="card-lux spotlight relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/15 bg-zinc-900">
                         <Link href={`/artworks/${art.id}`} className="block h-full w-full">
                           <img
                             src={art.image_url}
                             alt={art.title}
                             loading="lazy"
-                            className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-75"
+                            className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110"
                           />
 
                           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-80" />
@@ -431,7 +426,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                           </div>
 
                           <div className="absolute inset-x-0 bottom-0 p-4">
-                            <p className="text-sm font-medium text-white group-hover:underline">{art.title}</p>
+                            <p className="font-display text-lg text-white transition group-hover:text-champagne-100">{art.title}</p>
                             <div className="mt-1.5 flex flex-wrap gap-1.5">
                               {(art.tags || []).map((tag) => (
                                 <span key={tag} className="text-[9px] text-zinc-400">
@@ -440,6 +435,10 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                               ))}
                             </div>
                           </div>
+
+                          <span className="absolute bottom-4 right-4 translate-y-3 rounded-full bg-black/60 px-3 py-1.5 text-[9px] tracking-[0.2em] text-champagne-100 opacity-0 backdrop-blur-md transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                            LIHAT ↗
+                          </span>
                         </Link>
 
                         <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
@@ -449,8 +448,8 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                             title="Masukkan ke Moodboard"
                             className={`flex h-8 items-center gap-1 rounded-full border px-2.5 text-[10px] backdrop-blur-md transition ${
                               boardCount > 0
-                                ? "border-white/40 bg-black/70 font-medium text-white hover:bg-white hover:text-black"
-                                : "border-white/20 bg-black/55 text-zinc-200 hover:bg-white hover:text-black"
+                                ? "border-champagne-300/60 bg-black/70 font-medium text-champagne-100 hover:bg-champagne-200 hover:text-black"
+                                : "border-white/20 bg-black/55 text-zinc-200 hover:border-champagne-300/60 hover:bg-champagne-200 hover:text-black"
                             }`}
                           >
                             <span>▤</span>
@@ -461,7 +460,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                             type="button"
                             onClick={() => handleRemoveFavorite(art.id)}
                             title="Hapus dari Favorites"
-                            className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-400 bg-amber-400 text-xs font-bold text-black backdrop-blur-md transition hover:border-red-400 hover:bg-red-500 hover:text-white"
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-champagne-300 bg-gradient-to-br from-champagne-100 to-champagne-400 text-xs font-bold text-black shadow-[0_0_18px_rgba(212,175,106,0.45)] backdrop-blur-md transition hover:border-red-400 hover:from-red-500 hover:to-red-600 hover:text-white"
                           >
                             ⚑
                           </button>
@@ -470,12 +469,12 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
                       <div className="mt-3 flex items-center justify-between gap-2">
                         <Link href={`/creators/${art.artist_username}`} className="min-w-0 transition hover:opacity-80">
-                          <h3 className="truncate text-xs font-medium text-zinc-200 hover:underline">{art.artist_name}</h3>
+                          <h3 className="truncate text-xs font-medium text-zinc-200 hover:text-champagne-200">{art.artist_name}</h3>
                           <p className="text-[10px] text-zinc-500">@{art.artist_username}</p>
                         </Link>
 
                         <div className="group/react relative flex items-center">
-                          <div className="pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full border border-white/15 bg-[#161618] px-2.5 py-1.5 opacity-0 shadow-2xl transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
+                          <div className="glass pointer-events-none absolute bottom-full right-0 mb-2 flex items-center gap-1 rounded-full px-2.5 py-1.5 opacity-0 transition-all duration-200 group-hover/react:pointer-events-auto group-hover/react:opacity-100">
                             {REACTIONS.map((r) => (
                               <button
                                 key={r.type}
@@ -509,7 +508,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
               </div>
 
               {filteredArtworks.length === 0 && (
-                <div className="py-20 text-center">
+                <div className="glass mt-6 rounded-2xl border border-white/10 py-20 text-center">
                   <p className="text-2xl text-zinc-600">▤</p>
                   <p className="mt-3 text-sm text-zinc-400">
                     {selectedCollection
@@ -523,7 +522,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                       setActiveCategory("All");
                       setSearch("");
                     }}
-                    className="mt-3 text-xs text-zinc-300 underline hover:text-white"
+                    className="mt-3 text-xs text-champagne-200 underline hover:text-white"
                   >
                     Tampilkan semua Favorites
                   </button>
@@ -534,15 +533,15 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
           {/* EMPTY STATE BELUM ADA FAVORITES */}
           {artworks.length === 0 && (
-            <section className="mt-16 flex flex-col items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-20 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-xl text-amber-300">
+            <section className="glass mt-16 flex flex-col items-center justify-center rounded-3xl border border-white/15 px-6 py-20 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-champagne-300/30 bg-champagne-400/10 text-xl text-champagne-200">
                 ⚑
               </div>
-              <h2 className="mt-5 text-lg font-light text-white">Belum ada karya favorit tersimpan</h2>
-              <p className="mt-2 max-w-md text-xs leading-relaxed text-zinc-500">
+              <h2 className="font-display mt-5 text-3xl text-white">Belum ada karya favorit tersimpan</h2>
+              <p className="mt-2 max-w-md text-xs leading-relaxed text-zinc-400">
                 Tekan ikon bendera (⚑) pada karya yang kamu sukai di halaman Home atau Explore, lalu kelompokkan ke dalam Moodboard pribadimu.
               </p>
-              <Link href="/explore" className="mt-6 rounded-full bg-white px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200">
+              <Link href="/explore" className="btn-gold mt-6 rounded-full px-6 py-2.5 text-[10px] uppercase tracking-[0.2em]">
                 Mulai Jelajahi
               </Link>
             </section>
@@ -550,7 +549,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
           <footer className="mt-20 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] py-8 text-[9px] tracking-[0.2em] text-zinc-700">
             <span>AESTHE © 2026</span>
-            <span>FAVORITES &amp; MOODBOARDS.</span>
+            <span className="font-display text-sm italic normal-case tracking-normal text-zinc-500">Curate your visual moodboards.</span>
             <span>MADE FOR CREATORS.</span>
           </footer>
         </div>
@@ -558,12 +557,12 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
       {/* MODAL BUAT MOODBOARD BARU */}
       {showCreateModal && (
-        <div onClick={() => setShowCreateModal(false)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111] p-7 shadow-2xl">
+        <div onClick={() => setShowCreateModal(false)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
+          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-md rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[9px] tracking-[0.3em] text-zinc-500">NEW MOODBOARD</p>
-                <h2 className="mt-1 text-xl font-light text-white">Buat Moodboard Baru</h2>
+                <p className="eyebrow">NEW MOODBOARD</p>
+                <h2 className="font-display mt-1.5 text-3xl text-white">Buat Moodboard Baru</h2>
               </div>
               <button type="button" onClick={() => setShowCreateModal(false)} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>
@@ -583,7 +582,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                   required
                   maxLength={100}
                   placeholder="Contoh: Inspirasi Desain Karakter"
-                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  className="input-lux"
                 />
               </div>
 
@@ -593,14 +592,14 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                   name="description"
                   rows={3}
                   placeholder="Kumpulan referensi palet warna, komposisi, dan pencahayaan..."
-                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  className="input-lux"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isCreating}
-                className="w-full rounded-lg bg-white py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50"
+                className="btn-gold w-full rounded-xl py-3 text-[10px] uppercase tracking-[0.2em]"
               >
                 {isCreating ? "Membuat..." : "Simpan Moodboard"}
               </button>
@@ -611,12 +610,12 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
       {/* MODAL EDIT MOODBOARD */}
       {editingCollection && (
-        <div onClick={() => setEditingCollection(null)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111] p-7 shadow-2xl">
+        <div onClick={() => setEditingCollection(null)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
+          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-md rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[9px] tracking-[0.3em] text-zinc-500">EDIT MOODBOARD</p>
-                <h2 className="mt-1 text-xl font-light text-white">Perbarui Moodboard</h2>
+                <p className="eyebrow">EDIT MOODBOARD</p>
+                <h2 className="font-display mt-1.5 text-3xl text-white">Perbarui Moodboard</h2>
               </div>
               <button type="button" onClick={() => setEditingCollection(null)} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>
@@ -638,7 +637,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                   required
                   maxLength={100}
                   defaultValue={editingCollection.name}
-                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  className="input-lux"
                 />
               </div>
 
@@ -648,14 +647,14 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                   name="description"
                   rows={3}
                   defaultValue={editingCollection.description || ""}
-                  className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white focus:border-white/40 focus:outline-none"
+                  className="input-lux"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isEditing}
-                className="w-full rounded-lg bg-white py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50"
+                className="btn-gold w-full rounded-xl py-3 text-[10px] uppercase tracking-[0.2em]"
               >
                 {isEditing ? "Menyimpan..." : "Simpan Perubahan"}
               </button>
@@ -666,18 +665,18 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
 
       {/* MODAL CHECKLIST MASUKKAN KARYA KE MOODBOARD */}
       {liveAssigningArtwork && (
-        <div onClick={() => setAssigningArtwork(null)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111] p-7 shadow-2xl">
+        <div onClick={() => setAssigningArtwork(null)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl">
+          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-md rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[9px] tracking-[0.3em] text-zinc-500">SAVE TO MOODBOARD</p>
-                <h2 className="mt-1 text-lg font-light text-white">{liveAssigningArtwork.title}</h2>
+                <p className="eyebrow">SAVE TO MOODBOARD</p>
+                <h2 className="font-display mt-1.5 text-2xl text-white">{liveAssigningArtwork.title}</h2>
               </div>
               <button type="button" onClick={() => setAssigningArtwork(null)} className="text-xl text-zinc-500 hover:text-white">×</button>
             </div>
 
             {collections.length === 0 ? (
-              <div className="mt-6 rounded-xl border border-white/10 bg-black/40 p-5 text-center">
+              <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 text-center">
                 <p className="text-xs text-zinc-400">Kamu belum punya moodboard.</p>
                 <button
                   type="button"
@@ -685,7 +684,7 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                     setAssigningArtwork(null);
                     setShowCreateModal(true);
                   }}
-                  className="mt-4 rounded-full bg-white px-5 py-2 text-[10px] font-semibold uppercase tracking-wider text-black"
+                  className="btn-gold mt-4 rounded-full px-5 py-2 text-[10px] uppercase tracking-wider"
                 >
                   ＋ Buat Moodboard Pertama
                 </button>
@@ -704,8 +703,8 @@ export default function FavoritesClient({ currentUser, artworks, collections = [
                       onClick={() => handleToggleArtworkInCollection(col.id, liveAssigningArtwork.id)}
                       className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition disabled:opacity-50 ${
                         isIn
-                          ? "border-amber-400/50 bg-amber-500/15 text-amber-200"
-                          : "border-white/10 bg-black/40 text-zinc-300 hover:border-white/30 hover:text-white"
+                          ? "border-champagne-300/60 bg-champagne-400/15 text-champagne-100"
+                          : "border-white/10 bg-black/40 text-zinc-300 hover:border-champagne-300/40 hover:text-white"
                       }`}
                     >
                       <div className="min-w-0">

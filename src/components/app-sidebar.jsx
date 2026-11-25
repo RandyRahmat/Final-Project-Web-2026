@@ -26,12 +26,12 @@ export default function AppSidebar({
   const avatarUrl = currentUser?.avatarUrl || currentUser?.avatar_url || null;
 
   const navItemClass = (isActive) =>
-    `group flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] transition-all duration-300 ${
+    `group relative overflow-hidden flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-[12px] transition-all duration-300 ${
       collapsed ? "lg:justify-center lg:px-0" : ""
     } ${
       isActive
-        ? "border border-white/[0.08] bg-white/[0.08] text-white shadow-[inset_2px_0_0_white]"
-        : "text-zinc-500 hover:bg-white/[0.04] hover:text-white"
+        ? "bg-gradient-to-r from-champagne-400/[0.14] via-white/[0.03] to-transparent text-white border border-champagne-300/15 shadow-[0_0_30px_-12px_rgba(212,175,106,0.5)]"
+        : "text-zinc-500 hover:bg-white/[0.04] hover:text-champagne-50"
     }`;
 
   return (
@@ -41,17 +41,19 @@ export default function AppSidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0b0b0c]/95 px-6 py-7 backdrop-blur-2xl transition-all duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r border-white/[0.07] bg-[#0a0a0b]/80 px-6 py-7 backdrop-blur-2xl transition-all duration-300 lg:translate-x-0 ${
           mobileMenu ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "lg:w-[78px] lg:px-3" : "lg:w-[250px]"}`}
       >
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-champagne-400/25 to-transparent" />
+
         {/* HEADER LOGO + TOMBOL MINIMIZE */}
         <div className={`mb-10 flex items-center ${collapsed ? "justify-between lg:flex-col lg:gap-3" : "justify-between"}`}>
           <Link href="/home" title="Aesthe Home" onClick={onCloseMobile} className="flex items-center gap-3 overflow-hidden">
-            <img src="/images/aesthe-logo.png" alt="Aesthe" className="h-9 w-9 shrink-0 object-contain mix-blend-screen" />
+            <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow h-9 w-9 shrink-0 object-contain mix-blend-screen" />
             <div className={collapsed ? "lg:hidden" : ""}>
-              <h1 className="text-[17px] font-medium tracking-[0.35em]">AESTHE</h1>
-              <p className="mt-0.5 text-[8px] tracking-[0.3em] text-zinc-600">ART SHOWCASE</p>
+              <h1 className="bg-gradient-to-r from-white to-champagne-200 bg-clip-text text-[17px] font-medium tracking-[0.35em] text-transparent">AESTHE</h1>
+              <p className="mt-0.5 text-[8px] tracking-[0.3em] text-champagne-600/80">ART SHOWCASE</p>
             </div>
           </Link>
 
@@ -75,21 +77,24 @@ export default function AppSidebar({
 
           <nav className="space-y-1">
             <Link href="/home" title="Home" onClick={onCloseMobile} className={navItemClass(activeItem === "home")}>
-              <span className="w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110">⌂</span>
+              {activeItem === "home" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
+              <span className={`w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110 ${activeItem === "home" ? "text-champagne-300" : ""}`}>⌂</span>
               <span className={collapsed ? "lg:hidden" : ""}>Home</span>
             </Link>
 
             <Link href="/explore" title="Explore" onClick={onCloseMobile} className={navItemClass(activeItem === "explore")}>
-              <span className="w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110">◈</span>
+              {activeItem === "explore" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
+              <span className={`w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110 ${activeItem === "explore" ? "text-champagne-300" : ""}`}>◈</span>
               <span className={collapsed ? "lg:hidden" : ""}>Explore</span>
             </Link>
 
             {isMember && (
               <Link href="/favorites" title="Favorites" onClick={onCloseMobile} className={navItemClass(activeItem === "favorites")}>
-                <span className="w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110">⚑</span>
+                {activeItem === "favorites" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
+                <span className={`w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110 ${activeItem === "favorites" ? "text-champagne-300" : ""}`}>⚑</span>
                 <span className={collapsed ? "lg:hidden" : ""}>Favorites</span>
                 {typeof favoritesCount === "number" && (
-                  <span className={`ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300 ${collapsed ? "lg:hidden" : ""}`}>
+                  <span className={`ml-auto rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200 ${collapsed ? "lg:hidden" : ""}`}>
                     {favoritesCount}
                   </span>
                 )}
@@ -97,10 +102,11 @@ export default function AppSidebar({
             )}
 
             <Link href="/challenges" title="Challenges" onClick={onCloseMobile} className={navItemClass(activeItem === "challenges")}>
-              <span className="w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110">✧</span>
+              {activeItem === "challenges" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
+              <span className={`w-4 shrink-0 text-center text-base transition-transform duration-300 group-hover:scale-110 ${activeItem === "challenges" ? "text-champagne-300" : ""}`}>✧</span>
               <span className={collapsed ? "lg:hidden" : ""}>Challenges</span>
               {typeof challengesCount === "number" && (
-                <span className={`ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-zinc-300 ${collapsed ? "lg:hidden" : ""}`}>
+                <span className={`ml-auto rounded-full bg-champagne-400/15 px-2 py-0.5 text-[9px] text-champagne-200 ${collapsed ? "lg:hidden" : ""}`}>
                   {challengesCount}
                 </span>
               )}
@@ -140,7 +146,8 @@ export default function AppSidebar({
 
             {currentUser && (
               <Link href="/profile" title="My Profile" onClick={onCloseMobile} className={navItemClass(activeItem === "profile")}>
-                <span className="w-4 shrink-0 text-center text-base">◉</span>
+                {activeItem === "profile" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
+                <span className={`w-4 shrink-0 text-center text-base ${activeItem === "profile" ? "text-champagne-300" : ""}`}>◉</span>
                 <span className={collapsed ? "lg:hidden" : ""}>My Profile</span>
               </Link>
             )}
@@ -154,7 +161,8 @@ export default function AppSidebar({
 
             {currentUser && (
               <Link href="/messages" title="Messages" onClick={onCloseMobile} className={navItemClass(activeItem === "messages")}>
-                <span className="w-4 shrink-0 text-center text-sm">✉</span>
+                {activeItem === "messages" && <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-champagne-200 to-champagne-500 shadow-[0_0_10px_rgba(212,175,106,0.8)]" />}
+                <span className={`w-4 shrink-0 text-center text-sm ${activeItem === "messages" ? "text-champagne-300" : ""}`}>✉</span>
                 <span className={collapsed ? "lg:hidden" : ""}>Messages</span>
               </Link>
             )}
@@ -164,7 +172,7 @@ export default function AppSidebar({
                 href="/curator"
                 title="Curator Dashboard"
                 onClick={onCloseMobile}
-                className={`flex w-full items-center gap-4 rounded-lg border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-left text-[12px] text-amber-200 transition hover:border-amber-400/40 hover:bg-amber-500/15 ${
+                className={`flex w-full items-center gap-4 rounded-lg border border-champagne-400/25 bg-champagne-400/10 px-4 py-3 text-left text-[12px] text-champagne-200 transition hover:border-champagne-300/50 hover:bg-champagne-400/15 ${
                   collapsed ? "lg:justify-center lg:px-0" : ""
                 }`}
               >
@@ -218,18 +226,20 @@ export default function AppSidebar({
         {/* SESSION CARD POJOK KIRI BAWAH */}
         <div className="mt-auto border-t border-white/[0.06] pt-4">
           {currentUser ? (
-            <div className={`flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-2.5 transition hover:border-white/20 ${collapsed ? "lg:flex-col lg:gap-2 lg:p-2" : ""}`}>
-              <Link href="/profile" title={`Profil ${displayName}`} onClick={onCloseMobile} className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs font-semibold text-white">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                ) : (
-                  displayName.charAt(0).toUpperCase()
-                )}
+            <div className={`glass flex items-center gap-3 rounded-2xl p-2.5 transition hover:border-champagne-300/25 ${collapsed ? "lg:flex-col lg:gap-2 lg:p-2" : ""}`}>
+              <Link href="/profile" title={`Profil ${displayName}`} onClick={onCloseMobile} className="relative shrink-0 rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-semibold text-white">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                  ) : (
+                    displayName.charAt(0).toUpperCase()
+                  )}
+                </div>
                 <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-black bg-emerald-400" />
               </Link>
 
               <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
-                <Link href="/profile" onClick={onCloseMobile} className="block truncate text-xs font-medium leading-tight text-white transition hover:text-zinc-300">
+                <Link href="/profile" onClick={onCloseMobile} className="block truncate text-xs font-medium leading-tight text-white transition hover:text-champagne-200">
                   {displayName}
                 </Link>
                 <form action={logoutUserAction} className="mt-0.5">
@@ -248,13 +258,13 @@ export default function AppSidebar({
               )}
             </div>
           ) : (
-            <div className={`flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-2.5 ${collapsed ? "lg:flex-col lg:gap-1.5 lg:p-2" : ""}`}>
-              <Link href="/" title="Sign In" onClick={onCloseMobile} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-800 text-xs text-zinc-400 transition hover:border-white/30 hover:text-white">
+            <div className={`glass flex items-center gap-3 rounded-2xl p-2.5 ${collapsed ? "lg:flex-col lg:gap-1.5 lg:p-2" : ""}`}>
+              <Link href="/" title="Sign In" onClick={onCloseMobile} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-800 text-xs text-zinc-400 transition hover:border-champagne-300/40 hover:text-champagne-200">
                 G
               </Link>
               <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
                 <p className="truncate text-xs font-medium leading-tight text-white">Guest</p>
-                <Link href="/" onClick={onCloseMobile} className="text-[10px] text-zinc-400 transition hover:text-white">
+                <Link href="/" onClick={onCloseMobile} className="text-[10px] text-zinc-400 transition hover:text-champagne-200">
                   Sign In
                 </Link>
               </div>

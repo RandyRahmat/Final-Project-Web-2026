@@ -4,6 +4,33 @@ import { useState, useEffect, useRef, useActionState } from "react";
 import Link from "next/link";
 import { loginUserAction, registerUserAction, verifyAccountForResetAction, resetPasswordAction } from "@/actions/auth-actions";
 
+const MARQUEE_COLUMNS = [
+  [
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=70",
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=70",
+    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=70",
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=70",
+  ],
+  [
+    "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&q=70",
+    "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=600&q=70",
+    "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=600&q=70",
+    "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=70",
+  ],
+  [
+    "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&q=70",
+    "https://images.unsplash.com/photo-1563089145-599997674d42?w=600&q=70",
+    "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=600&q=70",
+    "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=600&q=70",
+  ],
+  [
+    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=70",
+    "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&q=70",
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=70",
+    "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=70",
+  ],
+];
+
 export default function WelcomePage() {
   const [step, setStep] = useState(0);
   const [authMode, setAuthMode] = useState("login");
@@ -59,19 +86,29 @@ export default function WelcomePage() {
       : isVerifyingReset;
 
   return (
-    <main className="relative h-screen w-full overflow-hidden bg-[#0b0b0c] text-zinc-100 select-none">
-      <div className="pointer-events-none fixed inset-y-0 left-1/2 z-0 w-[1px] -translate-x-1/2 bg-white/[0.06]" />
-      <div className="pointer-events-none fixed left-1/2 top-1/2 z-0 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.03] blur-3xl" />
+    <main className="relative h-screen w-full overflow-hidden bg-transparent text-zinc-100 select-none">
+      <div className={`pointer-events-none fixed inset-0 z-0 overflow-hidden transition-opacity duration-1000 ${step === 0 ? "opacity-[0.3]" : step === 1 ? "opacity-[0.16]" : "opacity-[0.08]"}`}>
+        <div className="absolute -inset-x-[10%] -top-[25%] grid h-[150%] rotate-[-8deg] scale-110 grid-cols-3 gap-4 px-4 sm:grid-cols-4">
+          {MARQUEE_COLUMNS.map((col, i) => (
+            <div key={i} style={{ animationDuration: `${55 + i * 9}s` }} className={`flex flex-col gap-4 ${i % 2 === 0 ? "animate-marquee-up" : "animate-marquee-down"} ${i === 3 ? "hidden sm:flex" : ""}`}>
+              {[...col, ...col].map((src, idx) => (
+                <img key={idx} src={src} alt="" loading="lazy" className="aspect-[3/4] w-full rounded-2xl object-cover" />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_center,rgba(9,9,9,0.45)_0%,rgba(9,9,9,0.9)_65%,#090909_100%)]" />
 
       <header className="fixed top-6 left-1/2 z-30 -translate-x-1/2">
-        <nav className="flex items-center gap-6 rounded-full border border-white/10 bg-zinc-900/70 px-6 py-2.5 text-[11px] uppercase tracking-[0.22em] text-zinc-400 backdrop-blur-md">
-          <button type="button" onClick={handleBackToTop} className={`transition hover:text-white ${step === 0 ? "text-white font-medium" : ""}`}>
+        <nav className="glass flex items-center gap-6 rounded-full px-6 py-2.5 text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+          <button type="button" onClick={handleBackToTop} className={`transition hover:text-white ${step === 0 ? "text-champagne-200 font-medium" : ""}`}>
             Beranda
           </button>
-          <button type="button" onClick={handleStartLoginSequence} className={`transition hover:text-white ${step === 1 ? "text-white font-medium" : ""}`}>
+          <button type="button" onClick={handleStartLoginSequence} className={`transition hover:text-white ${step === 1 ? "text-champagne-200 font-medium" : ""}`}>
             Tentang
           </button>
-          <button type="button" onClick={handleSkipToLogin} className={`transition hover:text-white ${step === 2 ? "text-white font-medium" : ""}`}>
+          <button type="button" onClick={handleSkipToLogin} className={`transition hover:text-white ${step === 2 ? "text-champagne-200 font-medium" : ""}`}>
             Masuk
           </button>
         </nav>
@@ -83,30 +120,43 @@ export default function WelcomePage() {
       >
         <section className="relative flex h-screen w-full flex-col items-center justify-center px-6">
           <div className="flex flex-col items-center">
+            <span className="glass animate-fade-up mb-6 rounded-full px-4 py-1.5 text-[9px] tracking-[0.4em] text-champagne-200">
+              DIGITAL ART SHOWCASE &middot; 2026
+            </span>
+
             <div className="relative flex items-center justify-center">
-              <img src="/images/aesthe-logo.png" alt="Logo Aesthe" className="h-44 w-44 object-contain mix-blend-screen drop-shadow-[0_0_28px_rgba(255,255,255,0.35)] sm:h-52 sm:w-52" />
+              <div className="animate-spin-slow absolute inset-[-20%] -z-10 rounded-full bg-[conic-gradient(from_0deg,transparent,rgba(212,175,106,0.3),transparent_40%)] blur-2xl" />
+              <img src="/images/aesthe-logo.png" alt="Logo Aesthe" className="logo-glow animate-float-slow h-36 w-36 object-contain mix-blend-screen sm:h-44 sm:w-44" />
             </div>
 
-            <div className="mt-1 h-[1px] w-48 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            <div className="mt-1 h-[1px] w-48 bg-gradient-to-r from-transparent via-champagne-300/40 to-transparent" />
 
             <div className="mt-5 overflow-hidden">
               <img src="/images/aesthe-text.png" alt="AESTHE" className="h-5 w-auto mix-blend-screen opacity-90 sm:h-6" />
             </div>
 
-            <button type="button" onClick={handleStartLoginSequence} className="group mt-12 flex flex-col items-center gap-3 focus:outline-none">
-              <span className="rounded-full border border-white/25 bg-white/[0.04] px-10 py-3 text-xs font-medium uppercase tracking-[0.35em] text-white backdrop-blur-sm transition-all duration-300 group-hover:border-white group-hover:bg-white group-hover:text-black group-hover:shadow-[0_0_30px_rgba(255,255,255,0.35)]">
-                LOGIN
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.28em] text-zinc-500 transition-colors group-hover:text-zinc-300">
-                Masuk ke Galeri
-              </span>
-            </button>
+            <h1 className="font-display animate-fade-up mt-8 max-w-4xl text-center text-4xl leading-[1.05] sm:text-6xl lg:text-7xl" style={{ animationDelay: "150ms" }}>
+              <span className="text-shimmer">Ruang pamer bagi</span> <span className="italic text-gold">imajinasi</span> <span className="text-shimmer">tanpa batas.</span>
+            </h1>
+
+            <p className="animate-fade-up mt-5 max-w-xl text-center text-xs leading-relaxed text-zinc-400 sm:text-sm" style={{ animationDelay: "300ms" }}>
+              Pamerkan karya digitalmu, ikuti kompetisi yang dikurasi, dan temukan inspirasi dari kreator visual terbaik.
+            </p>
+
+            <div className="animate-fade-up mt-10 flex flex-wrap items-center justify-center gap-4" style={{ animationDelay: "450ms" }}>
+              <button type="button" onClick={handleStartLoginSequence} className="btn-gold rounded-full px-9 py-3.5 text-[10px] uppercase tracking-[0.35em]">
+                Masuk ke Galeri &rarr;
+              </button>
+              <Link href="/home" className="btn-ghost rounded-full px-7 py-3.5 text-[10px] uppercase tracking-[0.3em]">
+                Mode Tamu
+              </Link>
+            </div>
           </div>
 
           <div className="absolute bottom-7 inset-x-8 flex items-center justify-between text-[10px] uppercase tracking-[0.25em] text-zinc-500">
             <span>ART SHOWCASE</span>
             <span>AESTHE PLATFORM &copy; 2026</span>
-            <Link href="/home" className="transition hover:text-zinc-300">
+            <Link href="/home" className="transition hover:text-champagne-200">
               MODE TAMU
             </Link>
           </div>
@@ -118,24 +168,25 @@ export default function WelcomePage() {
           className="relative flex h-screen w-full cursor-pointer flex-col items-center justify-center px-6 text-center"
         >
           <div className={`max-w-4xl transition-all duration-1000 ${step === 1 ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
-            <div className="mb-4 flex flex-col items-center gap-2">
-              <span className="text-[10px] text-zinc-400">&#9662;</span>
-              <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-400">
-                TENTANG AESTHE
-              </p>
+            <div className="mb-5 flex flex-col items-center gap-2">
+              <p className="eyebrow">TENTANG AESTHE</p>
             </div>
 
-            <h2 className="text-2xl font-light uppercase leading-relaxed tracking-[0.14em] text-white sm:text-4xl sm:leading-snug">
-              RUANG PAMER DIGITAL BAGI KREATOR{" "}
-              <span className="text-zinc-500">
-                UNTUK MERAYAKAN KARYA VISUAL &amp; KURASI SENI MODERN
-              </span>
+            <h2 className="font-display text-3xl leading-tight text-white sm:text-5xl lg:text-6xl">
+              Ruang pamer digital bagi kreator, <span className="italic text-gold">untuk merayakan karya visual</span>{" "}
+              <span className="text-zinc-500">&amp; kurasi seni modern.</span>
             </h2>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <span className="glass rounded-full px-4 py-2 text-[10px] tracking-[0.2em] text-zinc-300">✦ KURASI OLEH CURATOR</span>
+              <span className="glass rounded-full px-4 py-2 text-[10px] tracking-[0.2em] text-zinc-300">◈ KOMPETISI BERHADIAH</span>
+              <span className="glass rounded-full px-4 py-2 text-[10px] tracking-[0.2em] text-zinc-300">◉ KOMUNITAS KREATOR</span>
+            </div>
 
             <div className="mt-12 flex justify-center">
               <div className="h-[2px] w-44 overflow-hidden rounded-full bg-zinc-800">
                 <div
-                  className={`h-full bg-white transition-all ease-linear ${
+                  className={`h-full bg-gradient-to-r from-champagne-200 to-champagne-500 transition-all ease-linear ${
                     step === 1 ? "w-full duration-[3100ms]" : "w-0 duration-0"
                   }`}
                 />
@@ -145,10 +196,10 @@ export default function WelcomePage() {
         </section>
 
         <section className="relative flex h-screen w-full flex-col items-center justify-center px-6">
-          <div className={`w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/65 p-8 backdrop-blur-xl transition-all duration-1000 ${step === 2 ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
+          <div className={`glass gradient-border w-full max-w-md rounded-3xl p-8 transition-all duration-1000 sm:p-10 ${step === 2 ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
             <div className="mb-6 flex flex-col items-center text-center">
-              <img src="/images/aesthe-logo.png" alt="Aesthe" className="mb-3 h-10 w-10 object-contain mix-blend-screen" />
-              <h3 className="text-lg font-medium tracking-wider text-white">
+              <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow mb-3 h-10 w-10 object-contain mix-blend-screen" />
+              <h3 className="font-display text-3xl tracking-wide text-white">
                 {authMode === "login"
                   ? "Masuk ke Akun Aesthe"
                   : authMode === "register"
@@ -167,11 +218,11 @@ export default function WelcomePage() {
             </div>
 
             {authMode !== "forgot" && (
-              <div className="mb-6 grid grid-cols-2 rounded-lg border border-white/10 bg-black/40 p-1 text-xs">
-                <button type="button" onClick={() => setAuthMode("login")} className={`rounded-md py-2 font-medium transition ${authMode === "login" ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
+              <div className="mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-black/40 p-1 text-xs">
+                <button type="button" onClick={() => setAuthMode("login")} className={`rounded-lg py-2 font-medium transition ${authMode === "login" ? "chip-active" : "text-zinc-400 hover:text-white"}`}>
                   Masuk
                 </button>
-                <button type="button" onClick={() => setAuthMode("register")} className={`rounded-md py-2 font-medium transition ${authMode === "register" ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
+                <button type="button" onClick={() => setAuthMode("register")} className={`rounded-lg py-2 font-medium transition ${authMode === "register" ? "chip-active" : "text-zinc-400 hover:text-white"}`}>
                   Daftar Akun
                 </button>
               </div>
@@ -188,7 +239,7 @@ export default function WelcomePage() {
                 <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs leading-relaxed text-emerald-300">
                   {resetState.message}
                 </div>
-                <button type="button" onClick={() => setAuthMode("login")} className="w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200">
+                <button type="button" onClick={() => setAuthMode("login")} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
                   Kembali ke Login
                 </button>
               </div>
@@ -198,19 +249,19 @@ export default function WelcomePage() {
 
                 <div>
                   <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi Baru</label>
-                  <input type="password" name="newPassword" required minLength={6} placeholder="Minimal 6 karakter" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                  <input type="password" name="newPassword" required minLength={6} placeholder="Minimal 6 karakter" className="input-lux" />
                 </div>
 
                 <div>
                   <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Konfirmasi Kata Sandi</label>
-                  <input type="password" name="confirmPassword" required minLength={6} placeholder="Ulangi kata sandi baru" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                  <input type="password" name="confirmPassword" required minLength={6} placeholder="Ulangi kata sandi baru" className="input-lux" />
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="mt-2 w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50">
+                <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
                   {isSubmitting ? "Menyimpan..." : "Simpan Kata Sandi Baru"}
                 </button>
 
-                <button type="button" onClick={() => setAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-white">
+                <button type="button" onClick={() => setAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
                   &larr; Kembali ke halaman masuk
                 </button>
               </form>
@@ -218,19 +269,19 @@ export default function WelcomePage() {
               <form action={verifyResetAction} className="space-y-4">
                 <div>
                   <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email Terdaftar</label>
-                  <input type="email" name="email" required placeholder="email@email.com" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                  <input type="email" name="email" required placeholder="email@email.com" className="input-lux" />
                 </div>
 
                 <div>
                   <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username Terdaftar</label>
-                  <input type="text" name="username" required placeholder="randy_art" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                  <input type="text" name="username" required placeholder="randy_art" className="input-lux" />
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="mt-2 w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50">
+                <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
                   {isSubmitting ? "Memverifikasi..." : "Verifikasi Akun"}
                 </button>
 
-                <button type="button" onClick={() => setAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-white">
+                <button type="button" onClick={() => setAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
                   &larr; Kembali ke halaman masuk
                 </button>
               </form>
@@ -240,23 +291,23 @@ export default function WelcomePage() {
                 <>
                   <div>
                     <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Display Name</label>
-                    <input type="text" name="displayName" required placeholder="Contoh: Randy Rahmat" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                    <input type="text" name="displayName" required placeholder="Contoh: Randy Rahmat" className="input-lux" />
                   </div>
 
                   <div>
                     <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username</label>
-                    <input type="text" name="username" required placeholder="randy_art" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                    <input type="text" name="username" required placeholder="randy_art" className="input-lux" />
                   </div>
 
                   <div>
                     <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Peran Akun</label>
                     <input type="hidden" name="role" value={selectedRole} />
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <button type="button" onClick={() => setSelectedRole("Member")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Member" ? "border-white bg-white/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
+                      <button type="button" onClick={() => setSelectedRole("Member")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Member" ? "border-champagne-300/60 bg-champagne-400/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
                         <div className="font-medium">Member / Kreator</div>
                         <div className="text-[10px] text-zinc-500">Unggah &amp; ikut tantangan</div>
                       </button>
-                      <button type="button" onClick={() => setSelectedRole("Curator")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Curator" ? "border-white bg-white/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
+                      <button type="button" onClick={() => setSelectedRole("Curator")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Curator" ? "border-champagne-300/60 bg-champagne-400/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
                         <div className="font-medium">Curator</div>
                         <div className="text-[10px] text-zinc-500">Butuh verifikasi Admin</div>
                       </button>
@@ -267,32 +318,32 @@ export default function WelcomePage() {
 
               <div>
                 <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email</label>
-                <input type="email" name="email" required placeholder="email@email.com" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                <input type="email" name="email" required placeholder="email@email.com" className="input-lux" />
               </div>
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi</label>
                   {authMode === "login" && (
-                    <button type="button" onClick={() => setAuthMode("forgot")} className="text-[11px] text-zinc-400 transition hover:text-white">
+                    <button type="button" onClick={() => setAuthMode("forgot")} className="text-[11px] text-zinc-400 transition hover:text-champagne-200">
                       Lupa kata sandi?
                     </button>
                   )}
                 </div>
-                <input type="password" name="password" required placeholder="Password" className="w-full rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none" />
+                <input type="password" name="password" required placeholder="Password" className="input-lux" />
               </div>
 
-              <button type="submit" disabled={isSubmitting} className="mt-2 w-full rounded-lg bg-white py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50">
+              <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
                 {isSubmitting ? "Memproses..." : authMode === "login" ? "Masuk Sekarang" : "Daftar Akun"}
               </button>
             </form>
             )}
 
             <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 text-[11px] text-zinc-500">
-              <button type="button" onClick={handleBackToTop} className="transition hover:text-white">
+              <button type="button" onClick={handleBackToTop} className="transition hover:text-champagne-200">
                 &uarr; Kembali ke Awal
               </button>
-              <Link href="/home" className="transition hover:text-white">
+              <Link href="/home" className="transition hover:text-champagne-200">
                 Jelajahi tanpa akun &rarr;
               </Link>
             </div>

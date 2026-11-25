@@ -30,17 +30,17 @@ function formatDateTime(dateValue) {
 const RANK_STYLE = {
   1: {
     badge: "♛ Juara #1 · Gold",
-    border: "border-amber-400/50 bg-gradient-to-b from-amber-500/15 to-zinc-900/70",
+    border: "shine border-amber-400/70 bg-gradient-to-b from-amber-500/20 via-zinc-900/80 to-zinc-950 shadow-[0_0_35px_rgba(245,158,11,0.2)]",
     text: "text-amber-300",
   },
   2: {
     badge: "Juara #2 · Silver",
-    border: "border-slate-300/40 bg-gradient-to-b from-slate-200/15 to-zinc-900/70",
+    border: "border-slate-300/45 bg-gradient-to-b from-slate-200/15 to-zinc-900/75",
     text: "text-slate-100",
   },
   3: {
     badge: "Juara #3 · Bronze",
-    border: "border-amber-700/45 bg-gradient-to-b from-amber-800/15 to-zinc-900/70",
+    border: "border-amber-700/50 bg-gradient-to-b from-amber-800/20 to-zinc-900/75",
     text: "text-amber-500",
   },
 };
@@ -105,28 +105,22 @@ export default function ChallengeDetailClient({
   };
 
   return (
-    <main className="min-h-screen bg-[#090909] text-zinc-100">
-      {/* BACKGROUND ATMOSPHERE */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-64 left-1/3 h-[600px] w-[600px] rounded-full bg-white/[0.035] blur-[140px]" />
-        <div className="absolute inset-0 opacity-[0.025] [background-image:radial-gradient(#fff_0.6px,transparent_0.6px)] [background-size:5px_5px]" />
-      </div>
-
+    <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       {/* TOP BAR */}
-      <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/80 px-5 backdrop-blur-2xl sm:px-10">
+      <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-10">
         <div className="flex items-center gap-4">
           <Link href="/home" className="flex items-center gap-3">
-            <img src="/images/aesthe-logo.png" alt="Aesthe" className="h-8 w-8 object-contain mix-blend-screen" />
-            <span className="text-sm font-medium tracking-[0.3em] text-white">AESTHE</span>
+            <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow h-8 w-8 object-contain mix-blend-screen" />
+            <span className="bg-gradient-to-r from-white to-champagne-200 bg-clip-text text-sm font-medium tracking-[0.3em] text-transparent">AESTHE</span>
           </Link>
           <span className="hidden text-zinc-700 sm:inline">/</span>
-          <span className="hidden text-[10px] uppercase tracking-[0.22em] text-zinc-400 sm:inline">
+          <span className="hidden text-[10px] uppercase tracking-[0.22em] text-champagne-200 sm:inline">
             CHALLENGE DETAILS
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/challenges" className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-[10px] uppercase tracking-[0.15em] text-zinc-200 transition hover:bg-white hover:text-black">
+          <Link href="/challenges" className="btn-ghost rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.15em]">
             &larr; Semua Challenges
           </Link>
         </div>
@@ -134,10 +128,10 @@ export default function ChallengeDetailClient({
 
       <div className="relative z-10 mx-auto max-w-[1400px] px-5 py-10 sm:px-10">
         {/* BANNER & INFO UTAMA CHALLENGE */}
-        <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/45">
+        <section className="glass spotlight overflow-hidden rounded-3xl border border-white/15">
           <div className="relative h-64 w-full overflow-hidden bg-zinc-900 sm:h-80">
             {challenge.banner_url ? (
-              <img src={challenge.banner_url} alt={challenge.title} className="h-full w-full object-cover" />
+              <img src={challenge.banner_url} alt={challenge.title} className="animate-ken-burns h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 via-zinc-900 to-black text-5xl text-zinc-700">
                 ✧
@@ -147,7 +141,7 @@ export default function ChallengeDetailClient({
 
             <div className="absolute left-6 top-6 flex flex-wrap items-center gap-2">
               <span
-                className={`rounded-full border px-3.5 py-1 text-[10px] font-medium uppercase tracking-widest backdrop-blur-md ${
+                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-[10px] font-medium uppercase tracking-widest backdrop-blur-md ${
                   status === "active"
                     ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-300"
                     : status === "upcoming"
@@ -155,6 +149,7 @@ export default function ChallengeDetailClient({
                     : "border-zinc-500/40 bg-zinc-800/80 text-zinc-300"
                 }`}
               >
+                {status === "active" && <span className="live-dot text-emerald-400" />}
                 {status === "active" ? "Sedang Berlangsung" : status === "upcoming" ? "Akan Datang" : "Challenge Selesai"}
               </span>
             </div>
@@ -162,35 +157,35 @@ export default function ChallengeDetailClient({
 
           <div className="grid grid-cols-1 gap-8 p-6 sm:p-9 lg:grid-cols-12">
             <div className="lg:col-span-8">
-              <h1 className="text-3xl font-light tracking-tight text-white sm:text-4xl">{challenge.title}</h1>
-              <p className="mt-2 text-xs text-zinc-400">
+              <h1 className="font-display text-4xl leading-[1.05] text-white sm:text-5xl">{challenge.title}</h1>
+              <p className="mt-2.5 text-xs text-zinc-400">
                 Diselenggarakan oleh Curator:{" "}
-                <Link href={`/creators/${challenge.curator_username}`} className="text-white underline decoration-white/25 underline-offset-4 hover:text-amber-300">
+                <Link href={`/creators/${challenge.curator_username}`} className="text-champagne-200 underline decoration-champagne-300/35 underline-offset-4 hover:text-white">
                   {challenge.curator_name}
                 </Link>
               </p>
 
               <div className="mt-6">
-                <h2 className="text-[10px] uppercase tracking-[0.25em] text-zinc-500">Deskripsi Challenge</h2>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
+                <h2 className="eyebrow">DESKRIPSI CHALLENGE</h2>
+                <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
                   {challenge.description}
                 </p>
               </div>
 
-              <div className="mt-6 rounded-xl border border-white/[0.07] bg-black/30 p-5">
-                <h2 className="text-[10px] uppercase tracking-[0.25em] text-zinc-500">Aturan &amp; Ketentuan</h2>
-                <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">
+              <div className="mt-6 rounded-2xl border border-white/10 bg-black/35 p-5">
+                <h2 className="eyebrow">ATURAN &amp; KETENTUAN</h2>
+                <p className="mt-2.5 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">
                   {challenge.rules || "1. Karya harus orisinal milik peserta.\n2. Maksimal 1 karya per Member untuk challenge ini.\n3. Pemenang ditentukan secara resmi oleh Curator setelah periode challenge berakhir."}
                 </p>
               </div>
             </div>
 
             {/* PANEL KANAN: HADIAH, DEADLINE, TOMBOL SUBMIT/WITHDRAW */}
-            <div className="flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-black/40 p-6 lg:col-span-4">
+            <div className="glass flex flex-col justify-between rounded-2xl border border-white/15 p-6 lg:col-span-4">
               <div className="space-y-4">
                 <div>
-                  <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500">Hadiah Utama</p>
-                  <p className="mt-1 text-lg font-medium text-amber-300">{challenge.prize}</p>
+                  <p className="eyebrow">HADIAH UTAMA</p>
+                  <p className="font-display mt-1.5 text-2xl text-gold">{challenge.prize}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 border-t border-white/[0.07] pt-4 text-xs">
@@ -221,7 +216,7 @@ export default function ChallengeDetailClient({
                   <button
                     type="button"
                     onClick={() => setShowSubmitModal(true)}
-                    className="w-full rounded-full bg-white py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200"
+                    className="btn-gold w-full rounded-full py-3 text-[10px] uppercase tracking-[0.2em]"
                   >
                     Submit Your Work
                   </button>
@@ -255,7 +250,7 @@ export default function ChallengeDetailClient({
                 )}
 
                 {isGuest && isActive && (
-                  <Link href="/" className="block w-full rounded-full border border-white/20 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white hover:text-black">
+                  <Link href="/" className="btn-gold w-full rounded-full py-3 text-center text-[10px] uppercase tracking-[0.2em]">
                     Login sebagai Member untuk Ikut
                   </Link>
                 )}
@@ -277,14 +272,14 @@ export default function ChallengeDetailClient({
         {/* BAGIAN PEMENANG RESMI (DIPILIH OLEH CURATOR) */}
         <section className="mt-12">
           <div className="mb-6">
-            <p className="text-[9px] tracking-[0.3em] text-zinc-500">OFFICIAL RESULTS</p>
-            <h2 className="mt-1 text-2xl font-light tracking-tight text-white">
-              Pemenang Challenge<span className="text-zinc-600">.</span>
+            <p className="eyebrow">OFFICIAL RESULTS</p>
+            <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">
+              Pemenang Challenge<span className="text-champagne-400">.</span>
             </h2>
           </div>
 
           {winners.length === 0 ? (
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-12 text-center">
+            <div className="glass rounded-2xl border border-white/10 px-6 py-12 text-center">
               <p className="text-xs text-zinc-400">
                 {isEnded
                   ? "Challenge telah berakhir. Menunggu Curator meninjau submisi dan mengumumkan pemenang."
@@ -296,19 +291,23 @@ export default function ChallengeDetailClient({
               {winners.map((win) => {
                 const style = RANK_STYLE[Number(win.winner_rank)] || RANK_STYLE[3];
                 return (
-                  <div key={win.id} className={`overflow-hidden rounded-2xl border p-4 ${style.border}`}>
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className={`text-xs font-semibold uppercase tracking-widest ${style.text}`}>
-                        {style.badge}
-                      </span>
+                  <div key={win.id} data-reveal>
+                    <div className={`card-lux spotlight overflow-hidden rounded-2xl border p-4 ${style.border}`}>
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className={`text-xs font-semibold uppercase tracking-widest ${style.text}`}>
+                          {style.badge}
+                        </span>
+                      </div>
+                      <Link href={`/artworks/${win.artwork_id}`} className="block aspect-[4/3] overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
+                        <img src={win.artwork_image_url} alt={win.artwork_title} className="h-full w-full object-cover transition duration-700 hover:scale-105" />
+                      </Link>
+                      <Link href={`/artworks/${win.artwork_id}`} className="font-display mt-4 block text-xl text-white transition hover:text-champagne-200">
+                        {win.artwork_title}
+                      </Link>
+                      <Link href={`/creators/${win.artist_username}`} className="mt-1 inline-block text-xs text-zinc-400 transition hover:text-champagne-200">
+                        by {win.artist_name} (@{win.artist_username})
+                      </Link>
                     </div>
-                    <div className="aspect-[4/3] overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
-                      <img src={win.artwork_image_url} alt={win.artwork_title} className="h-full w-full object-cover" />
-                    </div>
-                    <h3 className="mt-4 text-base font-medium text-white">{win.artwork_title}</h3>
-                    <Link href={`/creators/${win.artist_username}`} className="mt-1 inline-block text-xs text-zinc-400 transition hover:text-white">
-                      by {win.artist_name} (@{win.artist_username})
-                    </Link>
                   </div>
                 );
               })}
@@ -320,90 +319,92 @@ export default function ChallengeDetailClient({
         <section className="mt-14">
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <p className="text-[9px] tracking-[0.3em] text-zinc-500">PARTICIPANTS GALLERY</p>
-              <h2 className="mt-1 text-2xl font-light tracking-tight text-white">
-                Galeri Submisi <span className="text-base text-zinc-500">({submissions.length})</span>
+              <p className="eyebrow">PARTICIPANTS GALLERY</p>
+              <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">
+                Galeri Submisi <span className="font-sans text-base text-champagne-300/80">({submissions.length})</span>
               </h2>
             </div>
           </div>
 
           {submissions.length === 0 ? (
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-16 text-center">
+            <div className="glass rounded-2xl border border-white/10 px-6 py-16 text-center">
               <p className="text-sm text-zinc-400">Belum ada karya yang didaftarkan ke challenge ini.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {submissions.map((sub) => (
-                <article key={sub.id} className="group overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900/40">
-                  <div className="relative aspect-[4/5] overflow-hidden bg-zinc-900">
-                    <img
-                      src={sub.artwork_image_url}
-                      alt={sub.artwork_title}
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                <article key={sub.id} data-reveal className="group">
+                  <div className="card-lux spotlight glass overflow-hidden rounded-2xl border border-white/15">
+                    <div className="relative aspect-[4/5] overflow-hidden bg-zinc-900">
+                      <img
+                        src={sub.artwork_image_url}
+                        alt={sub.artwork_title}
+                        className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
 
-                    <span className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/50 px-3 py-1 text-[8px] tracking-wider text-white backdrop-blur-md">
-                      {sub.category_name.toUpperCase()}
-                    </span>
-
-                    {isEnded && sub.winner_rank && (
-                      <span className="absolute right-3 top-3 rounded-full border border-amber-400/50 bg-amber-500/25 px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-amber-200 backdrop-blur-md">
-                        ♛ Juara #{sub.winner_rank}
+                      <span className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/50 px-3 py-1 text-[8px] tracking-wider text-white backdrop-blur-md">
+                        {sub.category_name.toUpperCase()}
                       </span>
-                    )}
 
-                    <div className="absolute inset-x-0 bottom-0 p-4">
-                      <Link href={`/artworks/${sub.artwork_id}`} className="block text-sm font-medium text-white hover:underline">
-                        {sub.artwork_title}
-                      </Link>
-                      <Link href={`/creators/${sub.artist_username}`} className="mt-1 inline-block text-[11px] text-zinc-400 transition hover:text-white">
-                        {sub.artist_name} (@{sub.artist_username})
-                      </Link>
-                    </div>
-                  </div>
+                      {isEnded && sub.winner_rank && (
+                        <span className="shine absolute right-3 top-3 rounded-full border border-amber-400/60 bg-amber-500/25 px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-amber-200 backdrop-blur-md">
+                          ♛ Juara #{sub.winner_rank}
+                        </span>
+                      )}
 
-                  {isOwnerCurator && isEnded && (
-                    <div className="border-t border-white/[0.08] bg-black/40 p-3">
-                      <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-zinc-500">
-                        Pilih Pemenang Resmi (Curator)
-                      </p>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {[
-                          { rank: 1, label: "#1 Gold", activeClass: "border-amber-400 bg-amber-400 text-black font-semibold" },
-                          { rank: 2, label: "#2 Silver", activeClass: "border-slate-200 bg-slate-200 text-black font-semibold" },
-                          { rank: 3, label: "#3 Bronze", activeClass: "border-amber-700 bg-amber-600 text-white font-semibold" },
-                        ].map((opt) => {
-                          const isCurrentRank = Number(sub.winner_rank) === opt.rank;
-                          return (
-                            <button
-                              key={opt.rank}
-                              type="button"
-                              disabled={selectingSubId === sub.id}
-                              onClick={() => handleSelectWinner(sub.id, isCurrentRank ? null : opt.rank)}
-                              className={`rounded-lg border px-2.5 py-1.5 text-[10px] transition disabled:opacity-50 ${
-                                isCurrentRank
-                                  ? opt.activeClass
-                                  : "border-white/15 bg-white/[0.04] text-zinc-300 hover:border-white/40 hover:text-white"
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          );
-                        })}
-                        {sub.winner_rank && (
-                          <button
-                            type="button"
-                            disabled={selectingSubId === sub.id}
-                            onClick={() => handleSelectWinner(sub.id, null)}
-                            className="ml-auto rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-[10px] text-red-300 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
-                          >
-                            Reset
-                          </button>
-                        )}
+                      <div className="absolute inset-x-0 bottom-0 p-4">
+                        <Link href={`/artworks/${sub.artwork_id}`} className="font-display block text-lg text-white transition hover:text-champagne-100">
+                          {sub.artwork_title}
+                        </Link>
+                        <Link href={`/creators/${sub.artist_username}`} className="mt-1 inline-block text-[11px] text-zinc-400 transition hover:text-champagne-200">
+                          {sub.artist_name} (@{sub.artist_username})
+                        </Link>
                       </div>
                     </div>
-                  )}
+
+                    {isOwnerCurator && isEnded && (
+                      <div className="border-t border-white/[0.08] bg-black/40 p-3">
+                        <p className="mb-2 text-[9px] uppercase tracking-[0.2em] text-zinc-500">
+                          Pilih Pemenang Resmi (Curator)
+                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {[
+                            { rank: 1, label: "#1 Gold", activeClass: "border-amber-400 bg-amber-400 text-black font-semibold" },
+                            { rank: 2, label: "#2 Silver", activeClass: "border-slate-200 bg-slate-200 text-black font-semibold" },
+                            { rank: 3, label: "#3 Bronze", activeClass: "border-amber-700 bg-amber-600 text-white font-semibold" },
+                          ].map((opt) => {
+                            const isCurrentRank = Number(sub.winner_rank) === opt.rank;
+                            return (
+                              <button
+                                key={opt.rank}
+                                type="button"
+                                disabled={selectingSubId === sub.id}
+                                onClick={() => handleSelectWinner(sub.id, isCurrentRank ? null : opt.rank)}
+                                className={`rounded-lg border px-2.5 py-1.5 text-[10px] transition disabled:opacity-50 ${
+                                  isCurrentRank
+                                    ? opt.activeClass
+                                    : "border-white/15 bg-white/[0.04] text-zinc-300 hover:border-champagne-300/50 hover:text-white"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                          {sub.winner_rank && (
+                            <button
+                              type="button"
+                              disabled={selectingSubId === sub.id}
+                              onClick={() => handleSelectWinner(sub.id, null)}
+                              className="ml-auto rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-[10px] text-red-300 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </article>
               ))}
             </div>
@@ -413,12 +414,12 @@ export default function ChallengeDetailClient({
 
       {/* MODAL SUBMIT YOUR WORK (KHUSUS MEMBER) */}
       {showSubmitModal && isMember && isActive && (
-        <div onClick={() => setShowSubmitModal(false)} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-xl">
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#111] p-7 shadow-2xl">
+        <div onClick={() => setShowSubmitModal(false)} className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5 backdrop-blur-xl">
+          <div onClick={(e) => e.stopPropagation()} className="modal-panel w-full max-w-lg rounded-3xl p-7">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[9px] tracking-[0.3em] text-zinc-500">CHALLENGE ENTRY</p>
-                <h2 className="mt-1 text-xl font-light text-white">Submit Your Work</h2>
+                <p className="eyebrow">CHALLENGE ENTRY</p>
+                <h2 className="font-display mt-1.5 text-3xl text-white">Submit Your Work</h2>
               </div>
               <button type="button" onClick={() => setShowSubmitModal(false)} className="text-xl text-zinc-500 transition hover:text-white">
                 ×
@@ -432,9 +433,9 @@ export default function ChallengeDetailClient({
             )}
 
             {memberArtworks.length === 0 ? (
-              <div className="mt-6 rounded-xl border border-white/10 bg-black/40 p-6 text-center">
+              <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-6 text-center">
                 <p className="text-xs text-zinc-300">Kamu belum memiliki karya di portofoliomu.</p>
-                <Link href="/home" className="mt-4 inline-block rounded-full bg-white px-5 py-2 text-[10px] font-semibold uppercase tracking-wider text-black">
+                <Link href="/home" className="btn-gold mt-4 inline-flex rounded-full px-5 py-2 text-[10px] uppercase tracking-wider">
                   Upload Karya Terlebih Dahulu
                 </Link>
               </div>
@@ -444,7 +445,7 @@ export default function ChallengeDetailClient({
                 <input type="hidden" name="artworkId" value={selectedArtworkId} />
 
                 <p className="text-xs text-zinc-400">
-                  Pilih 1 karya dari portofoliomu untuk didaftarkan ke <span className="text-white">{challenge.title}</span>:
+                  Pilih 1 karya dari portofoliomu untuk didaftarkan ke <span className="text-champagne-200">{challenge.title}</span>:
                 </p>
 
                 <div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto pr-1">
@@ -457,8 +458,8 @@ export default function ChallengeDetailClient({
                         onClick={() => setSelectedArtworkId(art.id)}
                         className={`overflow-hidden rounded-xl border text-left transition ${
                           isSelected
-                            ? "border-white bg-white/10"
-                            : "border-white/10 bg-black/40 hover:border-white/30"
+                            ? "border-champagne-300/70 bg-champagne-400/15"
+                            : "border-white/10 bg-black/40 hover:border-champagne-300/40"
                         }`}
                       >
                         <div className="aspect-[4/3] overflow-hidden bg-zinc-900">
@@ -476,7 +477,7 @@ export default function ChallengeDetailClient({
                 <button
                   type="submit"
                   disabled={isSubmitting || !selectedArtworkId}
-                  className="w-full rounded-lg bg-white py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-50"
+                  className="btn-gold w-full rounded-xl py-3 text-[10px] uppercase tracking-[0.2em]"
                 >
                   {isSubmitting ? "Mendaftarkan..." : "Kirim Submisi Karya"}
                 </button>

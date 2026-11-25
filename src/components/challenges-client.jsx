@@ -49,14 +49,7 @@ export default function ChallengesClient({ currentUser, challenges }) {
   }, [challenges, statusFilter, search]);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#090909] text-zinc-100">
-      {/* BACKGROUND ATMOSPHERE */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-64 left-1/3 h-[600px] w-[600px] rounded-full bg-white/[0.035] blur-[140px]" />
-        <div className="absolute right-0 top-[50%] h-[400px] w-[400px] rounded-full bg-zinc-500/[0.035] blur-[140px]" />
-        <div className="absolute inset-0 opacity-[0.025] [background-image:radial-gradient(#fff_0.6px,transparent_0.6px)] [background-size:5px_5px]" />
-      </div>
-
+    <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       <AppSidebar
         currentUser={currentUser}
         activeItem="challenges"
@@ -69,13 +62,13 @@ export default function ChallengesClient({ currentUser, challenges }) {
 
       {/* MAIN CONTENT */}
       <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[78px]" : "lg:ml-[250px]"}`}>
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/75 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-5 backdrop-blur-2xl sm:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => setMobileMenu(true)} className="text-xl text-zinc-400 hover:text-white lg:hidden" aria-label="Open menu">
               ☰
             </button>
             <div className="hidden text-[10px] tracking-[0.2em] text-zinc-600 sm:block">
-              COMMUNITY / <span className="text-zinc-300">CHALLENGES</span>
+              COMMUNITY / <span className="text-champagne-200">CHALLENGES</span>
             </div>
             <div className="flex items-center gap-2 sm:hidden">
               <img src="/images/aesthe-logo.png" alt="" className="h-6 w-6 object-contain" />
@@ -89,7 +82,7 @@ export default function ChallengesClient({ currentUser, challenges }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search challenges or curator..."
-              className="w-full rounded-full border border-white/[0.08] bg-white/[0.025] py-2.5 pl-11 pr-5 text-[11px] text-white outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.05]"
+              className="input-lux rounded-full py-2.5 pl-11 pr-5 text-[11px]"
             />
           </div>
 
@@ -98,35 +91,37 @@ export default function ChallengesClient({ currentUser, challenges }) {
               <p className="text-[11px] font-medium">{currentUser ? currentUser.displayName : "Guest Visitor"}</p>
               <p className="mt-0.5 text-[9px] text-zinc-600">{currentUser ? `${role.toUpperCase()} ACCOUNT` : "PUBLIC VIEW"}</p>
             </div>
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gradient-to-br from-zinc-500 to-zinc-900 text-xs font-medium uppercase">
-              {currentUser?.avatarUrl ? (
-                <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
-              ) : (
-                currentUser ? currentUser.displayName.charAt(0) : "G"
-              )}
+            <div className="rounded-full bg-gradient-to-br from-champagne-200 via-champagne-500 to-champagne-700 p-[1.5px]">
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-medium uppercase">
+                {currentUser?.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.displayName} className="h-full w-full object-cover" />
+                ) : (
+                  currentUser ? currentUser.displayName.charAt(0) : "G"
+                )}
+              </div>
             </div>
           </Link>
         </header>
 
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
-          <section className="flex flex-wrap items-end justify-between gap-4">
+          <section data-reveal className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="mb-3 flex items-center gap-2.5">
-                <p className="text-[9px] tracking-[0.35em] text-zinc-500">COMPETITIONS &amp; EVENTS</p>
-                <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+                <p className="eyebrow">COMPETITIONS &amp; EVENTS</p>
+                <span className="rounded-full border border-champagne-300/25 bg-champagne-400/10 px-2.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.2em] text-champagne-200">
                   {challenges.length} EVENTS
                 </span>
               </div>
-              <h1 className="text-3xl font-light tracking-tight sm:text-4xl lg:text-5xl">
-                Community Challenges<span className="text-zinc-500">.</span>
+              <h1 className="font-display text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+                Community <span className="italic text-gold">Challenges</span><span className="text-champagne-400">.</span>
               </h1>
-              <p className="mt-3 max-w-xl text-[11px] text-zinc-500 sm:text-xs">
+              <p className="mt-3 max-w-xl text-[11px] text-zinc-400 sm:text-xs">
                 Ikuti kompetisi kreatif dari para Curator, daftarkan karya terbaikmu, dan raih gelar juara resmi.
               </p>
             </div>
 
             {isCurator && isCuratorApproved && (
-              <Link href="/curator" className="rounded-full border border-amber-400/40 bg-amber-500/10 px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.18em] text-amber-200 transition hover:bg-amber-400 hover:text-black">
+              <Link href="/curator" className="btn-gold rounded-full px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]">
                 ✦ Kelola Challenge di Dashboard
               </Link>
             )}
@@ -147,8 +142,8 @@ export default function ChallengesClient({ currentUser, challenges }) {
                   onClick={() => setStatusFilter(tab.id)}
                   className={`shrink-0 rounded-full border px-5 py-2 text-[9px] tracking-[0.14em] transition ${
                     statusFilter === tab.id
-                      ? "border-white bg-white font-semibold text-black"
-                      : "border-white/[0.08] text-zinc-400 hover:border-white/30 hover:text-white"
+                      ? "chip-active"
+                      : "border-white/10 text-zinc-400 hover:border-champagne-300/40 hover:text-champagne-50"
                   }`}
                 >
                   {tab.label}
@@ -162,14 +157,14 @@ export default function ChallengesClient({ currentUser, challenges }) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search challenges..."
-                className="w-full rounded-full border border-white/[0.08] bg-white/[0.025] py-2 pl-10 pr-4 text-[11px] text-white outline-none"
+                className="input-lux rounded-full py-2 pl-10 pr-4 text-[11px]"
               />
             </div>
           </div>
 
           {/* CHALLENGES GRID */}
           {filteredChallenges.length === 0 ? (
-            <div className="mt-12 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-20 text-center">
+            <div className="glass mt-12 rounded-2xl border border-white/10 px-6 py-20 text-center">
               <p className="text-sm text-zinc-400">Belum ada challenge yang sesuai dengan filter.</p>
             </div>
           ) : (
@@ -177,68 +172,70 @@ export default function ChallengesClient({ currentUser, challenges }) {
               {filteredChallenges.map((ch) => {
                 const status = getChallengeStatus(ch);
                 return (
-                  <Link
-                    key={ch.id}
-                    href={`/challenges/${ch.id}`}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/45 transition hover:border-white/25"
-                  >
-                    <div className="relative h-44 overflow-hidden bg-zinc-900">
-                      {ch.banner_url ? (
-                        <img src={ch.banner_url} alt={ch.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 via-zinc-900 to-black text-3xl text-zinc-700">
-                          ✧
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                      <div className="absolute inset-x-4 top-4 flex flex-wrap items-center justify-between gap-2">
-                        <span
-                          className={`rounded-full border px-3 py-1 text-[9px] font-medium uppercase tracking-widest backdrop-blur-md ${
-                            status === "active"
-                              ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-300"
-                              : status === "upcoming"
-                              ? "border-sky-400/40 bg-sky-500/20 text-sky-300"
-                              : "border-zinc-500/40 bg-zinc-800/80 text-zinc-300"
-                          }`}
-                        >
-                          {status === "active" ? "Ongoing Event" : status === "upcoming" ? "Upcoming" : "Ended"}
-                        </span>
-
-                        {status === "ended" && ch.winner_count > 0 && (
-                          <span className="rounded-full border border-amber-400/40 bg-amber-500/20 px-3 py-1 text-[9px] font-medium uppercase tracking-wider text-amber-300 backdrop-blur-md">
-                            ♛ Pemenang Diumumkan
-                          </span>
+                  <div key={ch.id} data-reveal className="h-full">
+                    <Link
+                      href={`/challenges/${ch.id}`}
+                      className="card-lux spotlight glass group flex h-full flex-col overflow-hidden rounded-2xl border border-white/15 transition hover:border-champagne-300/45"
+                    >
+                      <div className="relative h-44 overflow-hidden bg-zinc-900">
+                        {ch.banner_url ? (
+                          <img src={ch.banner_url} alt={ch.title} className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-110" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 via-zinc-900 to-black text-3xl text-zinc-700">
+                            ✧
+                          </div>
                         )}
-                      </div>
-                    </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
-                    <div className="flex flex-1 flex-col justify-between p-5">
-                      <div>
-                        <h2 className="text-lg font-medium text-white transition group-hover:text-zinc-200">{ch.title}</h2>
-                        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-400">{ch.description}</p>
+                        <div className="absolute inset-x-4 top-4 flex flex-wrap items-center justify-between gap-2">
+                          <span
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[9px] font-medium uppercase tracking-widest backdrop-blur-md ${
+                              status === "active"
+                                ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-300"
+                                : status === "upcoming"
+                                ? "border-sky-400/40 bg-sky-500/20 text-sky-300"
+                                : "border-zinc-500/40 bg-zinc-800/80 text-zinc-300"
+                            }`}
+                          >
+                            {status === "active" && <span className="live-dot text-emerald-400" />}
+                            {status === "active" ? "Ongoing Event" : status === "upcoming" ? "Upcoming" : "Ended"}
+                          </span>
+
+                          {status === "ended" && ch.winner_count > 0 && (
+                            <span className="shine rounded-full border border-amber-400/50 bg-amber-500/20 px-3 py-1 text-[9px] font-medium uppercase tracking-wider text-amber-200 backdrop-blur-md">
+                              ♛ Pemenang Diumumkan
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="mt-5 space-y-2 border-t border-white/[0.07] pt-4 text-[11px] text-zinc-400">
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-500">Curator</span>
-                          <span className="text-zinc-200">{ch.curator_name}</span>
+                      <div className="flex flex-1 flex-col justify-between p-5">
+                        <div>
+                          <h2 className="font-display text-2xl text-white transition group-hover:text-champagne-100">{ch.title}</h2>
+                          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-400">{ch.description}</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-500">Hadiah</span>
-                          <span className="truncate max-w-[180px] text-amber-300">{ch.prize}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-500">Periode</span>
-                          <span>{formatDate(ch.start_date)} – {formatDate(ch.end_date)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-500">Partisipan</span>
-                          <span>{ch.submission_count} karya</span>
+
+                        <div className="mt-5 space-y-2 border-t border-white/[0.07] pt-4 text-[11px] text-zinc-400">
+                          <div className="flex items-center justify-between">
+                            <span className="text-zinc-500">Curator</span>
+                            <span className="text-zinc-200">{ch.curator_name}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-zinc-500">Hadiah</span>
+                            <span className="max-w-[180px] truncate text-champagne-300">{ch.prize}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-zinc-500">Periode</span>
+                            <span>{formatDate(ch.start_date)} – {formatDate(ch.end_date)}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-zinc-500">Partisipan</span>
+                            <span>{ch.submission_count} karya</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                  </div>
                 );
               })}
             </div>
@@ -246,7 +243,7 @@ export default function ChallengesClient({ currentUser, challenges }) {
 
           <footer className="mt-20 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] py-8 text-[9px] tracking-[0.2em] text-zinc-700">
             <span>AESTHE © 2026</span>
-            <span>COMMUNITY CHALLENGES.</span>
+            <span className="font-display text-sm italic normal-case tracking-normal text-zinc-500">Curated creative competitions.</span>
             <span>MADE FOR CREATORS.</span>
           </footer>
         </div>

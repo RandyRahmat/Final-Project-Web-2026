@@ -29,16 +29,15 @@ export default function PendingCuratorClient({ curator }) {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-[#090909] px-5 py-12 text-zinc-100">
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/[0.04] blur-[140px]" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-[#111113]/90 p-8 text-center backdrop-blur-xl">
-        <img src="/images/aesthe-logo.png" alt="Aesthe" className="mx-auto mb-5 h-12 w-12 object-contain mix-blend-screen" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-x-clip bg-transparent px-5 py-12 text-zinc-100">
+      <div className="glass gradient-border relative z-10 w-full max-w-md rounded-3xl p-8 text-center sm:p-10">
+        <div className="relative mx-auto mb-5 flex h-14 w-14 items-center justify-center">
+          <div className="animate-spin-slow absolute inset-[-30%] -z-10 rounded-full bg-[conic-gradient(from_0deg,transparent,rgba(212,175,106,0.3),transparent_45%)] blur-xl" />
+          <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow h-12 w-12 object-contain mix-blend-screen" />
+        </div>
 
         <span
-          className={`inline-block rounded-full border px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${
+          className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${
             isApproved
               ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
               : isRejected
@@ -46,10 +45,11 @@ export default function PendingCuratorClient({ curator }) {
               : "border-amber-400/40 bg-amber-500/15 text-amber-300"
           }`}
         >
+          {!isApproved && !isRejected && <span className="live-dot text-amber-400" />}
           Status Curator: {status}
         </span>
 
-        <h1 className="mt-5 text-2xl font-light text-white">
+        <h1 className="font-display mt-5 text-3xl text-white sm:text-4xl">
           {isApproved
             ? "Akun Anda Telah Disetujui!"
             : isRejected
@@ -74,7 +74,7 @@ export default function PendingCuratorClient({ curator }) {
         <div className="mt-7 space-y-3">
           {isApproved && (
             <form action={refreshCuratorSessionAction}>
-              <button type="submit" className="w-full rounded-full bg-white py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200">
+              <button type="submit" className="btn-gold w-full rounded-full py-3 text-[10px] uppercase tracking-[0.2em]">
                 Masuk ke Curator Dashboard &rarr;
               </button>
             </form>
@@ -91,12 +91,12 @@ export default function PendingCuratorClient({ curator }) {
             </button>
           )}
 
-          <Link href="/home" className="block w-full rounded-full border border-white/15 bg-white/[0.04] py-2.5 text-[10px] uppercase tracking-[0.18em] text-zinc-200 transition hover:bg-white hover:text-black">
+          <Link href="/home" className="btn-ghost block w-full rounded-full py-2.5 text-[10px] uppercase tracking-[0.18em]">
             Jelajahi Galeri (/home)
           </Link>
 
           <form action={logoutUserAction}>
-            <button type="submit" className="w-full py-2 text-[11px] text-zinc-500 transition hover:text-zinc-200">
+            <button type="submit" className="w-full py-2 text-[11px] text-zinc-500 transition hover:text-red-400">
               Keluar (Logout)
             </button>
           </form>

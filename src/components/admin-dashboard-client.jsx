@@ -165,7 +165,7 @@ export default function AdminDashboardClient({
   };
 
   return (
-    <main className="min-h-screen bg-[#090909] text-zinc-100">
+    <main className="min-h-screen overflow-x-clip bg-transparent text-zinc-100">
       <Sidebar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -178,7 +178,7 @@ export default function AdminDashboardClient({
         onToggleCollapse={toggleSidebarCollapsed}
       />
 
-      <div className={`min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}>
+      <div className={`relative z-10 min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}>
         <Navbar
           pageTitle={TAB_TITLES[activeTab]}
           searchQuery={searchQuery}
@@ -206,14 +206,14 @@ export default function AdminDashboardClient({
           {activeTab === "overview" && (
             <section className="space-y-8">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">PLATFORM ANALYTICS</p>
-                <h2 className="mt-1 text-2xl font-light text-white">Ringkasan Data Agregasi Platform</h2>
+                <p className="eyebrow">PLATFORM ANALYTICS</p>
+                <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">Ringkasan Data Agregasi Platform</h2>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/50 p-5">
+                <div className="glass spotlight card-lux rounded-2xl border border-white/15 p-5">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Total Pengguna</p>
-                  <p className="mt-2 text-3xl font-light text-white">
+                  <p className="font-display mt-2 text-4xl text-gold">
                     {stats.Admin + stats.Member + stats.Curator}
                   </p>
                   <p className="mt-2 text-[11px] text-zinc-400">
@@ -221,35 +221,35 @@ export default function AdminDashboardClient({
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/50 p-5">
+                <div className="glass spotlight card-lux rounded-2xl border border-white/15 p-5">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Total Karya Seni</p>
-                  <p className="mt-2 text-3xl font-light text-white">{stats.total_artworks}</p>
+                  <p className="font-display mt-2 text-4xl text-gold">{stats.total_artworks}</p>
                   <p className="mt-2 text-[11px] text-zinc-500">Tersebar di {categories.length} kategori</p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setActiveTab("moderation")}
-                  className="rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5 text-left transition hover:border-red-500/40"
+                  className="glass spotlight card-lux rounded-2xl border border-red-500/30 bg-red-500/[0.06] p-5 text-left transition hover:border-red-400/50"
                 >
                   <p className="text-[10px] uppercase tracking-[0.2em] text-red-300/80">Laporan Pending</p>
-                  <p className="mt-2 text-3xl font-light text-red-300">{stats.pending_reports}</p>
+                  <p className="font-display mt-2 text-4xl text-red-300">{stats.pending_reports}</p>
                   <p className="mt-2 text-[11px] text-zinc-400">{moderationQueue.length} karya menunggu moderasi &rarr;</p>
                 </button>
 
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5">
+                <div className="glass spotlight card-lux rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.06] p-5">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-emerald-300/80">Challenge Aktif</p>
-                  <p className="mt-2 text-3xl font-light text-emerald-300">{stats.active_challenges}</p>
+                  <p className="font-display mt-2 text-4xl text-emerald-300">{stats.active_challenges}</p>
                   <p className="mt-2 text-[11px] text-zinc-400">{stats.pending_curators} Curator menunggu verifikasi</p>
                 </div>
               </div>
 
               {/* Aksi Cepat */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-6">
+                <div className="glass rounded-2xl border border-white/15 p-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-white">Antrian Verifikasi Curator</h3>
-                    <button type="button" onClick={() => setActiveTab("curators")} className="text-[11px] text-zinc-400 hover:text-white">
+                    <h3 className="font-display text-2xl text-white">Antrian Verifikasi Curator</h3>
+                    <button type="button" onClick={() => setActiveTab("curators")} className="text-[11px] text-champagne-200 hover:text-white">
                       Lihat semua &rarr;
                     </button>
                   </div>
@@ -258,16 +258,16 @@ export default function AdminDashboardClient({
                   ) : (
                     <div className="mt-4 space-y-3">
                       {pendingCurators.slice(0, 4).map((c) => (
-                        <div key={c.id} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-black/40 p-3">
+                        <div key={c.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/40 p-3">
                           <div className="min-w-0">
                             <p className="truncate text-xs font-medium text-white">{c.display_name}</p>
                             <p className="truncate text-[10px] text-zinc-500">@{c.username} &bull; {c.email}</p>
                           </div>
                           <div className="flex shrink-0 gap-1.5">
-                            <button type="button" disabled={busyKey === `curator-${c.id}`} onClick={() => handleVerifyCurator(c, "Approved")} className="rounded-lg bg-emerald-500/20 px-2.5 py-1 text-[10px] font-medium text-emerald-300 hover:bg-emerald-500 hover:text-black">
+                            <button type="button" disabled={busyKey === `curator-${c.id}`} onClick={() => handleVerifyCurator(c, "Approved")} className="rounded-lg bg-emerald-500/20 px-2.5 py-1 text-[10px] font-medium text-emerald-300 transition hover:bg-emerald-500 hover:text-black">
                               Approve
                             </button>
-                            <button type="button" disabled={busyKey === `curator-${c.id}`} onClick={() => handleVerifyCurator(c, "Rejected")} className="rounded-lg bg-red-500/20 px-2.5 py-1 text-[10px] font-medium text-red-300 hover:bg-red-500 hover:text-white">
+                            <button type="button" disabled={busyKey === `curator-${c.id}`} onClick={() => handleVerifyCurator(c, "Rejected")} className="rounded-lg bg-red-500/20 px-2.5 py-1 text-[10px] font-medium text-red-300 transition hover:bg-red-500 hover:text-white">
                               Reject
                             </button>
                           </div>
@@ -277,16 +277,16 @@ export default function AdminDashboardClient({
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-6">
+                <div className="glass rounded-2xl border border-white/15 p-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-white">Distribusi Pengguna per Peran</h3>
-                    <button type="button" onClick={() => setActiveTab("users")} className="text-[11px] text-zinc-400 hover:text-white">
+                    <h3 className="font-display text-2xl text-white">Distribusi Pengguna per Peran</h3>
+                    <button type="button" onClick={() => setActiveTab("users")} className="text-[11px] text-champagne-200 hover:text-white">
                       Kelola &rarr;
                     </button>
                   </div>
                   <div className="mt-5 space-y-4">
                     {[
-                      { label: "Member (Kreator)", count: stats.Member, color: "bg-white" },
+                      { label: "Member (Kreator)", count: stats.Member, color: "bg-gradient-to-r from-champagne-200 to-champagne-400" },
                       { label: "Curator (Penyelenggara)", count: stats.Curator, color: "bg-amber-400" },
                       { label: "Admin (Pengelola)", count: stats.Admin, color: "bg-emerald-400" },
                     ].map((row) => {
@@ -314,22 +314,23 @@ export default function AdminDashboardClient({
           {activeTab === "curators" && (
             <section>
               <div className="mb-6">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">CURATOR VERIFICATION</p>
-                <h2 className="mt-1 text-2xl font-light text-white">Pendaftaran Curator Menunggu Persetujuan ({filteredCurators.length})</h2>
+                <p className="eyebrow">CURATOR VERIFICATION</p>
+                <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">Pendaftaran Curator Menunggu Persetujuan ({filteredCurators.length})</h2>
               </div>
 
               {filteredCurators.length === 0 ? (
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-16 text-center">
+                <div className="glass rounded-2xl border border-white/10 px-6 py-16 text-center">
                   <p className="text-sm text-zinc-400">Tidak ada pendaftar Curator berstatus Pending saat ini.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {filteredCurators.map((c) => (
-                    <div key={c.id} className="flex flex-col gap-4 rounded-2xl border border-white/[0.08] bg-zinc-900/50 p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div key={c.id} className="glass spotlight flex flex-col gap-4 rounded-2xl border border-white/15 p-5 transition hover:border-champagne-300/40 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <div className="flex items-center gap-2.5">
                           <h3 className="text-sm font-medium text-white">{c.display_name}</h3>
-                          <span className="rounded-full border border-amber-400/30 bg-amber-500/15 px-2.5 py-0.5 text-[9px] uppercase tracking-wider text-amber-300">
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/15 px-2.5 py-0.5 text-[9px] uppercase tracking-wider text-amber-300">
+                            <span className="live-dot text-amber-400" />
                             Pending
                           </span>
                         </div>
@@ -366,18 +367,18 @@ export default function AdminDashboardClient({
           {activeTab === "moderation" && (
             <section>
               <div className="mb-6">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">MODERATION QUEUE</p>
-                <h2 className="mt-1 text-2xl font-light text-white">Antrian Moderasi Laporan Karya ({filteredModeration.length})</h2>
+                <p className="eyebrow">MODERATION QUEUE</p>
+                <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">Antrian Moderasi Laporan Karya ({filteredModeration.length})</h2>
               </div>
 
               {filteredModeration.length === 0 ? (
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-6 py-16 text-center">
+                <div className="glass rounded-2xl border border-white/10 px-6 py-16 text-center">
                   <p className="text-sm text-zinc-400">Tidak ada laporan karya yang perlu ditinjau saat ini.</p>
                 </div>
               ) : (
                 <div className="space-y-5">
                   {filteredModeration.map((item) => (
-                    <div key={item.artwork_id} className="grid grid-cols-1 gap-5 rounded-2xl border border-white/[0.08] bg-zinc-900/50 p-5 lg:grid-cols-12">
+                    <div key={item.artwork_id} className="glass spotlight grid grid-cols-1 gap-5 rounded-2xl border border-white/15 p-5 lg:grid-cols-12">
                       <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-900 lg:col-span-3">
                         <img src={item.artwork_image_url} alt={item.artwork_title} className="h-48 w-full object-cover" />
                       </div>
@@ -386,13 +387,13 @@ export default function AdminDashboardClient({
                         <div>
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
-                              <span className="rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-0.5 text-[9px] uppercase tracking-wider text-zinc-300">
+                              <span className="rounded-full border border-champagne-300/30 bg-champagne-400/10 px-2.5 py-0.5 text-[9px] uppercase tracking-wider text-champagne-200">
                                 {item.category_name}
                               </span>
-                              <h3 className="mt-2 text-lg font-medium text-white">{item.artwork_title}</h3>
+                              <h3 className="font-display mt-2 text-2xl text-white">{item.artwork_title}</h3>
                               <p className="text-xs text-zinc-400">
                                 Kreator:{" "}
-                                <Link href={`/creators/${item.artist_username}`} className="text-zinc-200 underline hover:text-white">
+                                <Link href={`/creators/${item.artist_username}`} className="text-champagne-200 underline hover:text-white">
                                   {item.artist_name} (@{item.artist_username})
                                 </Link>
                               </p>
@@ -402,7 +403,7 @@ export default function AdminDashboardClient({
                             </span>
                           </div>
 
-                          <div className="mt-4 space-y-2 rounded-xl border border-white/[0.07] bg-black/40 p-3.5">
+                          <div className="mt-4 space-y-2 rounded-xl border border-white/10 bg-black/40 p-3.5">
                             <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500">Alasan Pelapor</p>
                             {(item.reports || []).map((rep) => (
                               <div key={rep.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.05] pb-2 text-xs last:border-0 last:pb-0">
@@ -420,7 +421,7 @@ export default function AdminDashboardClient({
                             type="button"
                             disabled={busyKey === `dismiss-${item.artwork_id}`}
                             onClick={() => handleDismissReport(item)}
-                            className="rounded-lg border border-white/15 bg-white/[0.04] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-200 transition hover:bg-white hover:text-black disabled:opacity-50"
+                            className="btn-ghost rounded-lg px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] disabled:opacity-50"
                           >
                             Dismiss Report
                           </button>
@@ -446,8 +447,8 @@ export default function AdminDashboardClient({
             <section>
               <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">USER MANAGEMENT</p>
-                  <h2 className="mt-1 text-2xl font-light text-white">Daftar Pengguna ({filteredUsers.length})</h2>
+                  <p className="eyebrow">USER MANAGEMENT</p>
+                  <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">Daftar Pengguna ({filteredUsers.length})</h2>
                 </div>
 
                 <div className="flex gap-2">
@@ -458,8 +459,8 @@ export default function AdminDashboardClient({
                       onClick={() => setRoleFilter(r)}
                       className={`rounded-full border px-4 py-1.5 text-[10px] uppercase tracking-[0.15em] transition ${
                         roleFilter === r
-                          ? "border-white bg-white font-semibold text-black"
-                          : "border-white/10 text-zinc-400 hover:border-white/30 hover:text-white"
+                          ? "chip-active"
+                          : "border-white/10 text-zinc-400 hover:border-champagne-300/40 hover:text-champagne-50"
                       }`}
                     >
                       {r === "All" ? "Semua" : r}
@@ -468,7 +469,7 @@ export default function AdminDashboardClient({
                 </div>
               </div>
 
-              <div className="overflow-x-auto rounded-2xl border border-white/[0.08] bg-zinc-900/40">
+              <div className="glass overflow-x-auto rounded-2xl border border-white/15">
                 <table className="w-full min-w-[680px] text-left text-xs">
                   <thead className="border-b border-white/[0.08] bg-black/40 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
                     <tr>
@@ -483,7 +484,7 @@ export default function AdminDashboardClient({
                     {filteredUsers.map((u) => {
                       const canDelete = u.role !== "Admin" && Number(u.id) !== Number(adminUser.id);
                       return (
-                        <tr key={u.id} className="hover:bg-white/[0.02]">
+                        <tr key={u.id} className="transition hover:bg-white/[0.03]">
                           <td className="px-5 py-3.5">
                             <p className="font-medium text-white">{u.display_name}</p>
                             <p className="text-[10px] text-zinc-500">@{u.username} &bull; {u.email}</p>
@@ -495,7 +496,7 @@ export default function AdminDashboardClient({
                                   ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-300"
                                   : u.role === "Curator"
                                   ? "border-amber-400/30 bg-amber-500/15 text-amber-300"
-                                  : "border-white/15 bg-white/[0.06] text-zinc-300"
+                                  : "border-champagne-300/25 bg-champagne-400/10 text-champagne-200"
                               }`}
                             >
                               {u.role}
@@ -532,12 +533,12 @@ export default function AdminDashboardClient({
           {activeTab === "categories" && (
             <section className="max-w-3xl space-y-6">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">CATEGORY MANAGEMENT</p>
-                <h2 className="mt-1 text-2xl font-light text-white">Manajemen Kategori Karya ({categories.length})</h2>
+                <p className="eyebrow">CATEGORY MANAGEMENT</p>
+                <h2 className="font-display mt-1.5 text-3xl text-white sm:text-4xl">Manajemen Kategori Karya ({categories.length})</h2>
               </div>
 
               {/* Form Tambah Kategori */}
-              <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/50 p-5">
+              <div className="glass rounded-2xl border border-white/15 p-5">
                 <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-zinc-400">Tambah Kategori Baru</p>
                 {createCatState?.error && (
                   <p className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
@@ -555,12 +556,12 @@ export default function AdminDashboardClient({
                     name="name"
                     required
                     placeholder="Contoh: Fotografi, UI/UX, 3D Art..."
-                    className="flex-1 rounded-lg border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:border-white/40 focus:outline-none"
+                    className="input-lux flex-1"
                   />
                   <button
                     type="submit"
                     disabled={isCreatingCat}
-                    className="rounded-lg bg-white px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-black transition hover:bg-zinc-200 disabled:opacity-50"
+                    className="btn-gold rounded-xl px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]"
                   >
                     {isCreatingCat ? "Menambah..." : "＋ Tambah"}
                   </button>
@@ -568,24 +569,24 @@ export default function AdminDashboardClient({
               </div>
 
               {/* Daftar Kategori */}
-              <div className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/40">
+              <div className="glass divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/15">
                 {filteredCategories.map((cat) => {
                   const isEditingThis = editingCatId === cat.id;
                   return (
-                    <div key={cat.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+                    <div key={cat.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 transition hover:bg-white/[0.02]">
                       {isEditingThis ? (
                         <div className="flex flex-1 items-center gap-2">
                           <input
                             type="text"
                             value={editingCatName}
                             onChange={(e) => setEditingCatName(e.target.value)}
-                            className="flex-1 rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 text-xs text-white focus:outline-none"
+                            className="input-lux flex-1 py-1.5"
                           />
                           <button
                             type="button"
                             disabled={busyKey === `edit-cat-${cat.id}`}
                             onClick={() => handleSaveCategoryEdit(cat.id)}
-                            className="rounded-lg bg-white px-3 py-1.5 text-[10px] font-semibold text-black"
+                            className="btn-gold rounded-lg px-3 py-1.5 text-[10px]"
                           >
                             Simpan
                           </button>
@@ -595,7 +596,7 @@ export default function AdminDashboardClient({
                               setEditingCatId(null);
                               setEditingCatName("");
                             }}
-                            className="rounded-lg border border-white/15 px-3 py-1.5 text-[10px] text-zinc-400 hover:text-white"
+                            className="btn-ghost rounded-lg px-3 py-1.5 text-[10px]"
                           >
                             Batal
                           </button>
@@ -613,7 +614,7 @@ export default function AdminDashboardClient({
                                 setEditingCatId(cat.id);
                                 setEditingCatName(cat.name);
                               }}
-                              className="rounded-lg border border-white/15 bg-white/[0.04] px-3 py-1.5 text-[10px] uppercase tracking-wider text-zinc-200 transition hover:bg-white hover:text-black"
+                              className="btn-ghost rounded-lg px-3 py-1.5 text-[10px] uppercase tracking-wider"
                             >
                               Edit
                             </button>

@@ -2,7 +2,7 @@
 
 export default function Navbar({ pageTitle, searchQuery, onSearchChange, onOpenMobileMenu }) {
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#0b0b0c]/85 px-6 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 flex h-[76px] w-full items-center justify-between border-b border-white/[0.06] bg-[#090909]/60 px-6 backdrop-blur-2xl">
       <div className="flex items-center gap-4">
         <button
           type="button"
@@ -12,8 +12,8 @@ export default function Navbar({ pageTitle, searchQuery, onSearchChange, onOpenM
           &#9776;
         </button>
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-500">Admin Console</p>
-          <h1 className="text-sm font-medium tracking-wide text-white">{pageTitle}</h1>
+          <p className="text-[9px] uppercase tracking-[0.28em] text-champagne-300/80">Admin Console</p>
+          <h1 className="font-display text-xl tracking-wide text-white">{pageTitle}</h1>
         </div>
       </div>
 
@@ -24,7 +24,7 @@ export default function Navbar({ pageTitle, searchQuery, onSearchChange, onOpenM
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Cari pengguna, laporan, atau kategori..."
-            className="w-full rounded-full border border-white/10 bg-zinc-900/80 py-1.5 pl-4 pr-8 text-xs text-white placeholder-zinc-500 transition focus:border-white/30 focus:outline-none"
+            className="input-lux rounded-full py-2 pl-4 pr-8 text-xs"
           />
           {searchQuery && (
             <button
@@ -37,7 +37,7 @@ export default function Navbar({ pageTitle, searchQuery, onSearchChange, onOpenM
           )}
         </div>
 
-        <span className="rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-1 text-[10px] uppercase tracking-[0.2em] text-zinc-300">
+        <span className="rounded-full border border-champagne-300/30 bg-champagne-400/10 px-3.5 py-1 text-[10px] uppercase tracking-[0.2em] text-champagne-200">
           Full Access
         </span>
       </div>

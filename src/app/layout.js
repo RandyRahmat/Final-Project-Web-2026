@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import AmbientBackground from "@/components/ui/ambient-background";
+import { AuthPromptProvider } from "@/components/ui/auth-prompt-provider";
 import BackToTop from "@/components/ui/back-to-top";
 import CommandPalette from "@/components/ui/command-palette";
 import { ConfirmProvider } from "@/components/ui/confirm-provider";
@@ -49,7 +50,9 @@ export default function RootLayout({ children }) {
         <CommandPalette />
         <BackToTop />
         <ToastProvider>
-          <ConfirmProvider>{children}</ConfirmProvider>
+          <AuthPromptProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </AuthPromptProvider>
         </ToastProvider>
       </body>
     </html>

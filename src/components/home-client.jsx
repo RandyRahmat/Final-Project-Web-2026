@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useActionState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/app-sidebar";
+import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import ExhibitionMode from "@/components/ui/exhibition-mode";
 import QuickSearchTrigger, { QuickSearchIconButton } from "@/components/ui/quick-search-trigger";
 import { useToast } from "@/components/ui/toast-provider";
@@ -18,6 +19,7 @@ const REACTIONS = [
 ];
 
 export default function HomeClient({ currentUser, artworks, categories, challenges, podiumWinners, notifications = [] }) {
+  const openAuthPrompt = useAuthPrompt();
   const toast = useToast();
   const [activeNav, setActiveNav] = useState("Home");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -29,7 +31,6 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
   const [uploadPreview, setUploadPreview] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed();
-  const [authNotice, setAuthNotice] = useState("");
   const [showExhibition, setShowExhibition] = useState(false);
   const notifContainerRef = useRef(null);
 
@@ -120,12 +121,13 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
 
   const handleReaction = async (artworkId, reactionType = "love") => {
     if (isGuest) {
-      setAuthNotice("Silakan masuk sebagai Member untuk memberi reaksi pada karya.");
-      toast.info("Masuk diperlukan", "Login sebagai Member untuk memberi reaksi.");
+      openAuthPrompt({
+        title: "Masuk untuk Memberi Reaksi",
+        message: "Login sebagai Member Aesthe untuk memberikan apresiasi dan reaksi pada karya seni ini.",
+      });
       return;
     }
     if (!isMember) return;
-    setAuthNotice("");
     const target = artworks.find((a) => a.id === artworkId);
     const removing = target?.user_reaction === reactionType;
     const reaction = getReactionDisplay(reactionType);
@@ -135,12 +137,13 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
 
   const handleFavorite = async (artworkId) => {
     if (isGuest) {
-      setAuthNotice("Silakan masuk sebagai Member untuk menyimpan karya ke Favorites.");
-      toast.info("Masuk diperlukan", "Login sebagai Member untuk menyimpan karya.");
+      openAuthPrompt({
+        title: "Masuk untuk Menyimpan Karya",
+        message: "Login sebagai Member Aesthe untuk menyimpan karya favorit dan mengaturnya ke dalam moodboard.",
+      });
       return;
     }
     if (!isMember) return;
-    setAuthNotice("");
     const target = artworks.find((a) => a.id === artworkId);
     const wasFav = Boolean(target?.is_favorited);
     await toggleFavoriteAction(artworkId);
@@ -322,15 +325,6 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
         </header>
 
         <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
-          {authNotice && (
-            <div className="mb-6 flex items-center justify-between rounded-xl border border-white/15 bg-white/[0.04] px-5 py-3 text-xs text-zinc-200">
-              <span>{authNotice}</span>
-              <Link href="/" className="rounded-full bg-white px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-black">
-                Login Sekarang
-              </Link>
-            </div>
-          )}
-
           {isCurator && !isCuratorApproved && (
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-3 text-xs text-amber-200">
               <span>

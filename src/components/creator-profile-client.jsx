@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { reactArtworkAction, toggleFavoriteAction } from "@/actions/artwork-actions";
 import { sendMessageAction } from "@/actions/message-actions";
@@ -16,8 +17,8 @@ const REACTIONS = [
 ];
 
 export default function CreatorProfileClient({ currentUser, creator, artworks, followStats }) {
+  const openAuthPrompt = useAuthPrompt();
   const toast = useToast();
-  const [authNotice, setAuthNotice] = useState("");
   const [togglingFollow, setTogglingFollow] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
@@ -69,13 +70,14 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
   const handleToggleFollow = async () => {
     if (isGuest) {
-      setAuthNotice(`Silakan masuk sebagai Member untuk mengikuti ${creator.display_name}.`);
-      toast.info("Masuk diperlukan", `Login untuk mengikuti @${creator.username}.`);
+      openAuthPrompt({
+        title: "Masuk untuk Mengikuti Kreator",
+        message: `Login sebagai Member Aesthe untuk mengikuti ${creator.display_name} (@${creator.username}) dan pantau karya terbarunya.`,
+      });
       return;
     }
     if (!isMember || isOwnProfile || togglingFollow) return;
     setTogglingFollow(true);
-    setAuthNotice("");
     const wasFollowing = Boolean(followStats?.isFollowing);
     await toggleFollowAction(creator.id);
     setTogglingFollow(false);
@@ -88,11 +90,12 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
   const handleOpenChat = () => {
     if (isGuest) {
-      setAuthNotice(`Silakan masuk terlebih dahulu untuk mengirim pesan pribadi ke ${creator.display_name}.`);
-      toast.info("Masuk diperlukan", "Login untuk mengirim pesan pribadi.");
+      openAuthPrompt({
+        title: "Masuk untuk Mengirim Pesan",
+        message: `Login terlebih dahulu untuk memulai percakapan pribadi dengan ${creator.display_name}.`,
+      });
       return;
     }
-    setAuthNotice("");
     setChatError("");
     setLoadingChat(true);
     setShowChat(true);
@@ -119,12 +122,13 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
   const handleReaction = async (artworkId, reactionType = "love") => {
     if (isGuest) {
-      setAuthNotice("Silakan masuk sebagai Member untuk memberi reaksi pada karya.");
-      toast.info("Masuk diperlukan", "Login sebagai Member untuk memberi reaksi.");
+      openAuthPrompt({
+        title: "Masuk untuk Memberi Reaksi",
+        message: "Login sebagai Member Aesthe untuk memberikan apresiasi dan reaksi pada karya seni ini.",
+      });
       return;
     }
     if (!isMember) return;
-    setAuthNotice("");
     const target = artworks.find((a) => a.id === artworkId);
     const r = REACTIONS.find((x) => x.type === reactionType) || REACTIONS[0];
     await reactArtworkAction(artworkId, reactionType);
@@ -133,12 +137,13 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
 
   const handleFavorite = async (artworkId) => {
     if (isGuest) {
-      setAuthNotice("Silakan masuk sebagai Member untuk menyimpan karya ke Favorites.");
-      toast.info("Masuk diperlukan", "Login sebagai Member untuk menyimpan karya.");
+      openAuthPrompt({
+        title: "Masuk untuk Menyimpan Karya",
+        message: "Login sebagai Member Aesthe untuk menyimpan karya favorit ke dalam koleksi moodboard.",
+      });
       return;
     }
     if (!isMember) return;
-    setAuthNotice("");
     const target = artworks.find((a) => a.id === artworkId);
     const wasFav = Boolean(target?.is_favorited);
     await toggleFavoriteAction(artworkId);
@@ -181,15 +186,6 @@ export default function CreatorProfileClient({ currentUser, creator, artworks, f
       </header>
 
       <div className="relative z-10 mx-auto max-w-[1400px] px-5 py-10 sm:px-10">
-        {authNotice && (
-          <div className="glass mb-6 flex items-center justify-between rounded-xl border border-champagne-300/25 px-5 py-3 text-xs text-zinc-200">
-            <span>{authNotice}</span>
-            <Link href="/" className="btn-gold rounded-full px-4 py-1 text-[10px] uppercase tracking-wider">
-              Login Sekarang
-            </Link>
-          </div>
-        )}
-
         {/* CREATOR HEADER */}
         <section className="glass spotlight relative overflow-hidden rounded-3xl border border-white/15 p-6 sm:p-10">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-champagne-400/[0.08] via-transparent to-transparent" />

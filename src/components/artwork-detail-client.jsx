@@ -2,6 +2,7 @@
 
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useAuthPrompt } from "@/components/ui/auth-prompt-provider";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import {
@@ -38,9 +39,9 @@ function formatDate(dateValue) {
 }
 
 export default function ArtworkDetailClient({ currentUser, artwork, comments }) {
+  const openAuthPrompt = useAuthPrompt();
   const confirm = useConfirm();
   const toast = useToast();
-  const [authNotice, setAuthNotice] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -167,12 +168,13 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
 
   const handleReaction = async (reactionType = "love") => {
     if (isGuest) {
-      setAuthNotice("Silakan masuk sebagai Member untuk memberi reaksi pada karya ini.");
-      toast.info("Masuk diperlukan", "Login sebagai Member untuk memberi reaksi.");
+      openAuthPrompt({
+        title: "Masuk untuk Memberi Reaksi",
+        message: "Login sebagai Member Aesthe untuk memberikan apresiasi dan reaksi pada karya ini.",
+      });
       return;
     }
     if (!isMember) return;
-    setAuthNotice("");
     const removing = artwork.user_reaction === reactionType;
     const r = REACTIONS.find((x) => x.type === reactionType) || REACTIONS[0];
     await reactArtworkAction(artwork.id, reactionType);
@@ -181,12 +183,13 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
 
   const handleFavorite = async () => {
     if (isGuest) {
-      setAuthNotice("Silakan masuk sebagai Member untuk menyimpan karya ke Favorites.");
-      toast.info("Masuk diperlukan", "Login sebagai Member untuk menyimpan karya.");
+      openAuthPrompt({
+        title: "Masuk untuk Menyimpan Karya",
+        message: "Login sebagai Member Aesthe untuk menyimpan karya ini ke Favorites & Moodboard.",
+      });
       return;
     }
     if (!isMember) return;
-    setAuthNotice("");
     const wasFav = Boolean(artwork.is_favorited);
     await toggleFavoriteAction(artwork.id);
     toast.success(wasFav ? "Dihapus dari Favorites" : "Disimpan ke Favorites", artwork.title);
@@ -194,11 +197,13 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
 
   const handleOpenReport = () => {
     if (isGuest) {
-      setAuthNotice("Silakan masuk sebagai Member untuk melaporkan karya ini.");
+      openAuthPrompt({
+        title: "Masuk untuk Melaporkan Karya",
+        message: "Login sebagai Member Aesthe agar laporan moderasi dapat ditinjau oleh Admin.",
+      });
       return;
     }
     if (!isMember || isOwnArtwork) return;
-    setAuthNotice("");
     setShowReportModal(true);
   };
 
@@ -245,15 +250,6 @@ export default function ArtworkDetailClient({ currentUser, artwork, comments }) 
       </header>
 
       <div className="relative z-10 mx-auto max-w-[1400px] px-5 py-8 sm:px-10 lg:py-12">
-        {authNotice && (
-          <div className="glass mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-champagne-300/25 px-5 py-3 text-xs text-zinc-200">
-            <span>{authNotice}</span>
-            <Link href="/" className="btn-gold rounded-full px-4 py-1 text-[10px] uppercase tracking-wider">
-              Login Sekarang
-            </Link>
-          </div>
-        )}
-
         {reportState?.success && (
           <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3 text-xs text-emerald-300">
             {reportState.message}

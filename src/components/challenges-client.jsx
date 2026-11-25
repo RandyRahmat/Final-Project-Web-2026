@@ -206,7 +206,7 @@ export default function ChallengesClient({ currentUser, challenges }) {
                           <img src={ch.banner_url} alt={ch.title} className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-110" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 via-zinc-900 to-black text-3xl text-zinc-700">
-                            ✧
+                            ✨
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />

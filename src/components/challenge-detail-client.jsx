@@ -181,7 +181,7 @@ export default function ChallengeDetailClient({
               <img src={challenge.banner_url} alt={challenge.title} className="animate-ken-burns h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 via-zinc-900 to-black text-5xl text-zinc-700">
-                ✧
+                ✨
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#090909] via-black/45 to-transparent" />

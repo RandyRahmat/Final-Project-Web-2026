@@ -305,13 +305,19 @@ export default function WelcomePage() {
 
         <section className="relative flex h-screen w-full flex-col items-center justify-center px-6 pt-14 sm:pt-0">
           <div
-            className={`glass gradient-border w-full max-w-md rounded-3xl transition-all duration-1000 ${
+            className={`glass gradient-border w-full rounded-3xl transition-all duration-1000 ${
+              authMode === "register" ? "max-w-[460px]" : "max-w-md"
+            } ${
               step === 2 ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
             }`}
           >
             <div
               data-lenis-prevent
-              className="max-h-[80vh] overflow-x-hidden overflow-y-auto rounded-3xl p-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-h-[84vh] sm:p-9"
+              className={`overflow-x-hidden overflow-y-auto rounded-3xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                authMode === "register"
+                  ? "max-h-[88vh] p-6 sm:px-8 sm:py-6"
+                  : "max-h-[82vh] p-7 sm:max-h-[86vh] sm:p-9"
+              }`}
             >
               {authMode === "forgot" ? (
                 <ForgotPasswordFlow
@@ -322,9 +328,11 @@ export default function WelcomePage() {
                 />
               ) : (
                 <>
-                  <div className="mb-6 flex flex-col items-center text-center">
-                    <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow mb-3 h-10 w-10 object-contain mix-blend-screen" />
-                    <h3 className="font-display text-3xl tracking-wide text-white">
+                  <div className={`flex flex-col items-center text-center ${authMode === "register" ? "mb-4" : "mb-6"}`}>
+                    {authMode === "login" && (
+                      <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow mb-3 h-10 w-10 object-contain mix-blend-screen" />
+                    )}
+                    <h3 className={`font-display tracking-wide text-white ${authMode === "register" ? "text-2xl sm:text-[28px]" : "text-3xl"}`}>
                       {authMode === "login" ? "Masuk ke Akun Aesthe" : "Buat Akun Baru"}
                     </h3>
                     <p className="mt-1 text-xs text-zinc-400">
@@ -335,50 +343,50 @@ export default function WelcomePage() {
                   </div>
 
                   {activeError && (
-                    <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                    <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-xs text-red-300">
                       {activeError}
                     </div>
                   )}
 
-                  <form key={authMode === "login" ? "login-form" : "register-form"} action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
+                  <form key={authMode === "login" ? "login-form" : "register-form"} action={authMode === "login" ? loginFormAction : registerFormAction} className={authMode === "register" ? "space-y-3" : "space-y-4"}>
                 {authMode === "register" && (
                   <>
-                    <div>
-                      <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Display Name</label>
-                      <input type="text" name="displayName" required placeholder="Display Name" className="input-lux" />
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-[11px] uppercase tracking-wider text-zinc-400">Display Name</label>
+                        <input type="text" name="displayName" required placeholder="Display Name" className="input-lux py-2" />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-[11px] uppercase tracking-wider text-zinc-400">Username</label>
+                        <input type="text" name="username" required placeholder="Username" className="input-lux py-2" />
+                      </div>
                     </div>
 
                     <div>
-                      <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username</label>
-                      <input type="text" name="username" required placeholder="Username" className="input-lux" />
-                    </div>
-
-                    <div>
-                      <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Peran Akun</label>
+                      <div className="flex flex-wrap items-baseline justify-between gap-1">
+                        <label className="block text-[11px] uppercase tracking-wider text-zinc-400">Peran Akun</label>
+                        <span className="text-[11px] text-zinc-400">
+                          <span className="font-medium text-champagne-200">
+                            {selectedRole === "Curator" ? "Curator" : "Member / Kreator"}
+                          </span>
+                          <span className="text-zinc-500">
+                            {selectedRole === "Curator" ? " · kelola challenge" : " · unggah karya"}
+                          </span>
+                        </span>
+                      </div>
                       <input type="hidden" name="role" value={selectedRole} />
 
-                      <p className="text-xs text-zinc-300">
-                        Mendaftar sebagai{" "}
-                        <span className="font-medium text-champagne-200">
-                          {selectedRole === "Curator" ? "Curator" : "Member / Kreator"}
-                        </span>
-                        <span className="text-[11px] text-zinc-500">
-                          {selectedRole === "Curator"
-                            ? " · kelola challenge & kurasi"
-                            : " · unggah karya & ikuti challenge"}
-                        </span>
-                      </p>
-
-                      <label className="mt-2.5 flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.08] bg-black/30 px-3.5 py-2.5 transition hover:border-champagne-300/35">
+                      <label className="mt-1.5 flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2 transition hover:border-champagne-300/35">
                         <input
                           type="checkbox"
                           checked={selectedRole === "Curator"}
                           onChange={(e) => setSelectedRole(e.target.checked ? "Curator" : "Member")}
-                          className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#d4af6a]"
+                          className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#d4af6a]"
                         />
                         <span className="text-[11px] leading-snug text-zinc-300">
-                          Ajukan akun sebagai <span className="font-medium text-champagne-200">Curator</span>{" "}
-                          <span className="text-zinc-500">(memerlukan verifikasi Admin)</span>
+                          Ajukan sebagai <span className="font-medium text-champagne-200">Curator</span>{" "}
+                          <span className="text-zinc-500">(verifikasi Admin)</span>
                         </span>
                       </label>
                     </div>
@@ -386,7 +394,7 @@ export default function WelcomePage() {
                 )}
 
                 <div>
-                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email</label>
+                  <label className={`block text-[11px] uppercase tracking-wider text-zinc-400 ${authMode === "register" ? "mb-1" : "mb-1.5"}`}>Email</label>
                   <input
                     type="email"
                     name="email"
@@ -394,12 +402,12 @@ export default function WelcomePage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="name@example.com"
-                    className="input-lux"
+                    className={authMode === "register" ? "input-lux py-2" : "input-lux"}
                   />
                 </div>
 
                 <div>
-                  <div className="mb-1.5 flex items-center justify-between">
+                  <div className={`flex items-center justify-between ${authMode === "register" ? "mb-1" : "mb-1.5"}`}>
                     <label className="block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi</label>
                     {authMode === "login" && (
                       <button type="button" onClick={() => switchAuthMode("forgot")} className="text-[11px] text-zinc-400 transition hover:text-champagne-200">
@@ -413,7 +421,7 @@ export default function WelcomePage() {
                       name="password"
                       required
                       placeholder="Password"
-                      className="input-lux pr-10"
+                      className={authMode === "register" ? "input-lux py-2 pr-10" : "input-lux pr-10"}
                     />
                     <button
                       type="button"
@@ -439,7 +447,7 @@ export default function WelcomePage() {
                   </div>
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
+                <button type="submit" disabled={isSubmitting} className={`btn-gold w-full rounded-xl text-xs uppercase tracking-[0.2em] ${authMode === "register" ? "mt-1 py-2.5" : "mt-2 py-3"}`}>
                   {isSubmitting ? "Memproses..." : authMode === "login" ? "Masuk Sekarang" : "Daftar Sekarang"}
                 </button>
               </form>
@@ -448,7 +456,7 @@ export default function WelcomePage() {
 
             {/* FOOTER DI DALAM KARTU: PENGALIH DAFTAR/MASUK + JELAJAHI TANPA AKUN */}
             {authMode !== "forgot" && (
-              <div className="mt-6 text-center">
+              <div className={`text-center ${authMode === "register" ? "mt-4" : "mt-6"}`}>
                 <p className="text-xs text-zinc-400">
                   {authMode === "login" ? (
                     <>
@@ -475,7 +483,7 @@ export default function WelcomePage() {
                   )}
                 </p>
 
-                <div className="my-4 flex items-center gap-3">
+                <div className={`flex items-center gap-3 ${authMode === "register" ? "my-2.5" : "my-4"}`}>
                   <div className="h-px flex-1 bg-white/10" />
                   <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">atau</span>
                   <div className="h-px flex-1 bg-white/10" />

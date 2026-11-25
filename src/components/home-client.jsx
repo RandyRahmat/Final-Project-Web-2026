@@ -239,7 +239,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                               ? "♥"
                               : item.kind === "follow"
                               ? "+"
-                              : "✧"}
+                              : "✨"}
                           </span>
 
                           <div className="min-w-0 flex-1">
@@ -366,7 +366,6 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
               </div>
 
               <div className="absolute bottom-8 left-7 right-7 max-w-lg">
-                <p className="mb-3 text-[9px] tracking-[0.3em] text-zinc-400">ARTWORK OF THE DAY / 001</p>
                 <h2 className="font-display text-4xl leading-[1.05] text-white sm:text-5xl">
                   {featured ? (
                     featured.title
@@ -457,7 +456,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                   )}
                   <div className="mt-2 flex h-20 w-full flex-col items-center justify-center rounded-t-xl border-x border-t border-amber-700/30 bg-gradient-to-t from-zinc-900 to-amber-900/20">
                     <span className="font-display text-xl font-semibold text-amber-500">#3</span>
-                    <span className="text-[8px] uppercase tracking-widest text-zinc-500">Bronze</span>
+                    <span className="text-[8px] font-medium uppercase tracking-widest text-amber-500/90">Bronze</span>
                   </div>
                 </div>
 
@@ -594,7 +593,7 @@ export default function HomeClient({ currentUser, artworks, categories, challeng
                     onClick={() => setShowExhibition(true)}
                     className="rounded-full border border-champagne-300/40 bg-champagne-400/10 px-4 py-2 text-[9px] font-medium tracking-[0.16em] text-champagne-100 transition hover:border-champagne-200 hover:bg-champagne-200 hover:text-black"
                   >
-                    ✧ MODE PAMERAN
+                    ✨ MODE PAMERAN
                   </button>
                 )}
 

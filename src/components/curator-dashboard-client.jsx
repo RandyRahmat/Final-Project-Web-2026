@@ -2,6 +2,7 @@
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import LuxDateTimePicker from "@/components/ui/lux-datetime-picker";
 import MobileBottomNav from "@/components/ui/mobile-bottom-nav";
 import NavIcon from "@/components/ui/nav-icon";
 import { useConfirm } from "@/components/ui/confirm-provider";
@@ -566,7 +567,7 @@ export default function CuratorDashboardClient({ curator, challenges, submission
                               {ch.banner_url ? (
                                 <img src={ch.banner_url} alt={ch.title} className="h-full w-full object-cover transition duration-700 hover:scale-105" />
                               ) : (
-                                <div className="flex h-full w-full items-center justify-center text-3xl text-zinc-700">✧</div>
+                                <div className="flex h-full w-full items-center justify-center text-3xl text-zinc-700">✨</div>
                               )}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
                               <div className="absolute inset-x-4 top-4 flex flex-wrap items-center justify-between gap-2">
@@ -676,11 +677,11 @@ export default function CuratorDashboardClient({ curator, challenges, submission
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">Tanggal Mulai</label>
-                  <input type="datetime-local" name="startDate" required className="input-lux" />
+                  <LuxDateTimePicker name="startDate" required placeholder="Pilih tanggal mulai..." />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">Tanggal Selesai (Deadline)</label>
-                  <input type="datetime-local" name="endDate" required className="input-lux" />
+                  <LuxDateTimePicker name="endDate" required placeholder="Pilih batas akhir..." />
                 </div>
               </div>
 
@@ -769,11 +770,11 @@ export default function CuratorDashboardClient({ curator, challenges, submission
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">Tanggal Mulai</label>
-                  <input type="datetime-local" name="startDate" required defaultValue={toDateTimeLocal(editingChallenge.start_date)} className="input-lux" />
+                  <LuxDateTimePicker key={`start-${editingChallenge.id}`} name="startDate" required defaultValue={toDateTimeLocal(editingChallenge.start_date)} placeholder="Pilih tanggal mulai..." />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-[10px] uppercase tracking-wider text-zinc-400">Tanggal Selesai</label>
-                  <input type="datetime-local" name="endDate" required defaultValue={toDateTimeLocal(editingChallenge.end_date)} className="input-lux" />
+                  <LuxDateTimePicker key={`end-${editingChallenge.id}`} name="endDate" required defaultValue={toDateTimeLocal(editingChallenge.end_date)} placeholder="Pilih batas akhir..." />
                 </div>
               </div>
 

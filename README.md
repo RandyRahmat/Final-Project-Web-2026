@@ -65,7 +65,7 @@ Tangkapan layar diambil langsung dari aplikasi yang berjalan pada resolusi deskt
 
 ### 2. Member (Kreator)
 - **Publikasi & Kelola Karya:** Mengunggah karya gambar lokal (tersimpan di `public/uploads/` dengan validasi *magic bytes* PNG/JPEG/WebP/GIF) lengkap dengan judul, deskripsi, kategori, dan tag; serta mengedit atau menghapus karya sendiri.
-- **Apresiasi & Interaksi Sosial:** Memberikan 5 pilihan reaksi ekspresif (`❤️ Love`, `😮 Wow`, `🔥 Fire`, `✧ Inspire`, `👏 Applause`), berkomentar di halaman karya, melaporkan karya bermasalah, dan mengikuti (*Follow*) kreator lain.
+- **Apresiasi & Interaksi Sosial:** Memberikan 5 pilihan reaksi ekspresif (`❤️ Love`, `😮 Wow`, `🔥 Fire`, `✨ Inspire`, `👏 Applause`), berkomentar di halaman karya, melaporkan karya bermasalah, dan mengikuti (*Follow*) kreator lain.
 - **Favorites & Moodboards (Collections):** Menyimpan karya favorit dan mengelompokkannya ke dalam folder *Moodboard* kustom di `/favorites`.
 - **Kompetisi Seni (Challenges):** Mengirimkan maksimal 1 karya per kompetisi yang sedang berlangsung (*Ongoing*) serta menarik kembali submisi sebelum batas waktu berakhir.
 - **Direct Messages (`/messages`):** Percakapan privat antar pengguna dengan sinkronisasi *polling* berkala, indikator pesan belum dibaca, dan tampilan responsif mobile/desktop.

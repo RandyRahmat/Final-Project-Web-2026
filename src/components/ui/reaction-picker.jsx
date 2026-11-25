@@ -6,7 +6,7 @@ export const REACTIONS = [
   { type: "love", icon: "❤️", label: "Love" },
   { type: "wow", icon: "😮", label: "Wow" },
   { type: "fire", icon: "🔥", label: "Fire" },
-  { type: "inspire", icon: "✧", label: "Inspire" },
+  { type: "inspire", icon: "✨", label: "Inspire" },
   { type: "applause", icon: "👏", label: "Applause" },
 ];
 

@@ -489,7 +489,7 @@ export default function ExploreClient({ currentUser, artworks, categories, creat
                     onClick={() => setShowExhibition(true)}
                     className="rounded-full border border-champagne-300/40 bg-champagne-400/10 px-4 py-2 text-[9px] font-medium tracking-[0.16em] text-champagne-100 transition hover:border-champagne-200 hover:bg-champagne-200 hover:text-black"
                   >
-                    ✧ MODE PAMERAN
+                    ✨ MODE PAMERAN
                   </button>
                 )}
 

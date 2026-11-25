@@ -59,7 +59,7 @@ export function AuthPromptProvider({ children }) {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="modal-panel gradient-border relative w-full max-w-sm overflow-hidden rounded-3xl p-7 text-center text-zinc-100 sm:p-8"
+            className="modal-panel gradient-border relative w-full max-w-sm rounded-3xl p-7 text-center text-zinc-100 sm:p-8"
           >
             <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-champagne-300/30 bg-champagne-400/10">
               <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow h-9 w-9 object-contain mix-blend-screen" />
@@ -79,7 +79,7 @@ export function AuthPromptProvider({ children }) {
 
             <div className="mt-7 flex flex-col gap-2">
               <Link
-                href="/"
+                href="/?step=login"
                 onClick={close}
                 className="btn-gold w-full rounded-full py-3 text-[11px] uppercase tracking-[0.2em]"
               >

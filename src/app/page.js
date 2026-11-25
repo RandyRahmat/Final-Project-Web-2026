@@ -35,12 +35,18 @@ export default function WelcomePage() {
   const [step, setStep] = useState(0);
   const [authMode, setAuthMode] = useState("login");
   const [selectedRole, setSelectedRole] = useState("Member");
+  const [showPassword, setShowPassword] = useState(false);
   const timerRef = useRef(null);
 
   const [loginState, loginFormAction, isLoginPending] = useActionState(loginUserAction, null);
   const [registerState, registerFormAction, isRegisterPending] = useActionState(registerUserAction, null);
   const [verifyResetState, verifyResetAction, isVerifyingReset] = useActionState(verifyAccountForResetAction, null);
   const [resetState, resetFormAction, isResetting] = useActionState(resetPasswordAction, null);
+
+  const switchAuthMode = (mode) => {
+    setAuthMode(mode);
+    setShowPassword(false);
+  };
 
   const handleStartLoginSequence = () => {
     setStep(1);
@@ -62,7 +68,13 @@ export default function WelcomePage() {
   };
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let rafId = 0;
+    if (params.get("step") === "login") {
+      rafId = requestAnimationFrame(() => setStep(2));
+    }
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
@@ -99,6 +111,17 @@ export default function WelcomePage() {
         </div>
       </div>
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_center,rgba(9,9,9,0.45)_0%,rgba(9,9,9,0.9)_65%,#090909_100%)]" />
+
+      {/* TOMBOL KEMBALI KE AWAL DI LUAR KARTU (DESKTOP POJOK KIRI ATAS) */}
+      <button
+        type="button"
+        onClick={handleBackToTop}
+        className={`btn-ghost fixed left-8 top-6 z-30 hidden rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.16em] transition-all duration-500 sm:inline-flex ${
+          step === 2 ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
+        }`}
+      >
+        &larr; Kembali ke Awal
+      </button>
 
       <header className="fixed top-6 left-1/2 z-30 -translate-x-1/2">
         <nav className="glass flex items-center gap-6 rounded-full px-6 py-2.5 text-[11px] uppercase tracking-[0.22em] text-zinc-400">
@@ -195,9 +218,17 @@ export default function WelcomePage() {
           </div>
         </section>
 
-        <section className="relative flex h-screen w-full flex-col items-center justify-center px-6">
-          <div className={`glass gradient-border w-full max-w-md rounded-3xl p-8 transition-all duration-1000 sm:p-10 ${step === 2 ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
-            <div className="mb-6 flex flex-col items-center text-center">
+        <section className="relative flex h-screen w-full flex-col items-center justify-center px-6 pt-14 sm:pt-0">
+          <div
+            className={`glass gradient-border w-full max-w-md rounded-3xl transition-all duration-1000 ${
+              step === 2 ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+            }`}
+          >
+            <div
+              data-lenis-prevent
+              className="max-h-[80vh] overflow-x-hidden overflow-y-auto rounded-3xl p-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-h-[84vh] sm:p-9"
+            >
+              <div className="mb-6 flex flex-col items-center text-center">
               <img src="/images/aesthe-logo.png" alt="Aesthe" className="logo-glow mb-3 h-10 w-10 object-contain mix-blend-screen" />
               <h3 className="font-display text-3xl tracking-wide text-white">
                 {authMode === "login"
@@ -217,17 +248,6 @@ export default function WelcomePage() {
               </p>
             </div>
 
-            {authMode !== "forgot" && (
-              <div className="mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-black/40 p-1 text-xs">
-                <button type="button" onClick={() => setAuthMode("login")} className={`rounded-lg py-2 font-medium transition ${authMode === "login" ? "chip-active" : "text-zinc-400 hover:text-white"}`}>
-                  Masuk
-                </button>
-                <button type="button" onClick={() => setAuthMode("register")} className={`rounded-lg py-2 font-medium transition ${authMode === "register" ? "chip-active" : "text-zinc-400 hover:text-white"}`}>
-                  Daftar Akun
-                </button>
-              </div>
-            )}
-
             {activeError && (
               <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
                 {activeError}
@@ -239,7 +259,7 @@ export default function WelcomePage() {
                 <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs leading-relaxed text-emerald-300">
                   {resetState.message}
                 </div>
-                <button type="button" onClick={() => setAuthMode("login")} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
+                <button type="button" onClick={() => switchAuthMode("login")} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
                   Kembali ke Login
                 </button>
               </div>
@@ -261,7 +281,7 @@ export default function WelcomePage() {
                   {isSubmitting ? "Menyimpan..." : "Simpan Kata Sandi Baru"}
                 </button>
 
-                <button type="button" onClick={() => setAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
+                <button type="button" onClick={() => switchAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
                   &larr; Kembali ke halaman masuk
                 </button>
               </form>
@@ -281,73 +301,144 @@ export default function WelcomePage() {
                   {isSubmitting ? "Memverifikasi..." : "Verifikasi Akun"}
                 </button>
 
-                <button type="button" onClick={() => setAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
+                <button type="button" onClick={() => switchAuthMode("login")} className="w-full text-center text-[11px] text-zinc-400 transition hover:text-champagne-200">
                   &larr; Kembali ke halaman masuk
                 </button>
               </form>
             ) : (
-            <form action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
-              {authMode === "register" && (
-                <>
-                  <div>
-                    <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Display Name</label>
-                    <input type="text" name="displayName" required placeholder="Contoh: Randy Rahmat" className="input-lux" />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username</label>
-                    <input type="text" name="username" required placeholder="randy_art" className="input-lux" />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Peran Akun</label>
-                    <input type="hidden" name="role" value={selectedRole} />
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <button type="button" onClick={() => setSelectedRole("Member")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Member" ? "border-champagne-300/60 bg-champagne-400/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
-                        <div className="font-medium">Member / Kreator</div>
-                        <div className="text-[10px] text-zinc-500">Unggah &amp; ikut tantangan</div>
-                      </button>
-                      <button type="button" onClick={() => setSelectedRole("Curator")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Curator" ? "border-champagne-300/60 bg-champagne-400/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
-                        <div className="font-medium">Curator</div>
-                        <div className="text-[10px] text-zinc-500">Butuh verifikasi Admin</div>
-                      </button>
+              <form action={authMode === "login" ? loginFormAction : registerFormAction} className="space-y-4">
+                {authMode === "register" && (
+                  <>
+                    <div>
+                      <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Display Name</label>
+                      <input type="text" name="displayName" required placeholder="Contoh: Randy Rahmat" className="input-lux" />
                     </div>
-                  </div>
-                </>
-              )}
 
-              <div>
-                <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email</label>
-                <input type="email" name="email" required placeholder="email@email.com" className="input-lux" />
-              </div>
+                    <div>
+                      <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Username</label>
+                      <input type="text" name="username" required placeholder="randy_art" className="input-lux" />
+                    </div>
 
-              <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label className="block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi</label>
-                  {authMode === "login" && (
-                    <button type="button" onClick={() => setAuthMode("forgot")} className="text-[11px] text-zinc-400 transition hover:text-champagne-200">
-                      Lupa kata sandi?
-                    </button>
-                  )}
+                    <div>
+                      <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Peran Akun</label>
+                      <input type="hidden" name="role" value={selectedRole} />
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <button type="button" onClick={() => setSelectedRole("Member")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Member" ? "border-champagne-300/60 bg-champagne-400/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
+                          <div className="font-medium">Member / Kreator</div>
+                          <div className="text-[10px] text-zinc-500">Unggah &amp; ikut tantangan</div>
+                        </button>
+                        <button type="button" onClick={() => setSelectedRole("Curator")} className={`rounded-lg border px-3 py-2 text-left transition ${selectedRole === "Curator" ? "border-champagne-300/60 bg-champagne-400/10 text-white" : "border-white/10 bg-black/30 text-zinc-400"}`}>
+                          <div className="font-medium">Curator</div>
+                          <div className="text-[10px] text-zinc-500">Butuh verifikasi Admin</div>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-zinc-400">Email</label>
+                  <input type="email" name="email" required placeholder="email@email.com" className="input-lux" />
                 </div>
-                <input type="password" name="password" required placeholder="Password" className="input-lux" />
-              </div>
 
-              <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
-                {isSubmitting ? "Memproses..." : authMode === "login" ? "Masuk Sekarang" : "Daftar Akun"}
-              </button>
-            </form>
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label className="block text-[11px] uppercase tracking-wider text-zinc-400">Kata Sandi</label>
+                    {authMode === "login" && (
+                      <button type="button" onClick={() => switchAuthMode("forgot")} className="text-[11px] text-zinc-400 transition hover:text-champagne-200">
+                        Lupa kata sandi?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      required
+                      placeholder="Password"
+                      className="input-lux pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      title={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-champagne-200"
+                    >
+                      {showPassword ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C7 20 2.73 16.89 1 12c.73-2.06 1.98-3.88 3.6-5.26" />
+                          <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c5 0 9.27 3.11 11 8a11.05 11.05 0 0 1-2.16 3.19" />
+                          <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" disabled={isSubmitting} className="btn-gold mt-2 w-full rounded-xl py-3 text-xs uppercase tracking-[0.2em]">
+                  {isSubmitting ? "Memproses..." : authMode === "login" ? "Masuk Sekarang" : "Daftar Sekarang"}
+                </button>
+              </form>
             )}
 
-            <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 text-[11px] text-zinc-500">
-              <button type="button" onClick={handleBackToTop} className="transition hover:text-champagne-200">
-                &uarr; Kembali ke Awal
-              </button>
-              <Link href="/home" className="transition hover:text-champagne-200">
-                Jelajahi tanpa akun &rarr;
-              </Link>
+            {/* FOOTER DI DALAM KARTU: PENGALIH DAFTAR/MASUK + JELAJAHI TANPA AKUN */}
+            {authMode !== "forgot" && (
+              <div className="mt-6 text-center">
+                <p className="text-xs text-zinc-400">
+                  {authMode === "login" ? (
+                    <>
+                      Belum punya akun Aesthe?{" "}
+                      <button
+                        type="button"
+                        onClick={() => switchAuthMode("register")}
+                        className="font-medium text-champagne-200 underline-offset-4 transition hover:text-champagne-100 hover:underline"
+                      >
+                        Daftar di sini
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Sudah punya akun?{" "}
+                      <button
+                        type="button"
+                        onClick={() => switchAuthMode("login")}
+                        className="font-medium text-champagne-200 underline-offset-4 transition hover:text-champagne-100 hover:underline"
+                      >
+                        Masuk sekarang
+                      </button>
+                    </>
+                  )}
+                </p>
+
+                <div className="my-4 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">atau</span>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>
+
+                <Link href="/home" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 transition hover:text-champagne-200">
+                  Jelajahi tanpa akun &rarr;
+                </Link>
+              </div>
+            )}
             </div>
           </div>
+
+          {/* TOMBOL KEMBALI KE AWAL DI LUAR KARTU (MOBILE) */}
+          <button
+            type="button"
+            onClick={handleBackToTop}
+            className="btn-ghost mt-4 rounded-full px-5 py-2 text-[10px] uppercase tracking-[0.16em] sm:hidden"
+          >
+            &larr; Kembali ke Awal
+          </button>
         </section>
       </div>
     </main>
